@@ -68,7 +68,7 @@ func New(l Logger, c Config) (*Mongnod, error) {
 	if !ok {
 
 		// Attemp to create the mongodb session.
-		if err := m.connectDB("mongo.New"); err != nil {
+		if err := m.connectDB("mongnod.New"); err != nil {
 			return nil, err
 		}
 
