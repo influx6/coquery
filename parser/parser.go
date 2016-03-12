@@ -82,3 +82,16 @@ func ParseQuery(context interface{}, data string) []string {
 
 	return parts
 }
+
+// SplitQuery returns a method name and the content of that method name for a
+// query section .eg SplitQuery("find(id,1)") => returns (find, "id,1").
+func SplitQuery(context interface{}, sec string) (method, contents string) {
+	if !section.MatchString(sec) {
+		return
+	}
+
+	subs := section.FindStringSubmatch(sec)
+	method = subs[0]
+	contents = subs[1]
+	return
+}
