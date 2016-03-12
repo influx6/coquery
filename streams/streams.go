@@ -9,9 +9,9 @@ import (
 
 // ReadResponse uses the ResponseStream providing a decorating and allows its
 // return values to be returned as a normal function call.
-func ReadResponse(rid string, in sumex.Streams) (*coquery.Response, *coquery.ResponseError) {
+func ReadResponse(rid string, in sumex.Streams) (*coquery.Response, coquery.ResponseError) {
 	var res *coquery.Response
-	var rerr *coquery.ResponseError
+	var rerr coquery.ResponseError
 
 	// Collect the response and error channels
 	rs, re := ResponseStream(rid, in)
@@ -29,13 +29,13 @@ func ReadResponse(rid string, in sumex.Streams) (*coquery.Response, *coquery.Res
 }
 
 // ResponseStream returns a channel responds with a response for a specific
-// requests ID (RID)
-func ResponseStream(rid string, in sumex.Streams) (<-chan *coquery.Response, <-chan *coquery.ResponseError) {
+// requests ID (RequestID())
+func ResponseStream(rid string, in sumex.Streams) (<-chan *coquery.Response, <-chan coquery.ResponseError) {
 	out := make(chan *coquery.Response)
-	outerr := make(chan *coquery.ResponseError)
+	outerr := make(chan coquery.ResponseError)
 
 	// Create a receiver and pass the needed information into the out stream
-	// if the RID matches.
+	// if the RequestID() matches.
 	rc, rcs := sumex.Receive(in)
 	re, res := sumex.ReceiveError(in)
 
@@ -63,7 +63,7 @@ func ResponseStream(rid string, in sumex.Streams) (<-chan *coquery.Response, <-c
 					continue
 				}
 
-				if res.RID != rid {
+				if res.RequestID() != rid {
 					continue
 				}
 
@@ -77,12 +77,12 @@ func ResponseStream(rid string, in sumex.Streams) (<-chan *coquery.Response, <-c
 					continue
 				}
 
-				res, rok := eu.(*coquery.ResponseError)
+				res, rok := eu.(coquery.ResponseError)
 				if !rok {
 					continue
 				}
 
-				if res.RID != rid {
+				if res.RequestID() != rid {
 					continue
 				}
 

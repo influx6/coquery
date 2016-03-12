@@ -9,6 +9,15 @@ type Parameter map[string]interface{}
 // Parameters defines a lists of Parameter types.
 type Parameters []Parameter
 
+//==============================================================================
+
+// Identity provides a interface that defines a request ID member method.
+type Identity interface {
+	RequestID() string
+}
+
+//==============================================================================
+
 // Response provides a response struct for replies to coquery requests.
 type Response struct {
 	Req  RecordRequest `json:"-" bson:"-"`
@@ -16,22 +25,19 @@ type Response struct {
 	Data Parameters    `json:"reply" bson:"reply"`
 }
 
-//==============================================================================
-
-// ResponseError provides a custom error message for requests types.
-type ResponseError struct {
-	RID     string `json:"rid" bson:"rid"`
-	Message string `json:"message" bson:"message"`
-	IError  error  `json:"error" bson:"error"`
+// RequestID returns the request id for this response.
+func (r *Response) RequestID() string {
+	return r.RID
 }
 
-// Error returns the error message for this response error.
-func (r ResponseError) Error() string {
-	if r.IError != nil {
-		return r.RID + " : " + r.Message + " : " + r.IError.Error()
-	}
+//==============================================================================
 
-	return r.RID + " : " + r.Message
+// ResponseError defines an interface for the error response for a coquery
+// request.
+type ResponseError interface {
+	Identity
+	Error() string
+	Message() string
 }
 
 //==============================================================================
@@ -44,8 +50,8 @@ type Find struct {
 	Value interface{} `json:"value" bson:"value"`
 }
 
-// Name returns the name for the giving request type.
-func (f Find) Name() string {
+// RequestName returns the name for the giving request type.
+func (f Find) RequestName() string {
 	return "find"
 }
 
@@ -57,8 +63,8 @@ type Collect struct {
 	Keys []string `json:"keys" bson:"keys"`
 }
 
-// Name returns the name for the giving request type.
-func (f Collect) Name() string {
+// RequestName returns the name for the giving request type.
+func (f Collect) RequestName() string {
 	return "collect"
 }
 
@@ -71,8 +77,8 @@ type Mutate struct {
 	Data []byte `json:"mutate" bson:"mutate"`
 }
 
-// Name returns the name for the giving request type.
-func (f Mutate) Name() string {
+// RequestName returns the name for the giving request type.
+func (f Mutate) RequestName() string {
 	return "mutate"
 }
 

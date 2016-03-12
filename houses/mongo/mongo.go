@@ -7,17 +7,15 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/influx6/coquery"
-	"github.com/influx6/coquery/storage"
 )
 
 //==========================================================================================
 
-// Logger provides a logging interface for the coquery package, allowing
-// users to provide their own internal logging systems.
-type Logger interface {
-	User(context interface{}, funcName string, message string, format ...interface{})
-	Dev(context interface{}, funcName string, message string, format ...interface{})
-	Error(context interface{}, funcName string, err error, message string, format ...interface{})
+// EventLog defines event logger that allows us to record events for a specific
+// action that occured.
+type EventLog interface {
+	Log(context interface{}, name string, message string, data ...interface{})
+	Error(context interface{}, name string, err error, message string, data ...interface{})
 }
 
 //==========================================================================================
@@ -38,12 +36,39 @@ type Query interface {
 
 //==========================================================================================
 
+// MError provides a custom error message for requests types.
+type MError struct {
+	Rid    string `json:"rid" bson:"rid"`
+	Msg    string `json:"message" bson:"message"`
+	IError error  `json:"error" bson:"error"`
+}
+
+// Message returns the internal message for this error
+func (r MError) Message() string {
+	return r.Msg
+}
+
+// RequestID returns the response error requestID
+func (r MError) RequestID() string {
+	return r.Rid
+}
+
+// Error returns the error message for this response error.
+func (r MError) Error() string {
+	if r.IError != nil {
+		return r.Rid + " : " + r.Msg + " : " + r.IError.Error()
+	}
+
+	return r.Rid + " : " + r.Msg
+}
+
+//==========================================================================================
+
 // FindProc provides a find working for handling find requests.
 type FindProc struct {
-	Log   Logger
+	Log   EventLog
 	Mongo Mongo
 	Query Query
-	Store storage.Store
 }
 
 // Name returns the Id of this operation provider.
@@ -53,7 +78,7 @@ func (f *FindProc) Name() string {
 
 // Do performs the necessary tasks passed to FindProc
 func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
-	f.Log.Dev("MongoProvider.FindProc", "Do", "Started : %s", f.Query.Query(data))
+	f.Log.Log("MongoProvider.FindProc", "Do", "Started : %s", f.Query.Query(data))
 
 	if err != nil {
 		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
@@ -72,17 +97,17 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	fn := func(c *mgo.Collection) error {
 		q := bson.M{}
 		q[find.Key] = find.Value
-		f.Log.Dev("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", f.Query.Query(q))
+		f.Log.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", f.Query.Query(q))
 		return c.Find(q).All(&res)
 	}
 
 	err = f.Mongo.ExecuteDB("MongoProvider.FindProc", find.Doc, fn)
 	if err != nil {
 		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
-		return nil, &coquery.ResponseError{RID: find.RID, Message: "FindProc Failed", IError: err}
+		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
 
-	f.Log.Dev("MongoProvider.FindProc", "Do", "Completed")
+	f.Log.Log("MongoProvider.FindProc", "Do", "Completed")
 
 	return &coquery.Response{
 		Req:  find,

@@ -33,19 +33,47 @@ type RecordRequests []RecordRequests
 // QueryProcessor provides an interface that processes a query into a requests
 // lists returning an error if the query had or was an invalid requests.
 type QueryProcessor interface {
-	Generate(context interface{}, queries []string) (RecordRequests, *ResponseError)
+	Generate(context interface{}, queries []string) (RecordRequests, ResponseError)
 }
 
 // ResponseWriter defines a interface for custom response writers for a
 // RecordRequest returned from the internals of a Document query processor.
 type ResponseWriter interface {
-	Write(context interface{}, rs *Response, re *ResponseError) error
+	Write(context interface{}, rs *Response, re ResponseError) error
 }
 
 // Documents define an interface for a backend provider which handles and
 // replies the needed requests from a
 type Documents interface {
 	Handle(context interface{}, rq RecordRequests, rw ResponseWriter)
+}
+
+//==============================================================================
+
+// CoError provides a custom error message for requests types.
+type CoError struct {
+	Rid    string `json:"rid" bson:"rid"`
+	Msg    string `json:"message" bson:"message"`
+	IError error  `json:"error" bson:"error"`
+}
+
+// Message returns the internal message for this error
+func (r *CoError) Message() string {
+	return r.Msg
+}
+
+// RequestID returns the response error requestID
+func (r *CoError) RequestID() string {
+	return r.Rid
+}
+
+// Error returns the error message for this response error.
+func (r *CoError) Error() string {
+	if r.IError != nil {
+		return r.Rid + " : " + r.Msg + " : " + r.IError.Error()
+	}
+
+	return r.Rid + " : " + r.Msg
 }
 
 //==============================================================================
@@ -122,10 +150,10 @@ func (d *DocRoute) Serve(context interface{}, subPath string, queries []string, 
 	atomic.AddInt64(&d.docAdd, -1)
 
 	if !ok {
-		err := &ResponseError{
-			RID:     "DocumentRouter",
-			Message: fmt.Sprintf("Invalid Path[%s] Request", subPath),
-			IError:  errors.New("404"),
+		err := &CoError{
+			Rid:    "DocumentRouter",
+			Msg:    fmt.Sprintf("Invalid Path[%s] Request", subPath),
+			IError: errors.New("404"),
 		}
 
 		d.Error(context, "Serve", err, "Completed")
@@ -171,10 +199,10 @@ func (co *CoEngine) Serve(context interface{}, query string, rw ResponseWriter) 
 	queryList := parser.ParseQuery(context, query)
 
 	if dl := len(queryList); dl < 3 {
-		err := &ResponseError{
-			RID:     "CoEngine",
-			Message: fmt.Sprintf("Invalid Query: %s", query),
-			IError:  fmt.Errorf("Invalid Query Length %d", dl),
+		err := &CoError{
+			Rid:    "CoEngine",
+			Msg:    fmt.Sprintf("Invalid Query: %s", query),
+			IError: fmt.Errorf("Invalid Query Length %d", dl),
 		}
 
 		co.Error(context, "Serve", err, "Completed")
@@ -194,10 +222,10 @@ func (co *CoEngine) Serve(context interface{}, query string, rw ResponseWriter) 
 	atomic.AddInt64(&co.routeAdd, -1)
 
 	if !ok {
-		err := &ResponseError{
-			RID:     "CoEngine",
-			Message: fmt.Sprintf("Invalid Query Path[%s]", root),
-			IError:  errors.New("504"),
+		err := &CoError{
+			Rid:    "CoEngine",
+			Msg:    fmt.Sprintf("Invalid Query Path[%s]", root),
+			IError: errors.New("504"),
 		}
 
 		co.Error(context, "Serve", err, "Completed")

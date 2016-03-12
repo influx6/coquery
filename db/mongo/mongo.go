@@ -32,12 +32,11 @@ type Config struct {
 
 //==============================================================================
 
-// Logger provides a logging interface for the coquery package, allowing
-// users to provide their own internal logging systems.
-type Logger interface {
-	User(context interface{}, funcName string, message string, format ...interface{})
-	Dev(context interface{}, funcName string, message string, format ...interface{})
-	Error(context interface{}, funcName string, err error, message string, format ...interface{})
+// EventLog defines event logger that allows us to record events for a specific
+// action that occured.
+type EventLog interface {
+	Log(context interface{}, name string, message string, data ...interface{})
+	Error(context interface{}, name string, err error, message string, data ...interface{})
 }
 
 //==============================================================================
@@ -45,15 +44,15 @@ type Logger interface {
 // Mongnod defines a mongo connection manager that builds off a mongo instance.
 type Mongnod struct {
 	*Config
-	log Logger
-	m   *mgo.Session
+	EventLog
+	m *mgo.Session
 }
 
 // New returns a new Mongnod instance.
-func New(l Logger, c Config) (*Mongnod, error) {
+func New(l EventLog, c Config) (*Mongnod, error) {
 	m := Mongnod{
-		Config: &c,
-		log:    l,
+		Config:   &c,
+		EventLog: l,
 	}
 
 	key := c.Host + ":" + c.DB
@@ -124,14 +123,14 @@ var ErrCollectionNoExist = fmt.Errorf("Collection does not exist")
 
 // ExecuteDB the MongoDB literal function.
 func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*mgo.Collection) error) error {
-	m.log.Dev(context, "executeDB", "Started : Db[%s] : Collection[%s]", m.DB, collectionName)
+	m.Log(context, "executeDB", "Started : Db[%s] : Collection[%s]", m.DB, collectionName)
 
 	ses := m.m.Copy()
 
 	// If we have a nil session then return an appropriate error.
 	if ses == nil {
 		err := errors.New("Invalid Session")
-		m.log.Error(context, "executeDB", err, "Completed")
+		m.Error(context, "executeDB", err, "Completed")
 		return err
 	}
 
@@ -141,7 +140,7 @@ func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*
 	// Capture the specified collection.
 	col := ses.DB(dbName).C(collectionName)
 	if col == nil {
-		m.log.Error(context, "executeDB", ErrCollectionNoExist, "Completed")
+		m.Error(context, "executeDB", ErrCollectionNoExist, "Completed")
 		return ErrCollectionNoExist
 	}
 
@@ -153,7 +152,7 @@ func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*
 
 // connectDB connects and initializes the master session for the mongo list.
 func (m *Mongnod) connectDB(context interface{}) error {
-	m.log.Dev(context, "connectDB", "Started : Config : %s", m.Query(m.Config))
+	m.Log(context, "connectDB", "Started : Config : %s", m.Query(m.Config))
 
 	// We need this object to establish a session to our MongoDB.
 	info := mgo.DialInfo{
@@ -168,14 +167,14 @@ func (m *Mongnod) connectDB(context interface{}) error {
 	// to our MongoDB.
 	ses, err := mgo.DialWithInfo(&info)
 	if err != nil {
-		m.log.Error(context, "connectDB", err, "Completed")
+		m.Error(context, "connectDB", err, "Completed")
 		return err
 	}
 
 	ses.SetMode(mgo.Monotonic, true)
 	m.m = ses
 
-	m.log.Dev(context, "connectDB", "Completed")
+	m.Log(context, "connectDB", "Completed")
 	return nil
 }
 

@@ -1,12 +1,10 @@
 package mongo_test
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/ardanlabs/kit/log"
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/db/mongo"
@@ -21,23 +19,37 @@ var context = "testing"
 
 //==============================================================================
 
-var logbuff bytes.Buffer
-var logg = log.New(&logbuff, func() int { return log.DEV }, log.Ldefault)
+// logg provides a concrete implementation of a logger.
+type logg struct{}
+
+// Log logs all standard log reports.
+func (l *logg) Log(context interface{}, name string, message string, data ...interface{}) {
+	if testing.Verbose() {
+		fmt.Printf("Log : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+	}
+}
+
+// Error logs all error reports.
+func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
+	if testing.Verbose() {
+		fmt.Printf("Error : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+	}
+}
 
 //==============================================================================
 
 // TestFindProc validates the operation provided by the FindProc operator.
 func TestFindProc(t *testing.T) {
-	logbuff.Reset()
-	defer fmt.Printf(logbuff.String())
-
 	t.Logf("Given the need to retrieve a record using FindProc operator")
 	{
 
 		t.Logf("\tWhen giving a mongo provider")
 		{
 
-			mo, merr := mongo.New(logg, mongo.Config{
+			var lg coquery.EventLog
+			lg = &logg{}
+
+			mo, merr := mongo.New(lg, mongo.Config{
 				Host:     "127.0.0.1:27017",
 				AuthDB:   "outcast",
 				DB:       "outcast",
@@ -58,7 +70,7 @@ func TestFindProc(t *testing.T) {
 			}
 
 			finder := &hmongo.FindProc{
-				Log:   logg,
+				Log:   lg,
 				Mongo: mo,
 				Query: mo,
 			}
@@ -90,16 +102,15 @@ func TestFindProc(t *testing.T) {
 // TestFindProcStream validates the operation provided by the FindProc operator
 // when using the streaming interface.
 func TestFindProcStream(t *testing.T) {
-	logbuff.Reset()
-	defer fmt.Printf(logbuff.String())
-
 	t.Logf("Given the need to retrieve a record using FindProc operator")
 	{
 
 		t.Logf("\tWhen giving a mongo provider")
 		{
 
-			mo, merr := mongo.New(logg, mongo.Config{
+			lg := &logg{}
+
+			mo, merr := mongo.New(lg, mongo.Config{
 				Host:     "127.0.0.1:27017",
 				AuthDB:   "outcast",
 				DB:       "outcast",
@@ -120,7 +131,7 @@ func TestFindProcStream(t *testing.T) {
 			}
 
 			finder := &hmongo.FindProc{
-				Log:   logg,
+				Log:   lg,
 				Mongo: mo,
 				Query: mo,
 			}
