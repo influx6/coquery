@@ -62,6 +62,8 @@ func TestFindProc(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully connected to mongodb instance.", tests.Success)
 
+			defer mo.Shutdown(context)
+
 			request := coquery.Find{
 				Doc:   "marine_metric_history",
 				RID:   "43D3UFZ6",
@@ -122,6 +124,8 @@ func TestFindProcStream(t *testing.T) {
 				t.Fatalf("\t%s\tShould have successfully connected to mongodb instance: %q", tests.Failed, merr)
 			}
 			t.Logf("\t%s\tShould have successfully connected to mongodb instance.", tests.Success)
+
+			defer mo.Shutdown(context)
 
 			request := &coquery.Find{
 				Doc:   "marine_metric_history",

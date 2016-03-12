@@ -55,35 +55,9 @@ func New(l EventLog, c Config) (*Mongnod, error) {
 		EventLog: l,
 	}
 
-	key := c.Host + ":" + c.DB
-
-	var new bool
-
-	masterListLock.Lock()
-	ms, ok := masterList[key]
-	masterListLock.Unlock()
-
-	// If not found, then attemp to connect and add to session master list.
-	if !ok {
-
-		// Attemp to create the mongodb session.
-		if err := m.connectDB("mongnod.New"); err != nil {
-			return nil, err
-		}
-
-		new = true
-
-		// Set the session adequately.
-		ms = m.m.Copy()
-
-		// Add to master list.
-		masterListLock.Lock()
-		masterList[key] = ms
-		masterListLock.Unlock()
-	}
-
-	if !new {
-		m.m = ms.Copy()
+	// connect to the mongodb server.
+	if err := m.connectDB("New"); err != nil {
+		return nil, err
 	}
 
 	return &m, nil
@@ -113,6 +87,21 @@ func (m *Mongnod) Query(ms interface{}) string {
 	}
 
 	return string(data)
+}
+
+// Shutdown closes the connection and its internal session provider.
+func (m *Mongnod) Shutdown(context interface{}) {
+	m.Log(context, "Shutdown", "Started : Db[%s]", m.DB)
+
+	m.m.Close()
+	// key := m.Host + ":" + m.DB
+	//
+	// // Remove this session from list to master list.
+	// masterListLock.Lock()
+	// delete(masterList, key)
+	// masterListLock.Unlock()
+
+	m.Log(context, "Shutdown", "Completed")
 }
 
 //==============================================================================
@@ -154,25 +143,51 @@ func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*
 func (m *Mongnod) connectDB(context interface{}) error {
 	m.Log(context, "connectDB", "Started : Config : %s", m.Query(m.Config))
 
-	// We need this object to establish a session to our MongoDB.
-	info := mgo.DialInfo{
-		Addrs:    []string{m.Host},
-		Timeout:  60 * time.Second,
-		Database: m.AuthDB,
-		Username: m.User,
-		Password: m.Password,
+	key := m.Host + ":" + m.DB
+
+	var new bool
+
+	masterListLock.Lock()
+	ms, ok := masterList[key]
+	masterListLock.Unlock()
+
+	// If not found, then attemp to connect and add to session master list.
+	if !ok {
+
+		// We need this object to establish a session to our MongoDB.
+		info := mgo.DialInfo{
+			Addrs:    []string{m.Host},
+			Timeout:  60 * time.Second,
+			Database: m.AuthDB,
+			Username: m.User,
+			Password: m.Password,
+		}
+
+		// Create a session which maintains a pool of socket connections
+		// to our MongoDB.
+		ses, err := mgo.DialWithInfo(&info)
+		if err != nil {
+			m.Error(context, "connectDB", err, "Completed")
+			return err
+		}
+
+		ses.SetMode(mgo.Monotonic, true)
+		m.m = ses
+
+		new = true
+
+		// Set the session adequately.
+		// ms = m.m.Copy()
+
+		// Add to master list.
+		masterListLock.Lock()
+		masterList[key] = m.m.Copy()
+		masterListLock.Unlock()
 	}
 
-	// Create a session which maintains a pool of socket connections
-	// to our MongoDB.
-	ses, err := mgo.DialWithInfo(&info)
-	if err != nil {
-		m.Error(context, "connectDB", err, "Completed")
-		return err
+	if !new {
+		m.m = ms.Copy()
 	}
-
-	ses.SetMode(mgo.Monotonic, true)
-	m.m = ses
 
 	m.Log(context, "connectDB", "Completed")
 	return nil
