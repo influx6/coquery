@@ -1,4 +1,4 @@
-package mongohouse
+package mongo
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/storage"
 )
 
 //==========================================================================================
@@ -42,6 +43,7 @@ type FindProc struct {
 	Log   Logger
 	Mongo Mongo
 	Query Query
+	Store storage.Store
 }
 
 // Name returns the Id of this operation provider.
@@ -77,14 +79,14 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	err = f.Mongo.ExecuteDB("MongoProvider.FindProc", find.Doc, fn)
 	if err != nil {
 		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
-		return nil, err
+		return nil, &coquery.ResponseError{RID: find.RID, Message: "FindProc Failed", IError: err}
 	}
 
 	f.Log.Dev("MongoProvider.FindProc", "Do", "Completed")
 
 	return &coquery.Response{
 		Req:  find,
-		ID:   find.ID,
+		RID:  find.RID,
 		Data: res,
 	}, nil
 }

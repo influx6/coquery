@@ -33,7 +33,6 @@ func TestBasicParsing(t *testing.T) {
 		{
 
 			proc := parser.ParseQuery(context, q)
-			// fmt.Printf("Proc: %s\n", proc)
 
 			if len(proc) < 5 {
 				t.Fatalf("\t%s\tShould have retrieved five segments of the parsing string", tests.Failed)
@@ -59,7 +58,6 @@ func TestDataParsing(t *testing.T) {
 		{
 
 			proc := parser.ParseQuery(context, q)
-			// fmt.Printf("Proc: %s\n", proc)
 
 			if len(proc) < 3 {
 				t.Fatalf("\t%s\tShould have retrieved five segments of the parsing string", tests.Failed)

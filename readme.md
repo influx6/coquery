@@ -17,11 +17,11 @@ go get -u github.com/influx/coquery/...
  Coquery was designed to support a flexible approach in how data is retrieved and
  stored on the backend using a interesting query dsl.
 
-  Example:
+  Example Query:
 
 ```go
 
-docs.user.rid(4356932).find(id,10).collects(name,age,address)
+docs.users.find(id,10).collects(name,age,address)
 
 find => {type: find, key:id, value: 0}
 collects => {type: collect, keys: [name, age ,address]}
@@ -30,5 +30,45 @@ docs.user.find(id,0).mutate({name:"alex"})
 
 find => {type: find, key:id, value: 0}
 mutate => {type: mutate, keys: {name: "alex"}}
+
+```
+
+  Example API:
+
+```go
+package main
+
+import (
+  "github.com/ardanlabs/kit/log"
+  "github.com/influx6/coquery"
+  dbMongo "github.com/influx6/db/mongo"
+  smMongo "github.com/influx6/streams/mongo"
+)
+
+func main(){
+
+  var engine = coquery.NewEngine()
+  var logger = log.New(os.Stdout,func() int{ return log.Dev},log.Ldefault)
+
+  mdb, err := dmongo.New(logger,dbMongo.Config{
+		Host:     "db.mongohouse.com:5430",
+		AuthDB:   "mob",
+		DB:       "mob",
+		User:     "box",
+		Password: "box",
+  })
+
+  if err != nil {
+    panic(err)
+  }
+
+  engine.Route("docs")
+  .Document("users",smMongo.New(logger,mdb))
+  .Document("admins",smMongo.New(logger,mdb))
+  .Document("reports",smMongo.New(logger,mdb))
+
+  http.ListenAndServe(":3000",engine)
+
+}
 
 ```
