@@ -23,6 +23,8 @@ type Store interface {
 
 	Add(Record) error
 	Remove(Record) error
+	RemoveByKey(Record) error
+	RemoveByValue(Record) error
 
 	Get(string) (Record, error)
 
@@ -133,6 +135,40 @@ func (u *under) HasRecord(rec Record) bool {
 
 //==============================================================================
 
+// RemoveByValue removes the Record into the storage maps.
+func (u *under) RemoveByValue(rec Record) error {
+	if _, ok := rec[u.key]; !ok {
+		return ErrNoKeyInRecord
+	}
+
+	key := rec[u.key].(string)
+	delete(rec, u.key)
+
+	u.rl.RLock()
+	inrec := u.Records[key]
+	u.rl.RUnlock()
+
+	RemoveValuesDiff(inrec, rec)
+	return nil
+}
+
+// RemoveByKey removes the Record into the storage maps.
+func (u *under) RemoveByKey(rec Record) error {
+	if _, ok := rec[u.key]; !ok {
+		return ErrNoKeyInRecord
+	}
+
+	key := rec[u.key].(string)
+	delete(rec, u.key)
+
+	u.rl.RLock()
+	inrec := u.Records[key]
+	u.rl.RUnlock()
+
+	RemoveMapDiff(inrec, rec)
+	return nil
+}
+
 // Remove removes the Record into the storage maps.
 func (u *under) Remove(rec Record) error {
 	if _, ok := rec[u.key]; !ok {
@@ -206,6 +242,68 @@ func (u *under) Add(rec Record) error {
 
 //==============================================================================
 
+// RemoveValuesDiff removes all properties according to their corresponding level
+// from the diff map checking if the values match,if found within the first map.
+func RemoveValuesDiff(target, diff map[string]interface{}) {
+	for key, value := range diff {
+		switch value.(type) {
+		case map[string]interface{}:
+			item, ok := target[key]
+			if !ok {
+				continue
+			}
+
+			mo, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			RemoveMapDiff(mo, value.(map[string]interface{}))
+			continue
+		default:
+			item, ok := target[key]
+			if !ok {
+				continue
+			}
+
+			if item != value {
+				continue
+			}
+
+			delete(target, key)
+		}
+	}
+}
+
+// RemoveMapDiff removes all properties according to their corresponding level
+// from the diff map, if found within the first map.
+func RemoveMapDiff(target, diff map[string]interface{}) {
+	for key, value := range diff {
+		switch value.(type) {
+		case map[string]interface{}:
+			item, ok := target[key]
+			if !ok {
+				continue
+			}
+
+			mo, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			RemoveMapDiff(mo, value.(map[string]interface{}))
+			continue
+		default:
+			_, ok := target[key]
+			if !ok {
+				continue
+			}
+
+			delete(target, key)
+		}
+	}
+}
+
 // MergeMaps merges the the first map with the contents of the second map if
 // the second map types match those of the first or if the first lacks an item
 // from the second map. If both keys exists in both maps and their types are
@@ -217,6 +315,7 @@ func MergeMaps(to, from map[string]interface{}) {
 
 		case bson.M:
 			valMap := value.(bson.M)
+
 			var tom map[string]interface{}
 
 			item, ok := to[key]
