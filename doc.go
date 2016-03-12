@@ -3,7 +3,7 @@
 // eg
 /*
 
-  docs.user.rid(4356932).find(id,0).collects(name,age,address)
+  docs.user.rid(4356932).find(id,10).collects(name,age,address)
 
   find => {type: find, key:id, value: 0}
   collects => {type: collect, keys: [name, age ,address]}
