@@ -143,7 +143,6 @@ func (u *under) RemoveByValue(rec Record) error {
 	}
 
 	key := rec[u.key].(string)
-	delete(rec, u.key)
 
 	u.rl.RLock()
 	inrec := u.Records[key]
@@ -160,7 +159,6 @@ func (u *under) RemoveByKey(rec Record) error {
 	}
 
 	key := rec[u.key].(string)
-	delete(rec, u.key)
 
 	u.rl.RLock()
 	inrec := u.Records[key]

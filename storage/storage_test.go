@@ -1,7 +1,6 @@
 package storage_test
 
 import (
-	"fmt"
 	"testing"
 
 	"gopkg.in/mgo.v2/bson"
@@ -31,7 +30,7 @@ func TestStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully stored the new rcord.", tests.Success)
 
-			if err := so.Add(map[string]interface{}{"store_id": "30", "address": bson.M{"state": "lagos"}}); err != nil {
+			if err := so.Add(map[string]interface{}{"store_id": "30", "address": bson.M{"state": "lagos", "country": "NG"}}); err != nil {
 				t.Fatalf("\t%s\tShould have successfully updated an existing record: %s", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould have successfully updated an existing record.", tests.Success)
@@ -46,13 +45,22 @@ func TestStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully found record with id '30'", tests.Success)
 
-			rec, err := so.Get("30")
+			_, err := so.Get("30")
 			if err != nil {
 				t.Fatalf("\t%s\tShould have successfully retrieve record with id '30'", tests.Failed)
 			}
 			t.Logf("\t%s\tShould have successfully retrieve record with id '30'", tests.Success)
 
-			fmt.Printf("%+s", rec)
+			if err := so.RemoveByValue(map[string]interface{}{"store_id": "30", "address": map[string]interface{}{"state": "lagos"}}); err != nil {
+				t.Fatalf("\t%s\tShould have successfully remove key with value on existing record: %s", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould have successfully remove key with value on existing record", tests.Success)
+
+			if err := so.RemoveByKey(map[string]interface{}{"store_id": "30", "address": nil}); err != nil {
+				t.Fatalf("\t%s\tShould have successfully remove key on existing record: %s", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould have successfully remove key on existing record.", tests.Success)
+
 		}
 	}
 }
