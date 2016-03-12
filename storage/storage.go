@@ -291,6 +291,7 @@ func BSONtoMap(m bson.M) map[string]interface{} {
 	return to
 }
 
+// bsonCopy copies one bson.M file, cloning as necessary down the data trees.
 func bsonCopy(to map[string]interface{}, from bson.M) {
 	for key, value := range from {
 		switch value.(type) {
@@ -309,6 +310,7 @@ func bsonCopy(to map[string]interface{}, from bson.M) {
 	}
 }
 
+// mapCopy copies one map details, cloning as necessary down the data trees.
 func mapCopy(to, from map[string]interface{}) {
 	for key, value := range from {
 		switch value.(type) {
