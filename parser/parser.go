@@ -91,7 +91,7 @@ func SplitQuery(context interface{}, sec string) (method, contents string) {
 	}
 
 	subs := section.FindStringSubmatch(sec)
-	method = subs[0]
-	contents = subs[1]
+	method = subs[1]
+	contents = subs[2]
 	return
 }

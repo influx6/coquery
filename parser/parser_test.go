@@ -19,6 +19,31 @@ func init() {
 
 //==============================================================================
 
+// TestQuerySpliting validates the ability to split a query method string.
+func TestQuerySpliting(t *testing.T) {
+	tests.ResetLog()
+	defer tests.DisplayLog()
+
+	t.Logf("Given the need to be able to parser a query method call")
+	{
+
+		q := "keys(name,age,address)"
+		t.Logf("\tWhen giving a query method call %q", q)
+		{
+
+			method, contents := parser.SplitQuery(context, q)
+
+			if method != "keys" && contents != "name,age,address" {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, contents)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+	}
+}
+
+//==============================================================================
+
 // TestParsing validates the behaviour of the parser routine for parsing query
 // string.
 func TestBasicParsing(t *testing.T) {
