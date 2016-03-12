@@ -181,6 +181,14 @@ type Engine interface {
 	Serve(context interface{}, query string, rw ResponseWriter)
 }
 
+// New returns a new Engine implementing structure for interfacing with
+// other API.
+func New(el EventLog) Engine {
+	return NewCoEngine(el)
+}
+
+//==============================================================================
+
 // CoEngine provides a concrete implementation of the coquery engine server.
 // It provides a two level deep routing level which allows providing
 // multiple response engines for different backends.
@@ -188,6 +196,16 @@ type CoEngine struct {
 	EventLog
 	routers  map[string]DocumentRouter
 	routeAdd int64
+}
+
+// NewCoEngine returns a new CoEngine instance.
+func NewCoEngine(el EventLog) *CoEngine {
+	co := CoEngine{
+		EventLog: el,
+		routers:  make(map[string]DocumentRouter),
+	}
+
+	return &co
 }
 
 // Serve processes the query using the coquery parser and runs the internal

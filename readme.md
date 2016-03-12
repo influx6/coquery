@@ -45,11 +45,25 @@ import (
   smMongo "github.com/influx6/streams/mongo"
 )
 
+// logg provides a concrete implementation of a logger.
+type logg struct{}
+
+// Log logs all standard log reports.
+func (l *logg) Log(context interface{}, name string, message string, data ...interface{}) {
+	fmt.Printf("Log : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+}
+
+// Error logs all error reports.
+func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
+	fmt.Printf("Error : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+}
+
 func main(){
 
   var context = "example"
-  var engine = coquery.NewEngine()
-  var logger = log.New(os.Stdout,func() int{ return log.Dev},log.Ldefault)
+  var logger = new(logg)
+
+  var engine = coquery.New(logger)
 
   mdb, err := dmongo.New(logger,dbMongo.Config{
 		Host:     "db.mongohouse.com:5430",
