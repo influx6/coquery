@@ -22,6 +22,7 @@ type Store interface {
 	HasRecord(Record) bool
 
 	Add(Record) error
+
 	Remove(Record) error
 	RemoveByKey(Record) error
 	RemoveByValue(Record) error
