@@ -11,6 +11,7 @@ import (
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/db/mongo"
 	hmongo "github.com/influx6/coquery/houses/mongo"
+	"github.com/influx6/coquery/streams"
 	"github.com/influx6/faux/sumex"
 )
 
@@ -128,7 +129,7 @@ func TestFindProcStream(t *testing.T) {
 
 			findStream.Inject(request)
 
-			res, err := coquery.ReadResponse(request.RID, findStream)
+			res, err := streams.ReadResponse(request.RID, findStream)
 			if err != nil {
 				t.Fatalf("\t%s\tShould have returned the error passed as second argument: %q", tests.Failed, err)
 			}

@@ -47,6 +47,7 @@ import (
 
 func main(){
 
+  var context = "example"
   var engine = coquery.NewEngine()
   var logger = log.New(os.Stdout,func() int{ return log.Dev},log.Ldefault)
 
@@ -62,10 +63,10 @@ func main(){
     panic(err)
   }
 
-  engine.Route("docs")
-  .Document("users",smMongo.New(logger,mdb))
-  .Document("admins",smMongo.New(logger,mdb))
-  .Document("reports",smMongo.New(logger,mdb))
+  engine.Route(context,"docs")
+  .Document(context,"users",smMongo.New(logger,mdb))
+  .Document(context,"admins",smMongo.New(logger,mdb))
+  .Document(context,"reports",smMongo.New(logger,mdb))
 
   http.ListenAndServe(":3000",engine)
 

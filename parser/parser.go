@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/ardanlabs/kit/log"
 )
+
+// // Logger defines message logger that allows us to record parser actions.
+// type Logger interface {
+// 	Log(context interface{}, name string, message string, data ...interface{})
+// 	Error(context interface{}, name string, err error, message string, data ...interface{})
+// }
 
 // section defines a regexp to part specific section of a query request string.
 var section = regexp.MustCompile("([a-zA-Z0-9_\\-]+)\\((.+)\\)")
@@ -16,7 +20,6 @@ var section = regexp.MustCompile("([a-zA-Z0-9_\\-]+)\\((.+)\\)")
 // ParseQuery returns the giving information as regarding the necessary data to
 // be processed.
 func ParseQuery(context interface{}, data string) []string {
-	log.Dev(context, "parser.ParseQuery", "Started : Query(%s)", data)
 
 	var parts []string
 
@@ -77,6 +80,5 @@ func ParseQuery(context interface{}, data string) []string {
 		parts = append(parts, line)
 	}
 
-	log.Dev(context, "parser.ParseQuery", "Completed")
 	return parts
 }
