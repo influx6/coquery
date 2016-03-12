@@ -157,7 +157,7 @@ var ErrNotFound = errors.New("Record Not Found")
 
 // Get returns the internal Record stroed in the map.
 func (u *under) Get(id string) (Record, error) {
-	if u.Has(id) {
+	if !u.Has(id) {
 		return nil, ErrNotFound
 	}
 
