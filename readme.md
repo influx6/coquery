@@ -17,7 +17,7 @@ go get -u github.com/influx/coquery/...
  Coquery was designed to support a flexible approach in how data is retrieved and
  stored on the backend using a interesting query dsl.
 
-  Example Query:
+  Example Query Patterns:
 
 ```bash
 
@@ -51,6 +51,7 @@ docs.user.find(id,0).mutate(hex("\x32\x4e\x54\x11\x21\x3a"))
 docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZmXHg2ZVx4MmU="))
 
 */
+
 
 ```
 

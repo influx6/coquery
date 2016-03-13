@@ -1,7 +1,6 @@
 package parser_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ardanlabs/kit/tests"
@@ -45,7 +44,7 @@ func TestQuerySpliting(t *testing.T) {
 		{
 
 			method, content, contents := parser.SplitQuery(context, qs)
-			fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
+			// fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
 
 			if method != "kv" || content != "id,\"{\"name\":\"bug.\"}\"" || len(contents) < 2 {
 				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
@@ -58,7 +57,7 @@ func TestQuerySpliting(t *testing.T) {
 		{
 
 			method, content, contents := parser.SplitQuery(context, qs)
-			fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
+			// fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
 
 			if method != "kv" || content != "id,{name:'slumber',age:1}" || len(contents) < 2 {
 				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
@@ -71,7 +70,7 @@ func TestQuerySpliting(t *testing.T) {
 		{
 
 			method, content, contents := parser.SplitQuery(context, qs)
-			fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
+			// fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
 
 			if method != "kv" || content != "id,\"\x21\x4e\"" || len(contents) < 2 {
 				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
@@ -84,7 +83,7 @@ func TestQuerySpliting(t *testing.T) {
 		{
 
 			method, content, contents := parser.SplitQuery(context, qs)
-			fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
+			// fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
 
 			if method != "kv" || content != "id,`\x21\x4e`" || len(contents) < 2 {
 				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
@@ -97,7 +96,7 @@ func TestQuerySpliting(t *testing.T) {
 		{
 
 			method, content, contents := parser.SplitQuery(context, qs)
-			fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
+			// fmt.Printf("Method: %s Content: %s Contents: %q\n", method, content, contents)
 
 			if method != "kv" || content != "id,```\x21\x4e,```" || len(contents) < 2 {
 				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
