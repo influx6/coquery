@@ -90,7 +90,7 @@ var runes = map[string]string{
 	"(": ")", ")": "(",
 	"[": "]", "]": "[",
 	"\"": "\"", "'": "'",
-	"`": "`", "```": "```",
+	"`": "`",
 }
 
 // SplitQuery returns a method name and the content of that mkethod name for a
@@ -117,13 +117,14 @@ func SplitQuery(context interface{}, sec string) (method string, content string,
 			break
 		}
 
-		line = strings.TrimSuffix(strings.TrimSpace(line), ",")
+		line = strings.TrimSpace(line)
 
 		// Get the prefix of this part.
 		pl := string(line[0])
 
 		// Do we have a possible special rune, if not add to list and continue
-		if _, ok := runes[pl]; ok {
+		if _, ok := runes[pl]; !ok {
+			line = strings.TrimSuffix(line, ",")
 			contentPart = append(contentPart, line)
 			continue
 		}
@@ -134,6 +135,7 @@ func SplitQuery(context interface{}, sec string) (method string, content string,
 		// also ends the item else then setup the depth level and
 		// the state we are in.
 		if strings.HasSuffix(line, el) {
+			line = strings.TrimSuffix(line, ",")
 			contentPart = append(contentPart, line)
 			continue
 		}
@@ -152,13 +154,7 @@ func SplitQuery(context interface{}, sec string) (method string, content string,
 				break iloop
 			}
 
-			mline = strings.TrimSuffix(strings.TrimSpace(mline), ",")
-
-			if strings.HasPrefix(mline, pl) {
-				subs = append(subs, mline)
-				depth++
-				continue iloop
-			}
+			// mline = strings.TrimSpace(mline)
 
 			if strings.HasSuffix(mline, el) && depth > 0 {
 				subs = append(subs, mline)
@@ -166,10 +162,18 @@ func SplitQuery(context interface{}, sec string) (method string, content string,
 				continue iloop
 			}
 
+			if strings.HasPrefix(mline, pl) {
+				subs = append(subs, mline)
+				depth++
+				continue iloop
+			}
+
 			subs = append(subs, mline)
 		}
 
-		contentPart = append(contentPart, strings.Join(subs, ""))
+		subline := strings.Join(subs, "")
+		subline = strings.TrimSuffix(subline, ",")
+		contentPart = append(contentPart, subline)
 	}
 
 	return
