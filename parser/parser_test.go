@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ardanlabs/kit/tests"
@@ -31,10 +32,75 @@ func TestQuerySpliting(t *testing.T) {
 		t.Logf("\tWhen giving a query method call %q", q)
 		{
 
-			method, contents := parser.SplitQuery(context, q)
+			method, content, contents := parser.SplitQuery(context, q)
 
-			if method != "keys" && contents != "name,age,address" {
-				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, contents)
+			if method != "keys" || content != "name,age,address" || len(contents) < 3 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+		qs := "kv(id,\"{\"name\":\"bug.\"}\")"
+		t.Logf("\tWhen giving a query method call %q", qs)
+		{
+
+			method, content, contents := parser.SplitQuery(context, qs)
+			fmt.Printf("Method: %s Content: %s Contents: %s\n", method, content, contents)
+
+			if method != "kv" || content != "id,\"{\"name\":\"bug.\"}\"" || len(contents) < 2 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+		qs = "kv(id,{name:'slumber',age:1})"
+		t.Logf("\tWhen giving a query method call %q", qs)
+		{
+
+			method, content, contents := parser.SplitQuery(context, qs)
+			fmt.Printf("Method: %s Content: %s Contents: %s\n", method, content, contents)
+
+			if method != "kv" || content != "id,{name:'slumber',age:1}" || len(contents) < 2 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+		qs = "kv(id,\"\x21\x4e\")"
+		t.Logf("\tWhen giving a query method call %q", qs)
+		{
+
+			method, content, contents := parser.SplitQuery(context, qs)
+			fmt.Printf("Method: %s Content: %s Contents: %s\n", method, content, contents)
+
+			if method != "kv" || content != "id,\"\x21\x4e\"" || len(contents) < 2 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+		qs = "kv(id,`\x21\x4e`)"
+		t.Logf("\tWhen giving a query method call %q", qs)
+		{
+
+			method, content, contents := parser.SplitQuery(context, qs)
+			fmt.Printf("Method: %s Content: %s Contents: %s\n", method, content, contents)
+
+			if method != "kv" || content != "id,`\x21\x4e`" || len(contents) < 2 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
+			}
+			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
+		}
+
+		qs = "kv(id,```\x21\x4e```)"
+		t.Logf("\tWhen giving a query method call %q", qs)
+		{
+
+			method, content, contents := parser.SplitQuery(context, qs)
+			fmt.Printf("Method: %s Content: %s Contents: %s\n", method, content, contents)
+
+			if method != "kv" || content != "id,```\x21\x4e```" || len(contents) < 2 {
+				t.Fatalf("\t%s\tShould have retrieved the appropriate method and contents of the query: Method: %q Content: %q", tests.Failed, method, content)
 			}
 			t.Logf("\t%s\tShould have retrieved the appropriate method and contents of the query", tests.Success)
 		}

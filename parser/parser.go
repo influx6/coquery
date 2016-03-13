@@ -83,15 +83,94 @@ func ParseQuery(context interface{}, data string) []string {
 	return parts
 }
 
-// SplitQuery returns a method name and the content of that method name for a
+// runes provides a map of special symbols with their endings to allows us
+// capture adequately proper parts of a query.
+var runes = map[string]string{
+	"{": "}", "}": "{",
+	"(": ")", ")": "(",
+	"[": "]", "]": "[",
+	"\"": "\"", "'": "'",
+	"`": "`", "```": "```",
+}
+
+// SplitQuery returns a method name and the content of that mkethod name for a
 // query section .eg SplitQuery("find(id,1)") => returns (find, "id,1").
-func SplitQuery(context interface{}, sec string) (method, contents string) {
+func SplitQuery(context interface{}, sec string) (method string, content string, contentPart []string) {
 	if !section.MatchString(sec) {
 		return
 	}
 
 	subs := section.FindStringSubmatch(sec)
 	method = subs[1]
-	contents = subs[2]
+	content = subs[2]
+
+	// We need to adjust the final data to be able to capture its entity.
+	data := fmt.Sprintf("%s,", content)
+
+	buf := bytes.NewBufferString(data)
+	read := bufio.NewReader(buf)
+
+	for {
+
+		line, err := read.ReadString(',')
+		if err != nil {
+			break
+		}
+
+		line = strings.TrimSuffix(strings.TrimSpace(line), ",")
+
+		// Get the prefix of this part.
+		pl := string(line[0])
+
+		// Do we have a possible special rune, if not add to list and continue
+		if _, ok := runes[pl]; ok {
+			contentPart = append(contentPart, line)
+			continue
+		}
+
+		el := runes[pl]
+
+		// If we have such a special character, then check if the special character
+		// also ends the item else then setup the depth level and
+		// the state we are in.
+		if strings.HasSuffix(line, el) {
+			contentPart = append(contentPart, line)
+			continue
+		}
+
+		depth := 1
+		subs := []string{line}
+
+	iloop:
+		for {
+			if depth <= 0 {
+				break iloop
+			}
+
+			mline, err := read.ReadString(',')
+			if err != nil {
+				break iloop
+			}
+
+			mline = strings.TrimSuffix(strings.TrimSpace(mline), ",")
+
+			if strings.HasPrefix(mline, pl) {
+				subs = append(subs, mline)
+				depth++
+				continue iloop
+			}
+
+			if strings.HasSuffix(mline, el) && depth > 0 {
+				subs = append(subs, mline)
+				depth--
+				continue iloop
+			}
+
+			subs = append(subs, mline)
+		}
+
+		contentPart = append(contentPart, strings.Join(subs, ""))
+	}
+
 	return
 }
