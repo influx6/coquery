@@ -8,14 +8,24 @@
 // eg
 /*
 
-  docs.users.find(id,10).collects(name,age,address)
+// Retrieve all records and collect only the "name","age" and "address" properties.
+docs.users.findN(-1).collects(name,age,address)
 
-  find => {type: find, key:id, value: 0}
-  collects => {type: collect, keys: [name, age ,address]}
+// Retrieve 10 records and collect only the "name","age" and "address" properties.
+docs.users.findN(10).collects(name,age,address)
 
-  docs.users.find(id,0).mutate({name:"alex"})
+// Retrieve 10 records for the first set and collect only the "name","age" and "address" properties.
+docs.users.findN(10,1).collects(name,age,address)
 
-  find => {type: find, key:id, value: 0}
-  mutate => {type: mutate, keys: {name: "alex"}}
+// Retrieve 10 records for the next set after the first and collect only the "name","age" and "address" properties.
+docs.users.findN(10,2).collects(name,age,address)
+
+// Retrieve record with the id=10 and collect only the "name","age" and "address" properties.
+docs.users.find(id,10).collects(name,age,address)
+
+
+// Retrieve record with the id=10 and mutate the "name" property to alex.
+docs.user.find(id,0).mutate({name:"alex"})
+
 */
 package coquery

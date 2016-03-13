@@ -19,17 +19,38 @@ go get -u github.com/influx/coquery/...
 
   Example Query:
 
-```go
+```bash
 
+// Retrieve all records and collect only the "name","age" and "address" properties.
+docs.users.findN(-1).collects(name,age,address)
+
+// Retrieve 10 records and collect only the "name","age" and "address" properties.
+docs.users.findN(10).collects(name,age,address)
+
+// Retrieve 10 records for the first 10 set and collect only the "name","age" and "address" properties.
+docs.users.findN(10,10).collects(name,age,address)
+
+// Retrieve 10 records for the first 20 after the first and collect only the "name","age" and "address" properties.
+docs.users.findN(10,20).collects(name,age,address)
+
+// Retrieve record with the id=10 and collect only the "name","age" and "address" properties.
 docs.users.find(id,10).collects(name,age,address)
 
-find => {type: find, key:id, value: 0}
-collects => {type: collect, keys: [name, age ,address]}
 
+// Retrieve record with the id=10 and mutate the "name" property to alex.
 docs.user.find(id,0).mutate({name:"alex"})
 
-find => {type: find, key:id, value: 0}
-mutate => {type: mutate, keys: {name: "alex"}}
+/* Experiemental ideas not yet implemented
+
+//Retrieve record with the id=10 and mutate the with the details of the
+//encoded mapped in hex format
+docs.user.find(id,0).mutate(hex("\x32\x4e\x54\x11\x21\x3a"))
+
+//Retrieve record with the id=10 and mutate the with the details of the
+//encoded mapped in base64 format
+docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZmXHg2ZVx4MmU="))
+
+*/
 
 ```
 

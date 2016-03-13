@@ -24,16 +24,22 @@ type RecordRequest interface {
 	RequestName() string
 }
 
+// RecordRequestExample provides an interface that defines RecordRequest that
+// provide a sample lists of its usage.
+type RecordRequestExample interface {
+	Examples() []string
+}
+
 // RecordRequests defines a lists of record requests genered from a query
 // proccessor.
-type RecordRequests []RecordRequests
+type RecordRequests []RecordRequest
 
 //==============================================================================
 
 // QueryProcessor provides an interface that processes a query into a requests
 // lists returning an error if the query had or was an invalid requests.
 type QueryProcessor interface {
-	Generate(context interface{}, queries []string) (RecordRequests, ResponseError)
+	Generate(context interface{}, rid string, doc string, queries []string) (RecordRequests, ResponseError)
 }
 
 // ResponseWriter defines a interface for custom response writers for a
@@ -82,7 +88,7 @@ func (r *CoError) Error() string {
 // document providers for request processing.
 type DocumentRouter interface {
 	Document(context interface{}, path string, qs QueryProcessor, d Documents) DocumentRouter
-	Serve(context interface{}, path string, queries []string, rw ResponseWriter)
+	Serve(context interface{}, rid string, path string, queries []string, rw ResponseWriter)
 }
 
 // docSet defines a structure for storing a query processor and a Document
@@ -137,7 +143,7 @@ func (d *DocRoute) Document(context interface{}, subPath string, qs QueryProcess
 
 // Serve takes the requests needed and serves up the requests lists to the
 // response writer.
-func (d *DocRoute) Serve(context interface{}, subPath string, queries []string, rw ResponseWriter) {
+func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, queries []string, rw ResponseWriter) {
 	d.Log(context, "Serve", "Started : Path[%s] : Query: %s", subPath, queries)
 
 	var ok bool
@@ -151,7 +157,7 @@ func (d *DocRoute) Serve(context interface{}, subPath string, queries []string, 
 
 	if !ok {
 		err := &CoError{
-			Rid:    "DocumentRouter",
+			Rid:    requestID,
 			Msg:    fmt.Sprintf("Invalid Path[%s] Request", subPath),
 			IError: errors.New("404"),
 		}
@@ -162,7 +168,7 @@ func (d *DocRoute) Serve(context interface{}, subPath string, queries []string, 
 		return
 	}
 
-	reqs, err := set.query.Generate(context, queries)
+	reqs, err := set.query.Generate(context, requestID, subPath, queries)
 	if err != nil {
 		d.Error(context, "Serve", err, "Completed")
 		rw.Write(context, nil, err)
@@ -178,7 +184,7 @@ func (d *DocRoute) Serve(context interface{}, subPath string, queries []string, 
 // Engine defines a interface for a coquery service providers.
 type Engine interface {
 	Route(context interface{}, root string) DocumentRouter
-	Serve(context interface{}, query string, rw ResponseWriter)
+	Serve(context interface{}, requestID string, query string, rw ResponseWriter)
 }
 
 // New returns a new Engine implementing structure for interfacing with
@@ -211,14 +217,14 @@ func NewCoEngine(el EventLog) *CoEngine {
 // Serve processes the query using the coquery parser and runs the internal
 // pieces accordingly sending the parts into the appropriate route else
 // responding with an appropriate error.
-func (co *CoEngine) Serve(context interface{}, query string, rw ResponseWriter) {
-	co.Log(context, "Serve", "Started : Query[%s]", query)
+func (co *CoEngine) Serve(context interface{}, requestID string, query string, rw ResponseWriter) {
+	co.Log(context, "Serve", "Started : requestID[%s] : Query[%s]", requestID, query)
 
 	queryList := parser.ParseQuery(context, query)
 
 	if dl := len(queryList); dl < 3 {
 		err := &CoError{
-			Rid:    "CoEngine",
+			Rid:    requestID,
 			Msg:    fmt.Sprintf("Invalid Query: %s", query),
 			IError: fmt.Errorf("Invalid Query Length %d", dl),
 		}
@@ -241,7 +247,7 @@ func (co *CoEngine) Serve(context interface{}, query string, rw ResponseWriter) 
 
 	if !ok {
 		err := &CoError{
-			Rid:    "CoEngine",
+			Rid:    requestID,
 			Msg:    fmt.Sprintf("Invalid Query Path[%s]", root),
 			IError: errors.New("504"),
 		}
@@ -254,7 +260,7 @@ func (co *CoEngine) Serve(context interface{}, query string, rw ResponseWriter) 
 	sub := queryList[1]
 	qs := queryList[2:]
 
-	set.Serve(context, sub, qs, rw)
+	set.Serve(context, requestID, sub, qs, rw)
 	co.Log(context, "Serve", "Completed")
 }
 
