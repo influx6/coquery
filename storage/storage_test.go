@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery/storage"
@@ -12,6 +13,38 @@ import (
 var context = "testing"
 
 //==============================================================================
+
+// TestExpirationStorage validates the storage API.
+func TestExpirationStorage(t *testing.T) {
+	t.Logf("Given the need to CRUD a coquery.storage with expiration")
+	{
+		t.Logf("\tWhen giving a coquery.Store API")
+		{
+
+			so := storage.NewExpirable("store_id", 100*time.Millisecond)
+
+			if err := so.Add(map[string]interface{}{"store_id": "30", "name": "alex"}); err != nil {
+				t.Fatalf("\t%s\tShould have successfully stored the new rcord: %s", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould have successfully stored the new rcord.", tests.Success)
+
+			_, err := so.Get("30")
+			if err != nil {
+				t.Fatalf("\t%s\tShould have successfully retrieve record with id '30'", tests.Failed)
+			}
+			t.Logf("\t%s\tShould have successfully retrieve record with id '30'", tests.Success)
+
+			<-time.After(200 * time.Millisecond)
+
+			_, err = so.Get("30")
+			if err == nil {
+				t.Fatalf("\t%s\tShould have failed to retrieve record with id '30'", tests.Failed)
+			}
+			t.Logf("\t%s\tShould have failed to retrieve record with id '30'", tests.Success)
+
+		}
+	}
+}
 
 // TestStorage validates the storage API.
 func TestStorage(t *testing.T) {
@@ -63,6 +96,15 @@ func TestStorage(t *testing.T) {
 				t.Fatalf("\t%s\tShould have successfully remove key on existing record: %s", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould have successfully remove key on existing record.", tests.Success)
+
+			so.Delete("30")
+			// fmt.Printf("%+s\n", so)
+
+			_, err = so.Get("30")
+			if err == nil {
+				t.Fatalf("\t%s\tShould have failed to retrieve record with id '30'", tests.Failed)
+			}
+			t.Logf("\t%s\tShould have failed to retrieve record with id '30'", tests.Success)
 
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -31,6 +32,7 @@ type Store interface {
 	Remove(Record) error
 	RemoveByKey(Record) error
 	RemoveByValue(Record) error
+	Delete(string) error
 
 	Get(string) (Record, error)
 
@@ -144,21 +146,62 @@ type under struct {
 	records    map[string]Record
 	tainted    map[string]bool
 	deleted    map[string]bool
+	scans      map[string]int64
 	rfl        sync.RWMutex
 	recordRefs RefList
-	scans      map[string]int64
+	afl        sync.RWMutex
+	active     map[string]int64
 }
 
 // New returns a new instance of the under store.
-func New(RecordKey string) Store {
+func New(recordKey string) Store {
 	un := under{
-		key:        RecordKey,
+		key:        recordKey,
 		records:    make(map[string]Record),
 		tainted:    make(map[string]bool),
 		deleted:    make(map[string]bool),
 		scans:      make(map[string]int64),
+		active:     make(map[string]int64),
 		recordRefs: make(RefList),
 	}
+
+	return &un
+}
+
+// NewExpirable returns a new store but which has a expiration timer
+// check on all records in the store. If a record has not being assed
+// for a while then that record is deleted from within the stores.
+func NewExpirable(recordKey string, maxAge time.Duration) Store {
+	un := under{
+		key:        recordKey,
+		records:    make(map[string]Record),
+		tainted:    make(map[string]bool),
+		deleted:    make(map[string]bool),
+		scans:      make(map[string]int64),
+		active:     make(map[string]int64),
+		recordRefs: make(RefList),
+	}
+
+	// Lunch our expiration checker in a go-routine
+	go func() {
+		for {
+			<-time.After(maxAge)
+
+			un.afl.RLock()
+			defer un.afl.RUnlock()
+
+			for key, state := range un.active {
+				if du := atomic.LoadInt64(&state); du-1 <= 0 {
+					un.Delete(key)
+					continue
+				}
+
+				atomic.StoreInt64(&state, 1)
+			}
+
+		}
+
+	}()
 
 	return &un
 }
@@ -285,6 +328,33 @@ func (u *under) RemoveByKey(rec Record) error {
 	return nil
 }
 
+// ErrInvalidRecKey is returned when a key has no associated record in store.
+var ErrInvalidRecKey = errors.New("Invalid Record Key")
+
+// Delete removes the Record into the storage maps using its key.
+func (u *under) Delete(key string) error {
+	_, ok := u.records[key]
+	if !ok {
+		return ErrInvalidRecKey
+	}
+
+	u.rl.Lock()
+	defer u.rl.Unlock()
+
+	delete(u.records, key)
+	delete(u.tainted, key)
+
+	// Remove this record from all refs.
+	for _, ref := range u.recordRefs {
+		for _, rfg := range ref {
+			rfg.UnSet(key)
+		}
+	}
+
+	u.deleted[key] = true
+	return nil
+}
+
 // Remove removes the Record into the storage maps.
 func (u *under) Remove(rec Record) error {
 	if !u.ValidRecord(rec) {
@@ -317,6 +387,11 @@ func (u *under) Get(id string) (Record, error) {
 	inrec := u.records[id]
 	u.rl.RUnlock()
 
+	u.afl.RLock()
+	d := u.active[id]
+	atomic.AddInt64(&d, 1)
+	u.afl.RUnlock()
+
 	return inrec, nil
 }
 
@@ -342,6 +417,10 @@ func (u *under) Add(rec Record) error {
 		defer u.rl.Unlock()
 
 		u.records[key] = rec
+
+		u.afl.Lock()
+		u.active[key] = 1
+		u.afl.Unlock()
 		return nil
 	}
 
@@ -353,15 +432,20 @@ func (u *under) Add(rec Record) error {
 
 	u.records[key] = inrec
 	u.tainted[key] = true
+
+	u.afl.Lock()
+	u.active[key] = 1
+	d := u.active[key]
+	u.afl.Unlock()
+
+	atomic.AddInt64(&d, 1)
+
 	return nil
 }
 
 // ErrInvalidRefKey is returned when the reference key is not found in the
 // provided record.
 var ErrInvalidRefKey = errors.New("Invalid Reference Key")
-
-// ErrInvalidRecKey is returned when a key has no associated record in store.
-var ErrInvalidRecKey = errors.New("Invalid Record Key")
 
 // AdjustRef adjusts the reference data within the record lists.
 func (u *under) AdjustRef(reckey string, refKey string) error {
@@ -412,6 +496,8 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 		return ErrNoKeyInRecord
 	}
 
+	coreKey := rec[u.key].(string)
+
 	if new {
 		u.Add(rec)
 	}
@@ -436,7 +522,7 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 
 	// If we are scanning for this key already then add and skip this record
 	if scanning > 1 {
-		refs.Set(recVal, rec[u.key].(string))
+		refs.Set(recVal, coreKey)
 		return nil
 	}
 
@@ -455,6 +541,12 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 	}
 
 	atomic.StoreInt64(&us, 0)
+
+	u.afl.RLock()
+	d := u.active[coreKey]
+	u.afl.RUnlock()
+
+	atomic.AddInt64(&d, 1)
 
 	return nil
 }
