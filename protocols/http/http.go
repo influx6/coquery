@@ -5,6 +5,7 @@ package http
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -135,15 +136,34 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	case "post", "put":
 		contentType := req.Header.Get("Content-Type")
-		if !strings.Contains(contentType, "application/x-www-form-urlencoded") {
+
+		isQuery := strings.Contains(contentType, "application/x-coquery")
+		isForm := strings.Contains(contentType, "application/x-www-form-urlencoded")
+
+		if !isForm && !isQuery {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		req.ParseForm()
+		if isForm {
+			req.ParseForm()
 
-		query = req.FormValue("coquery")
-		reqID = req.FormValue("rid")
+			query = req.FormValue("coquery")
+			reqID = req.FormValue("rid")
+		}
+
+		if isQuery {
+			defer req.Body.Close()
+
+			bo, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				res.Write([]byte(err.Error()))
+				return
+			}
+
+			query = string(bo)
+		}
 
 	case "get", "patch":
 		xco := req.Header.Get("X-Coquery-Request")
