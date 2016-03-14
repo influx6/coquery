@@ -128,9 +128,9 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 				continue
 			}
 
-		case "collect":
+		case "collects":
 
-			reqs = append(reqs, &Collect{
+			reqs = append(reqs, &Collects{
 				RID:  reqid,
 				Keys: params,
 			})
@@ -239,25 +239,25 @@ func (f *Find) Example() []string {
 
 //==============================================================================
 
-// Collect retrieves specific keyed items from the coquery stores.
-type Collect struct {
+// Collects retrieves specific keyed items from the coquery stores.
+type Collects struct {
 	RID  string   `json:"rid" bson:"rid"`
 	Keys []string `json:"keys" bson:"keys"`
 }
 
 // RequestName returns the name for the giving request type.
-func (f *Collect) RequestName() string {
-	return "collect"
+func (f *Collects) RequestName() string {
+	return "collects"
 }
 
 // RequestID returns the request id for this request object.
-func (f *Collect) RequestID() string {
+func (f *Collects) RequestID() string {
 	return f.RID
 }
 
 // Example returns a string that showcase a sample of this request.
 // In truth this provides a code-level sample information and nothing more.
-func (f *Collect) Example() []string {
+func (f *Collects) Example() []string {
 	return []string{"collect(name,age,created_at)"}
 }
 

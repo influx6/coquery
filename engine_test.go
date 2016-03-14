@@ -28,7 +28,7 @@ func (l *logg) Log(context interface{}, name string, message string, data ...int
 // Error logs all error reports.
 func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
 	if testing.Verbose() {
-		fmt.Printf("Error : %s : %s : %s\n", context, name, fmt.Sprintf(message, data...))
+		fmt.Printf("Error : %s : %s : %s : %q\n", context, name, fmt.Sprintf(message, data...), err.Error())
 	}
 }
 
@@ -90,7 +90,7 @@ func TestCoEngine(t *testing.T) {
 			Document(context, "greetings", &coquery.BasicQueries{EventLog: log}, &inMemory{})
 
 		q1 := "doc.greetings.find(id,1)"
-		t.Logf("\tWhen giving a query request: %q", q1)
+		t.Logf("\tWhen giving a query with one request: %q", q1)
 		{
 
 			writer := &spyWriter{
@@ -128,6 +128,33 @@ func TestCoEngine(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfull matched greetings as 'Hello Word!'", tests.Success)
 
+		}
+
+		q2 := "doc.greetings.find(id,1).collects(greeting)"
+		t.Logf("\tWhen giving a query with more than one request: %q", q2)
+		{
+
+			writer := &spyWriter{
+				Out: make(chan *coquery.Response),
+				Err: make(chan coquery.ResponseError),
+			}
+
+			qid := "632UFY"
+
+			eos.Serve(context, qid, q2, writer)
+
+			// var res *coquery.Response
+			var err coquery.ResponseError
+
+			select {
+			case <-writer.Out:
+			case err = <-writer.Err:
+			}
+
+			if err == nil {
+				t.Fatalf("\t%s\tShould have failed when there was more than one reques.", tests.Failed)
+			}
+			t.Logf("\t%s\tShould have failed when there was more than one request: %q", tests.Success, err.Error())
 		}
 	}
 }

@@ -3,8 +3,6 @@ package storage_test
 import (
 	"testing"
 
-	"gopkg.in/mgo.v2/bson"
-
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery/storage"
 )
@@ -30,7 +28,7 @@ func TestStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully stored the new rcord.", tests.Success)
 
-			if err := so.Add(map[string]interface{}{"store_id": "30", "address": bson.M{"state": "lagos", "country": "NG"}}); err != nil {
+			if err := so.ModRef(map[string]interface{}{"store_id": "30", "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state"); err != nil {
 				t.Fatalf("\t%s\tShould have successfully updated an existing record: %s", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould have successfully updated an existing record.", tests.Success)
@@ -45,11 +43,16 @@ func TestStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully found record with id '30'", tests.Success)
 
-			_, err := so.Get("30")
+			rc, err := so.Get("30")
 			if err != nil {
 				t.Fatalf("\t%s\tShould have successfully retrieve record with id '30'", tests.Failed)
 			}
 			t.Logf("\t%s\tShould have successfully retrieve record with id '30'", tests.Success)
+
+			if _, ok := storage.PullKeys(rc, "address.state"); !ok {
+				t.Fatalf("\t%s\tShould have successfully retrieve deep key[%s] record", tests.Failed, "address.state")
+			}
+			t.Logf("\t%s\tShould have successfully retrieve deep key[%s] record", tests.Success, "address.state")
 
 			if err := so.RemoveByValue(map[string]interface{}{"store_id": "30", "address": map[string]interface{}{"state": "lagos"}}); err != nil {
 				t.Fatalf("\t%s\tShould have successfully remove key with value on existing record: %s", tests.Failed, err)

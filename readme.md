@@ -61,7 +61,6 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 package main
 
 import (
-  "github.com/ardanlabs/kit/log"
   "github.com/influx6/coquery"
   dbMongo "github.com/influx6/db/mongo"
   smMongo "github.com/influx6/streams/mongo"
@@ -83,11 +82,11 @@ func (l *logg) Error(context interface{}, name string, err error, message string
 func main(){
 
   var context = "example"
-  var logger = new(logg)
+  log := &logg{}
 
-  var engine = coquery.New(logger)
+  var engine = coquery.New(log)
 
-  mdb, err := dmongo.New(logger,dbMongo.Config{
+  mdb, err := dmongo.New(log,dbMongo.Config{
 		Host:     "db.mongohouse.com:5430",
 		AuthDB:   "mob",
 		DB:       "mob",
@@ -105,7 +104,6 @@ func main(){
   .Document(context,"reports",smMongo.New(logger,mdb))
 
   http.ListenAndServe(":3000",engine)
-
 }
 
 ```
