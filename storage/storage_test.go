@@ -18,6 +18,9 @@ var context = "testing"
 // BenchmarkStorageStore benchmarks the addition and deletion of records using
 // the coquery.Storage.
 func BenchmarkStorageDelete(b *testing.B) {
+	b.ResetTimer()
+	b.ReportAllocs()
+
 	so := storage.New("store_id")
 
 	// Store N items.
@@ -30,6 +33,9 @@ func BenchmarkStorageDelete(b *testing.B) {
 // BenchmarkStorageStoreAndDelete benchmarks the addition and deletion of records using
 // the coquery.Storage.
 func BenchmarkStorageStoreAndDelete(b *testing.B) {
+	b.ResetTimer()
+	b.ReportAllocs()
+
 	so := storage.New("store_id")
 
 	// Store N items.
@@ -48,6 +54,9 @@ func BenchmarkStorageStoreAndDelete(b *testing.B) {
 // BenchmarkStorage benchmarks the addition and deletion of records using
 // the coquery.Storage.
 func BenchmarkStorage(b *testing.B) {
+	b.ResetTimer()
+	b.ReportAllocs()
+
 	so := storage.New("store_id")
 
 	// Store N items.
@@ -66,6 +75,9 @@ func BenchmarkStorage(b *testing.B) {
 // BenchmarkStorageWithRef benchmarks the addition and deletion of records using
 // the coquery.Storage, and adding reference for the address.street key.
 func BenchmarkStorageWithRef(b *testing.B) {
+	b.ResetTimer()
+	b.ReportAllocs()
+
 	so := storage.New("store_id")
 
 	// Store N items.
@@ -89,7 +101,10 @@ func BenchmarkStorageWithRef(b *testing.B) {
 // BenchmarkStorage benchmarks the addition and deletion of records using
 // the coquery.Storage with expiration turned on.
 func BenchmarkExpirableStorage(b *testing.B) {
-	so := storage.NewExpirable("store_id", 100*time.Millisecond)
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	so := storage.NewExpirable("store_id", 5*time.Second)
 
 	for i := 0; i < b.N; i++ {
 		key := fmt.Sprintf("%d", i)
