@@ -6,9 +6,12 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/influx6/coquery"
+	"github.com/pborman/uuid"
 )
 
 //==============================================================================
@@ -42,7 +45,7 @@ func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 	data, err := json.Marshal(rs.Data)
 	if err != nil {
 		h.res.WriteHeader(http.StatusBadRequest)
-		h.res.Write([]byte(re.Error()))
+		h.res.Write([]byte(err.Error()))
 		return err
 	}
 
@@ -82,6 +85,25 @@ type httpCoquery struct {
 	coquery.Engine
 }
 
+// ListenAndServe runs a http server with the httpCoquery instance wired
+// to serve its incoming requests.
+func (h *httpCoquery) ListenAndServe(context interface{}, addr string) {
+	h.Log(context, "ListenAndServe", "Started : Addr[%s]", addr)
+
+	// Lunch the http server in a goroutine.
+	go func() {
+		h.Log(context, "ListenAndServe", "Listening on: %s", addr)
+		http.ListenAndServe(addr, h)
+	}()
+
+	// Listen for an interrupt signal from the OS.
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	<-sigChan
+
+	h.Log(context, "ListenAndServe", "Completed")
+}
+
 // ServeHTTP provides the http.Handler ServeHTTP method to serve http requests
 // to a coquery.Engine.
 func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
@@ -98,23 +120,30 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	switch strings.ToLower(req.Method) {
 	case "head":
-		res.Header().Set("X-Coquery-Server", "HTTP-Coquery-1.0")
+		req.ParseForm()
+		reqID = req.FormValue("rid")
+
+		if reqID == "" {
+			reqID = uuid.New()
+		}
+
+		res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
+		res.Header().Set("X-CoQuery-Request-ID", reqID)
+		res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
 		res.Header().Set("Accepts", "application/x-www-form-urlencoded;")
 		return
 
 	case "post", "put":
 		contentType := req.Header.Get("Content-Type")
-		if !strings.Contains(contentType, "application/x-www.form-urlencoded") {
+		if !strings.Contains(contentType, "application/x-www-form-urlencoded") {
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		if err := req.ParseForm(); err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
+		req.ParseForm()
 
 		query = req.FormValue("coquery")
+		reqID = req.FormValue("rid")
 
 	case "get", "patch":
 		xco := req.Header.Get("X-Coquery-Request")
@@ -122,11 +151,9 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		// If there exists no such then report as failure.
 		if xco == "" {
 
-			if err := req.ParseForm(); err != nil {
-				res.WriteHeader(http.StatusBadRequest)
-				return
-			}
+			req.ParseForm()
 
+			reqID = req.FormValue("rid")
 			xco = req.FormValue("coquery")
 			if xco == "" {
 				res.WriteHeader(http.StatusBadRequest)
@@ -137,8 +164,12 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		query = xco
 	}
 
-	res.Header().Set("X-Coquery-Server", "HTTP-Coquery-1.0")
-	res.Header().Set("X-Coquery-Request-ID", reqID)
+	if reqID == "" {
+		reqID = uuid.New()
+	}
+
+	res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
+	res.Header().Set("X-CoQuery-Request-ID", reqID)
 
 	h.Serve("httpCoquery", reqID, query, &ResWriter{res: res, req: req})
 }
