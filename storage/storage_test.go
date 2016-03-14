@@ -1,6 +1,7 @@
 package storage_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,6 +14,93 @@ import (
 var context = "testing"
 
 //==============================================================================
+
+// BenchmarkStorageStore benchmarks the addition and deletion of records using
+// the coquery.Storage.
+func BenchmarkStorageDelete(b *testing.B) {
+	so := storage.New("store_id")
+
+	// Store N items.
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Add(map[string]interface{}{"store_id": key, "name": "alex"})
+	}
+}
+
+// BenchmarkStorageStoreAndDelete benchmarks the addition and deletion of records using
+// the coquery.Storage.
+func BenchmarkStorageStoreAndDelete(b *testing.B) {
+	so := storage.New("store_id")
+
+	// Store N items.
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Add(map[string]interface{}{"store_id": key, "name": "alex"})
+	}
+
+	// Delete N items
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Delete(key)
+	}
+}
+
+// BenchmarkStorage benchmarks the addition and deletion of records using
+// the coquery.Storage.
+func BenchmarkStorage(b *testing.B) {
+	so := storage.New("store_id")
+
+	// Store N items.
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Add(map[string]interface{}{"store_id": key, "name": "alex"})
+	}
+
+	// Delete N items
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Delete(key)
+	}
+}
+
+// BenchmarkStorageWithRef benchmarks the addition and deletion of records using
+// the coquery.Storage, and adding reference for the address.street key.
+func BenchmarkStorageWithRef(b *testing.B) {
+	so := storage.New("store_id")
+
+	// Store N items.
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Add(map[string]interface{}{"store_id": key, "name": "alex"})
+	}
+
+	// Mod N items with new data and add refs
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.ModRef(map[string]interface{}{"store_id": key, "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state")
+	}
+
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Delete(key)
+	}
+}
+
+// BenchmarkStorage benchmarks the addition and deletion of records using
+// the coquery.Storage with expiration turned on.
+func BenchmarkExpirableStorage(b *testing.B) {
+	so := storage.NewExpirable("store_id", 100*time.Millisecond)
+
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Add(map[string]interface{}{"store_id": key, "name": "alex"})
+	}
+
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("%d", i)
+		so.Delete(key)
+	}
+}
 
 // TestExpirationStorage validates the storage API.
 func TestExpirationStorage(t *testing.T) {

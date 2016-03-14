@@ -471,8 +471,9 @@ func (u *under) ModRef(rec Record, refKey string) error {
 	return u.ModRefBy(rec, refKey, true)
 }
 
-// AddRef adds the record into the map if its new and adjusts its reference index
-// lists with the needed keyed index.
+// AddRef adds the record into the map if its new and adjusts its reference
+// index lists with the needed keyed index. If a record already exists, only
+// the reference information is stored with no data modified.
 func (u *under) AddRef(rec Record, refKey string) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
