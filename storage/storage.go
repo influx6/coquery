@@ -419,7 +419,7 @@ func (u *under) Add(rec Record) error {
 		u.records[key] = rec
 
 		u.afl.Lock()
-		u.active[key] = 1
+		u.active[key] = 2
 		u.afl.Unlock()
 		return nil
 	}
