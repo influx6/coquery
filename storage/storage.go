@@ -16,30 +16,6 @@ import (
 // Record define a lists of Record items within the understore.
 type Record map[string]interface{}
 
-// Store defines a interface that provides necessary storage methods
-type Store interface {
-	ClearTainted()
-	ClearDeleted()
-
-	Has(string) bool
-	HasRecord(Record) bool
-
-	Add(Record) error
-	AddRef(Record, string) error
-	ModRef(Record, string) error
-	ModRefBy(Record, string, bool) error
-
-	Remove(Record) error
-	RemoveByKey(Record) error
-	RemoveByValue(Record) error
-	Delete(string) error
-
-	Get(string) (Record, error)
-
-	TaintedRecords() []string
-	DeletedRecords() []string
-}
-
 //==============================================================================
 
 // Truthtable defines a map of string values with a bool value.
@@ -137,6 +113,31 @@ func (r RefList) Has(k string) bool {
 }
 
 //==============================================================================
+
+// Store defines a interface that provides necessary storage methods
+type Store interface {
+	ClearTainted()
+	ClearDeleted()
+
+	Has(string) bool
+	HasRecord(Record) bool
+
+	Add(Record) error
+	AddRef(Record, string) error
+	ModRef(Record, string) error
+	ModRefBy(Record, string, bool) error
+
+	Remove(Record) error
+	RemoveByKey(Record) error
+	RemoveByValue(Record) error
+	Delete(string) error
+
+	Get(string) (Record, error)
+	GetByRef(string, string) ([]Record, error)
+
+	TaintedRecords() []string
+	DeletedRecords() []string
+}
 
 // under provides an adequate means of storing full large scale json/json graph
 // documents which allows us to cache.
@@ -398,6 +399,47 @@ func (u *under) Get(id string) (Record, error) {
 	u.afl.Unlock()
 
 	return inrec, nil
+}
+
+// ErrInvalidValue is returned when a giving value reference key was not found
+// for that reference.
+var ErrInvalidValue = errors.New("Invalid Value for Reference key")
+
+// GetByRef returns the all internal Records with a specific reference key and
+// value.
+func (u *under) GetByRef(key string, value string) ([]Record, error) {
+	u.rl.RLock()
+	defer u.rl.RUnlock()
+
+	ufw := u.recordRefs.Get(key)
+
+	if ufw == nil {
+		return nil, ErrInvalidRefKey
+	}
+
+	ts := ufw.Get(value)
+	if ts == nil {
+		return nil, ErrInvalidValue
+	}
+
+	var recs []Record
+
+	for tkey := range ts {
+		inrec := u.records[tkey]
+
+		u.afl.RLock()
+		d := u.active[tkey]
+		atomic.AddInt64(&d, 1)
+		u.afl.RUnlock()
+
+		u.afl.Lock()
+		u.active[tkey] = d
+		u.afl.Unlock()
+
+		recs = append(recs, inrec)
+	}
+
+	return recs, nil
 }
 
 //==============================================================================

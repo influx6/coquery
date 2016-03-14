@@ -89,7 +89,13 @@ func BenchmarkStorageWithRef(b *testing.B) {
 	// Mod N items with new data and add refs
 	for i := 0; i < b.N; i++ {
 		key := fmt.Sprintf("%d", i)
-		so.AddRef(map[string]interface{}{"store_id": key, "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state")
+		so.AddRef(map[string]interface{}{"store_id": key, "address": map[string]interface{}{"state": fmt.Sprintf("lagos-%d", i), "country": "NG"}}, "address.state")
+	}
+
+	// Mod N items with new data and add refs
+	for i := 0; i < b.N; i++ {
+		key := fmt.Sprintf("lagos-%d", i)
+		so.GetByRef("address.state", key)
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -184,6 +190,12 @@ func TestStorage(t *testing.T) {
 				t.Fatalf("\t%s\tShould have successfully retrieve record with id '30'", tests.Failed)
 			}
 			t.Logf("\t%s\tShould have successfully retrieve record with id '30'", tests.Success)
+
+			_, err = so.GetByRef("address.state", "lagos")
+			if err != nil {
+				t.Fatalf("\t%s\tShould have successfully retrieve record by ref", tests.Failed)
+			}
+			t.Logf("\t%s\tShould have successfully retrieve record by ref", tests.Success)
 
 			if _, ok := storage.PullKeys(rc, "address.state"); !ok {
 				t.Fatalf("\t%s\tShould have successfully retrieve deep key[%s] record", tests.Failed, "address.state")
