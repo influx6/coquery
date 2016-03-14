@@ -197,6 +197,7 @@ func NewExpirable(recordKey string, maxAge time.Duration) Store {
 				}
 
 				atomic.StoreInt64(&state, 1)
+				un.active[key] = state
 			}
 
 		}
@@ -392,6 +393,10 @@ func (u *under) Get(id string) (Record, error) {
 	atomic.AddInt64(&d, 1)
 	u.afl.RUnlock()
 
+	u.afl.Lock()
+	u.active[id] = d
+	u.afl.Unlock()
+
 	return inrec, nil
 }
 
@@ -433,12 +438,14 @@ func (u *under) Add(rec Record) error {
 	u.records[key] = inrec
 	u.tainted[key] = true
 
-	u.afl.Lock()
-	u.active[key] = 1
+	u.afl.RLock()
 	d := u.active[key]
-	u.afl.Unlock()
+	u.afl.RUnlock()
 
+	u.afl.Lock()
 	atomic.AddInt64(&d, 1)
+	u.active[key] = d
+	u.afl.Unlock()
 
 	return nil
 }
@@ -547,7 +554,10 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 	d := u.active[coreKey]
 	u.afl.RUnlock()
 
+	u.afl.Lock()
 	atomic.AddInt64(&d, 1)
+	u.active[coreKey] = d
+	u.afl.Unlock()
 
 	return nil
 }

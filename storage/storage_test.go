@@ -89,7 +89,7 @@ func BenchmarkStorageWithRef(b *testing.B) {
 	// Mod N items with new data and add refs
 	for i := 0; i < b.N; i++ {
 		key := fmt.Sprintf("%d", i)
-		so.ModRef(map[string]interface{}{"store_id": key, "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state")
+		so.AddRef(map[string]interface{}{"store_id": key, "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state")
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -137,7 +137,7 @@ func TestExpirationStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully retrieve record with id '30'", tests.Success)
 
-			<-time.After(200 * time.Millisecond)
+			<-time.After(400 * time.Millisecond)
 
 			_, err = so.Get("30")
 			if err == nil {
