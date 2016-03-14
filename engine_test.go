@@ -21,14 +21,14 @@ type logg struct{}
 // Log logs all standard log reports.
 func (l *logg) Log(context interface{}, name string, message string, data ...interface{}) {
 	if testing.Verbose() {
-		fmt.Printf("Log : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+		fmt.Printf("Log : %s : %s : %s\n", context, name, fmt.Sprintf(message, data...))
 	}
 }
 
 // Error logs all error reports.
 func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
 	if testing.Verbose() {
-		fmt.Printf("Error : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+		fmt.Printf("Error : %s : %s : %s\n", context, name, fmt.Sprintf(message, data...))
 	}
 }
 
@@ -87,7 +87,7 @@ func TestCoEngine(t *testing.T) {
 		eos := coquery.New(log)
 
 		eos.Route(context, "doc").
-			Document(context, "greetings", &coquery.BasicQueries{log}, &inMemory{})
+			Document(context, "greetings", &coquery.BasicQueries{EventLog: log}, &inMemory{})
 
 		q1 := "doc.greetings.find(id,1)"
 		t.Logf("\tWhen giving a query request: %q", q1)
