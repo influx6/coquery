@@ -535,6 +535,7 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 	}
 
 	atomic.StoreInt64(&us, 1)
+	u.scans[refKey] = us
 
 	u.rl.RLock()
 	defer u.rl.RUnlock()
