@@ -196,13 +196,18 @@ type FindN struct {
 }
 
 // RequestName returns the name for the giving request type.
-func (f FindN) RequestName() string {
+func (f *FindN) RequestName() string {
 	return "findN"
+}
+
+// RequestID returns the request id for this request object.
+func (f *FindN) RequestID() string {
+	return f.RID
 }
 
 // Example returns a string that showcase a sample of this request.
 // In truth this provides a code-level sample information and nothing more.
-func (f FindN) Example() []string {
+func (f *FindN) Example() []string {
 	return []string{"findN(10,20)", "findN(-1)", "findN(10)"}
 }
 
@@ -217,13 +222,18 @@ type Find struct {
 }
 
 // RequestName returns the name for the giving request type.
-func (f Find) RequestName() string {
+func (f *Find) RequestName() string {
 	return "find"
+}
+
+// RequestID returns the request id for this request object.
+func (f *Find) RequestID() string {
+	return f.RID
 }
 
 // Example returns a string that showcase a sample of this request.
 // In truth this provides a code-level sample information and nothing more.
-func (f Find) Example() []string {
+func (f *Find) Example() []string {
 	return []string{"find(id,4023)", "find(name,'alex')"}
 }
 
@@ -236,13 +246,18 @@ type Collect struct {
 }
 
 // RequestName returns the name for the giving request type.
-func (f Collect) RequestName() string {
+func (f *Collect) RequestName() string {
 	return "collect"
+}
+
+// RequestID returns the request id for this request object.
+func (f *Collect) RequestID() string {
+	return f.RID
 }
 
 // Example returns a string that showcase a sample of this request.
 // In truth this provides a code-level sample information and nothing more.
-func (f Collect) Example() []string {
+func (f *Collect) Example() []string {
 	return []string{"collect(name,age,created_at)"}
 }
 
@@ -255,13 +270,18 @@ type Mutate struct {
 	Parameter Parameter `json:"params" bson:"params"`
 }
 
+// RequestID returns the request id for this request object.
+func (f *Mutate) RequestID() string {
+	return f.RID
+}
+
 // RequestName returns the name for the giving request type.
-func (f Mutate) RequestName() string {
+func (f *Mutate) RequestName() string {
 	return "mutate"
 }
 
 // Example returns a string that showcase a sample of this request.
-func (f Mutate) Example() []string {
+func (f *Mutate) Example() []string {
 	return []string{"mutate({name:'alex'})"}
 }
 

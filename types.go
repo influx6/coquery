@@ -6,6 +6,22 @@ package coquery
 // providers.
 type Parameter map[string]interface{}
 
+// Has returns true/false if the giving key exists there.
+func (p Parameter) Has(k string) bool {
+	_, ok := p[k]
+	return ok
+}
+
+// Set sets the giving key with the provided value.
+func (p Parameter) Set(k string, v interface{}) {
+	p[k] = v
+}
+
+// Get retrieves the value of a giving key if it exists else nil is returned.
+func (p Parameter) Get(k string) interface{} {
+	return p[k]
+}
+
 // Parameters defines a lists of Parameter types.
 type Parameters []Parameter
 

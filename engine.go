@@ -21,6 +21,7 @@ type EventLog interface {
 
 // RecordRequest defines a base type for the supported request types
 type RecordRequest interface {
+	Identity
 	RequestName() string
 }
 
@@ -170,6 +171,18 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 
 	reqs, err := set.query.Generate(context, requestID, subPath, queries)
 	if err != nil {
+		d.Error(context, "Serve", err, "Completed")
+		rw.Write(context, nil, err)
+		return
+	}
+
+	if len(reqs) == 0 {
+		err := &CoError{
+			Rid:    requestID,
+			Msg:    "No Request Generated",
+			IError: errors.New("404"),
+		}
+
 		d.Error(context, "Serve", err, "Completed")
 		rw.Write(context, nil, err)
 		return
