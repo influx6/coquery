@@ -122,6 +122,7 @@ func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*
 
 	if m.m == nil {
 		if err := m.connectDB(context); err != nil {
+			m.Error(context, "executeDB", err, "Completed")
 			return err
 		}
 	}
@@ -147,6 +148,7 @@ func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*
 		return ErrCollectionNoExist
 	}
 
+	m.Log(context, "executeDB", "Completed")
 	// Execute the MongoDB function and return possible error.
 	return f(col)
 }

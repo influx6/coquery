@@ -170,7 +170,7 @@ func TestStorage(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould have successfully stored the new rcord.", tests.Success)
 
-			if err := so.ModRef(map[string]interface{}{"store_id": "30", "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state"); err != nil {
+			if err := so.ModRefBy(map[string]interface{}{"store_id": "30", "address": map[string]interface{}{"state": "lagos", "country": "NG"}}, "address.state", true); err != nil {
 				t.Fatalf("\t%s\tShould have successfully updated an existing record: %s", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould have successfully updated an existing record.", tests.Success)

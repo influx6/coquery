@@ -13,11 +13,6 @@ import (
 
 //==============================================================================
 
-// Record define a lists of Record items within the understore.
-type Record map[string]interface{}
-
-//==============================================================================
-
 // Truthtable defines a map of string values with a bool value.
 type Truthtable map[string]bool
 
@@ -36,8 +31,8 @@ func (t Truthtable) Has(k string) bool {
 	return t[k]
 }
 
-// RecordRefList defines a lists of record refs associated with a lists of
-// record keys for fast indexes.
+// RecordRefList defines a lists of map[string]interface{} refs associated with a lists of
+// map[string]interface{} keys for fast indexes.
 type RecordRefList map[interface{}]Truthtable
 
 // Get returns the k truthable for the giving key else returns nil if it does
@@ -120,20 +115,21 @@ type Store interface {
 	ClearDeleted()
 
 	Has(string) bool
-	HasRecord(Record) bool
+	HasRecord(map[string]interface{}) bool
 
-	Add(Record) error
-	AddRef(Record, string) error
-	ModRef(Record, string) error
-	ModRefBy(Record, string, bool) error
+	Add(map[string]interface{}) error
+	AddRef(map[string]interface{}, string) error
+	AdjustRef(string, string) error
+	ModRef(map[string]interface{}, string) error
+	ModRefBy(map[string]interface{}, string, bool) error
 
-	Remove(Record) error
-	RemoveByKey(Record) error
-	RemoveByValue(Record) error
+	Remove(map[string]interface{}) error
+	RemoveByKey(map[string]interface{}) error
+	RemoveByValue(map[string]interface{}) error
 	Delete(string) error
 
-	Get(string) (Record, error)
-	GetByRef(string, string) ([]Record, error)
+	Get(string) (map[string]interface{}, error)
+	GetByRef(string, string) ([]map[string]interface{}, error)
 
 	TaintedRecords() []string
 	DeletedRecords() []string
@@ -144,7 +140,7 @@ type Store interface {
 type under struct {
 	key        string
 	rl         sync.RWMutex
-	records    map[string]Record
+	records    map[string]map[string]interface{}
 	tainted    map[string]bool
 	deleted    map[string]bool
 	scans      map[string]int64
@@ -158,7 +154,7 @@ type under struct {
 func New(recordKey string) Store {
 	un := under{
 		key:        recordKey,
-		records:    make(map[string]Record),
+		records:    make(map[string]map[string]interface{}),
 		tainted:    make(map[string]bool),
 		deleted:    make(map[string]bool),
 		scans:      make(map[string]int64),
@@ -170,12 +166,12 @@ func New(recordKey string) Store {
 }
 
 // NewExpirable returns a new store but which has a expiration timer
-// check on all records in the store. If a record has not being assed
-// for a while then that record is deleted from within the stores.
+// check on all records in the store. If a map[string]interface{} has not being assed
+// for a while then that map[string]interface{} is deleted from within the stores.
 func NewExpirable(recordKey string, maxAge time.Duration) Store {
 	un := under{
 		key:        recordKey,
-		records:    make(map[string]Record),
+		records:    make(map[string]map[string]interface{}),
 		tainted:    make(map[string]bool),
 		deleted:    make(map[string]bool),
 		scans:      make(map[string]int64),
@@ -210,17 +206,17 @@ func NewExpirable(recordKey string, maxAge time.Duration) Store {
 
 //==============================================================================
 
-// ErrNoKeyInRecord is returned when the Record lacks the wanted key.
-var ErrNoKeyInRecord = errors.New("Record Lacks Wanted key")
+// ErrNoKeyInRecord is returned when the map[string]interface{} lacks the wanted key.
+var ErrNoKeyInRecord = errors.New("map[string]interface{} Lacks Wanted key")
 
-// ClearDeleted resets the deleted Record lists, emptying all.
+// ClearDeleted resets the deleted map[string]interface{} lists, emptying all.
 func (u *under) ClearDeleted() {
 	u.rl.Lock()
 	defer u.rl.Unlock()
 	u.deleted = make(map[string]bool)
 }
 
-// ClearTainted resets the tainted Record lists, emptying all.
+// ClearTainted resets the tainted map[string]interface{} lists, emptying all.
 func (u *under) ClearTainted() {
 	u.rl.Lock()
 	defer u.rl.Unlock()
@@ -261,7 +257,7 @@ func (u *under) DeletedRecords() []string {
 
 //==============================================================================
 
-// Has returns true/false whether the Record into the storage maps.
+// Has returns true/false whether the map[string]interface{} into the storage maps.
 func (u *under) Has(rec string) bool {
 	u.rl.RLock()
 	defer u.rl.RUnlock()
@@ -270,9 +266,9 @@ func (u *under) Has(rec string) bool {
 	return ok
 }
 
-// ValidRecord returns true/false if the record has the needed key within it.
+// ValidRecord returns true/false if the map[string]interface{} has the needed key within it.
 // of the needed type.
-func (u *under) ValidRecord(rec Record) bool {
+func (u *under) ValidRecord(rec map[string]interface{}) bool {
 	if m, ok := rec[u.key]; ok {
 		if _, osk := m.(string); !osk {
 			return false
@@ -282,8 +278,8 @@ func (u *under) ValidRecord(rec Record) bool {
 	return true
 }
 
-// HasRecord returns true/false whether the Record into the storage maps.
-func (u *under) HasRecord(rec Record) bool {
+// HasRecord returns true/false whether the map[string]interface{} into the storage maps.
+func (u *under) HasRecord(rec map[string]interface{}) bool {
 	key, ok := rec[u.key].(string)
 	if !ok {
 		return false
@@ -298,8 +294,8 @@ func (u *under) HasRecord(rec Record) bool {
 
 //==============================================================================
 
-// RemoveByValue removes the Record into the storage maps.
-func (u *under) RemoveByValue(rec Record) error {
+// RemoveByValue removes the map[string]interface{} into the storage maps.
+func (u *under) RemoveByValue(rec map[string]interface{}) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -314,8 +310,8 @@ func (u *under) RemoveByValue(rec Record) error {
 	return nil
 }
 
-// RemoveByKey removes the Record into the storage maps.
-func (u *under) RemoveByKey(rec Record) error {
+// RemoveByKey removes the map[string]interface{} into the storage maps.
+func (u *under) RemoveByKey(rec map[string]interface{}) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -330,10 +326,10 @@ func (u *under) RemoveByKey(rec Record) error {
 	return nil
 }
 
-// ErrInvalidRecKey is returned when a key has no associated record in store.
-var ErrInvalidRecKey = errors.New("Invalid Record Key")
+// ErrInvalidRecKey is returned when a key has no associated map[string]interface{} in store.
+var ErrInvalidRecKey = errors.New("Invalid map[string]interface{} Key")
 
-// Delete removes the Record into the storage maps using its key.
+// Delete removes the map[string]interface{} into the storage maps using its key.
 func (u *under) Delete(key string) error {
 	_, ok := u.records[key]
 	if !ok {
@@ -346,7 +342,7 @@ func (u *under) Delete(key string) error {
 	delete(u.records, key)
 	delete(u.tainted, key)
 
-	// Remove this record from all refs.
+	// Remove this map[string]interface{} from all refs.
 	for _, ref := range u.recordRefs {
 		for _, rfg := range ref {
 			rfg.UnSet(key)
@@ -357,8 +353,8 @@ func (u *under) Delete(key string) error {
 	return nil
 }
 
-// Remove removes the Record into the storage maps.
-func (u *under) Remove(rec Record) error {
+// Remove removes the map[string]interface{} into the storage maps.
+func (u *under) Remove(rec map[string]interface{}) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -376,11 +372,11 @@ func (u *under) Remove(rec Record) error {
 
 //==============================================================================
 
-// ErrNotFound is returned when a Record is not found.
-var ErrNotFound = errors.New("Record Not Found")
+// ErrNotFound is returned when a map[string]interface{} is not found.
+var ErrNotFound = errors.New("map[string]interface{} Not Found")
 
-// Get returns the internal Record stroed in the map.
-func (u *under) Get(id string) (Record, error) {
+// Get returns the internal map[string]interface{} stroed in the map.
+func (u *under) Get(id string) (map[string]interface{}, error) {
 	if !u.Has(id) {
 		return nil, ErrNotFound
 	}
@@ -407,7 +403,7 @@ var ErrInvalidValue = errors.New("Invalid Value for Reference key")
 
 // GetByRef returns the all internal Records with a specific reference key and
 // value.
-func (u *under) GetByRef(key string, value string) ([]Record, error) {
+func (u *under) GetByRef(key string, value string) ([]map[string]interface{}, error) {
 	u.rl.RLock()
 	defer u.rl.RUnlock()
 
@@ -422,7 +418,7 @@ func (u *under) GetByRef(key string, value string) ([]Record, error) {
 		return nil, ErrInvalidValue
 	}
 
-	var recs []Record
+	var recs []map[string]interface{}
 
 	for tkey := range ts {
 		inrec := u.records[tkey]
@@ -444,10 +440,10 @@ func (u *under) GetByRef(key string, value string) ([]Record, error) {
 
 //==============================================================================
 
-// Add adds the Record into the storage maps.
-func (u *under) Add(rec Record) error {
+// Add adds the map[string]interface{} into the storage maps.
+func (u *under) Add(rec map[string]interface{}) error {
 
-	// If this does not have the specified Record key then return error.
+	// If this does not have the specified map[string]interface{} key then return error.
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -458,7 +454,7 @@ func (u *under) Add(rec Record) error {
 	inrec, ok := u.records[key]
 	u.rl.RUnlock()
 
-	// If the Record has no previous instance then add it.
+	// If the map[string]interface{} has no previous instance then add it.
 	if !ok {
 		u.rl.Lock()
 		defer u.rl.Unlock()
@@ -471,7 +467,7 @@ func (u *under) Add(rec Record) error {
 		return nil
 	}
 
-	// If the Record has a previous instance, then we need to merge it.
+	// If the map[string]interface{} has a previous instance, then we need to merge it.
 	MergeMaps(inrec, rec)
 
 	u.rl.Lock()
@@ -493,10 +489,13 @@ func (u *under) Add(rec Record) error {
 }
 
 // ErrInvalidRefKey is returned when the reference key is not found in the
-// provided record.
+// provided map[string]interface{}.
 var ErrInvalidRefKey = errors.New("Invalid Reference Key")
 
-// AdjustRef adjusts the reference data within the record lists.
+// AdjustRef adjusts the reference data within the map[string]interface{} lists.
+// By adding a new reference map[string]interface{} for a specific refrence key.
+// It retrieves a map[string]interface{} by its key then creates the appropriate
+// reference for it.
 func (u *under) AdjustRef(reckey string, refKey string) error {
 	if !u.Has(reckey) {
 		return ErrInvalidRecKey
@@ -510,9 +509,9 @@ func (u *under) AdjustRef(reckey string, refKey string) error {
 	return u.ModRefBy(rec, refKey, false)
 }
 
-// ModRef adds the record into the store, modding as necessary and adjusts the
+// ModRef adds the map[string]interface{} into the store, modding as necessary and adjusts the
 // ref details.
-func (u *under) ModRef(rec Record, refKey string) error {
+func (u *under) ModRef(rec map[string]interface{}, refKey string) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -520,10 +519,10 @@ func (u *under) ModRef(rec Record, refKey string) error {
 	return u.ModRefBy(rec, refKey, true)
 }
 
-// AddRef adds the record into the map if its new and adjusts its reference
-// index lists with the needed keyed index. If a record already exists, only
+// AddRef adds the map[string]interface{} into the map if its new and adjusts its reference
+// index lists with the needed keyed index. If a map[string]interface{} already exists, only
 // the reference information is stored with no data modified.
-func (u *under) AddRef(rec Record, refKey string) error {
+func (u *under) AddRef(rec map[string]interface{}, refKey string) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -538,10 +537,10 @@ func (u *under) AddRef(rec Record, refKey string) error {
 	return u.ModRefBy(rec, refKey, new)
 }
 
-// ModRefBy adds the record if new into the storage map and adds new reference
+// ModRefBy adds the map[string]interface{} if new into the storage map and adds new reference
 // using this type of key and its corresponding value, updating any records found
 // in its lists that matches it.
-func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
+func (u *under) ModRefBy(rec map[string]interface{}, refKey string, new bool) error {
 	if !u.ValidRecord(rec) {
 		return ErrNoKeyInRecord
 	}
@@ -570,7 +569,7 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 	refs := u.recordRefs.Add(refKey)
 	u.rfl.RUnlock()
 
-	// If we are scanning for this key already then add and skip this record
+	// If we are scanning for this key already then add and skip this map[string]interface{}
 	if scanning > 1 {
 		refs.Set(recVal, coreKey)
 		return nil
@@ -609,7 +608,7 @@ func (u *under) ModRefBy(rec Record, refKey string, new bool) error {
 
 // PullKeys will pull out a key values even when presented by a period delimited
 // depth keys. It returns true/false as second value if all keys where found.
-func PullKeys(rec Record, key string) (interface{}, bool) {
+func PullKeys(rec map[string]interface{}, key string) (interface{}, bool) {
 	keys := strings.Split(key, ".")
 
 	last := len(keys) - 1

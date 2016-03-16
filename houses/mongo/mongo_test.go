@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
@@ -72,9 +73,9 @@ func TestFindProc(t *testing.T) {
 			}
 
 			finder := &hmongo.FindProc{
-				Log:   lg,
-				Mongo: mo,
-				Query: mo,
+				EventLog: lg,
+				Mongo:    mo,
+				Query:    mo,
 			}
 
 			if finder.Name() != "find" {
@@ -135,22 +136,22 @@ func TestFindProcStream(t *testing.T) {
 			}
 
 			finder := &hmongo.FindProc{
-				Log:   lg,
-				Mongo: mo,
-				Query: mo,
+				EventLog: lg,
+				Mongo:    mo,
+				Query:    mo,
 			}
 
 			findStream := sumex.New(3, finder)
 
 			findStream.Inject(request)
 
-			res, err := streams.ReadResponse(request.RID, findStream)
+			res, err := streams.ReadResponse(lg, context, 1*time.Minute, request.RID, findStream)
 			if err != nil {
 				t.Fatalf("\t%s\tShould have returned the error passed as second argument: %q", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould have returned the error passed as second argument,", tests.Success)
 
-			if res.RID != request.RID {
+			if res.RequestID() != request.RequestID() {
 				t.Fatalf("\t%s\tShould have recieved a reply for request ID %s", tests.Failed, request.RID)
 			}
 			t.Logf("\t%s\tShould have recieved a reply for request ID %s", tests.Success, request.RID)

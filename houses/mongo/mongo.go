@@ -1,10 +1,13 @@
 package mongo
 
 import (
+	"fmt"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/storage"
 )
 
 //==========================================================================================
@@ -67,6 +70,7 @@ type FindProc struct {
 	EventLog
 	Mongo Mongo
 	Query Query
+	Store storage.Store
 }
 
 // Name returns the Id of this operation provider.
@@ -91,10 +95,23 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 
 	var res coquery.Parameters
 
+	if records, err := f.Store.GetByRef(find.Key, fmt.Sprintf("%s", find.Value)); err == nil {
+
+		for _, recs := range records {
+			res = append(res, coquery.Parameter(recs))
+		}
+
+		f.Log("MongoProvider.FindProc", "Do", "Completed")
+		return &coquery.Response{
+			Req:  find,
+			Data: res,
+		}, nil
+	}
+
 	fn := func(c *mgo.Collection) error {
 		q := bson.M{}
 		q[find.Key] = find.Value
-		f.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", f.Query.Query(q))
+		f.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", c.Name, f.Query.Query(q))
 		return c.Find(q).All(&res)
 	}
 
@@ -102,6 +119,10 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	if err != nil {
 		f.Error("MongoProvider.FindProc", "Do", err, "Completed")
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
+	}
+
+	for _, record := range res {
+		f.Store.Add((map[string]interface{})(record))
 	}
 
 	f.Log("MongoProvider.FindProc", "Do", "Completed")
