@@ -197,8 +197,11 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 		return
 	}
 
+	// Let the handler work in a go-routine and report a panic if any.
 	panics.DeferReport(func() {
+		d.Log(context, "Serve.GoRoutine", "Started : Req %s", requestID)
 		set.doc.Handle(context, reqs, rw)
+		d.Log(context, "Serve.GoRoutine", "Completed")
 	}, func(report *bytes.Buffer) {
 		d.Error(context, "Serve", ErrDocumentRoutePanic, "Panic : \n%s", report.String())
 	})
@@ -217,7 +220,12 @@ type Engine interface {
 // New returns a new Engine implementing structure for interfacing with
 // other API.
 func New(el EventLog) Engine {
-	return NewCoEngine(el)
+	co := CoEngine{
+		EventLog: el,
+		routers:  make(map[string]DocumentRouter),
+	}
+
+	return &co
 }
 
 //==============================================================================
@@ -229,16 +237,6 @@ type CoEngine struct {
 	EventLog
 	routers  map[string]DocumentRouter
 	routeAdd int64
-}
-
-// NewCoEngine returns a new CoEngine instance.
-func NewCoEngine(el EventLog) *CoEngine {
-	co := CoEngine{
-		EventLog: el,
-		routers:  make(map[string]DocumentRouter),
-	}
-
-	return &co
 }
 
 // Serve processes the query using the coquery parser and runs the internal
