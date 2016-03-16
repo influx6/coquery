@@ -37,13 +37,12 @@ type Identity interface {
 // Response provides a response struct for replies to coquery requests.
 type Response struct {
 	Req  RecordRequest `json:"-" bson:"-"`
-	RID  string        `json:"rid" bson:"rid"`
 	Data Parameters    `json:"reply" bson:"reply"`
 }
 
 // RequestID returns the request id for this response.
 func (r *Response) RequestID() string {
-	return r.RID
+	return r.Req.RequestID()
 }
 
 //==============================================================================

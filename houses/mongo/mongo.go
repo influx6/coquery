@@ -108,7 +108,6 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 
 	return &coquery.Response{
 		Req:  find,
-		RID:  find.RID,
 		Data: res,
 	}, nil
 }

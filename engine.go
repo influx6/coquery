@@ -21,28 +21,6 @@ type EventLog interface {
 
 //==============================================================================
 
-// ErrInvalidRequestType os returned when a request does not match
-// its receiver.
-var ErrInvalidRequestType = errors.New("Invalid Request Type")
-
-// RecordRequest defines a base type for the supported request types
-type RecordRequest interface {
-	Identity
-	RequestName() string
-}
-
-// RecordRequestExample provides an interface that defines RecordRequest that
-// provide a sample lists of its usage.
-type RecordRequestExample interface {
-	Examples() []string
-}
-
-// RecordRequests defines a lists of record requests genered from a query
-// proccessor.
-type RecordRequests []RecordRequest
-
-//==============================================================================
-
 // QueryProcessor provides an interface that processes a query into a requests
 // lists returning an error if the query had or was an invalid requests.
 type QueryProcessor interface {

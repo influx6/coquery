@@ -6,9 +6,40 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/influx6/coquery/parser"
 )
+
+//==============================================================================
+
+// ErrInvalidRequestType os returned when a request does not match
+// its receiver.
+var ErrInvalidRequestType = errors.New("Invalid Request Type")
+
+// RecordRequest defines a base type for the supported request types
+type RecordRequest interface {
+	Identity
+	RequestName() string
+}
+
+// RecordTimedRequest provides an interface where a requests overrides
+// the default wait time for a requests processor.
+type RecordTimedRequest interface {
+	RecordRequest
+	Wait() time.Duration
+}
+
+// RecordRequestExample provides an interface that defines RecordRequest that
+// provide a sample lists of its usage.
+type RecordRequestExample interface {
+	RecordRequest
+	Examples() []string
+}
+
+// RecordRequests defines a lists of record requests genered from a query
+// proccessor.
+type RecordRequests []RecordRequest
 
 //==============================================================================
 
