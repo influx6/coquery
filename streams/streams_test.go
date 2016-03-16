@@ -58,7 +58,9 @@ func (s *spyWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 
 //==============================================================================
 
-func TestFindProcStream(t *testing.T) {
+// TestStreamOSWithEngine validates the operations of the new streamos system
+// using the coquery.Engine.
+func TestStreamOSWithEngine(t *testing.T) {
 	t.Logf("Given the need to retrieve a record using FindProc operator")
 	{
 
