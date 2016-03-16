@@ -240,7 +240,7 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 		s.Inject(res)
 		s.Log.Log(context, "Handle", "Completed : Request[%s] : Type[%s] : Status[%s]", request.RequestID(), request.RequestName(), "Ok")
 	}
-	
+
 	s.Log.Log(context, "Handle", "Completed")
 }
 

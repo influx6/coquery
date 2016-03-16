@@ -122,7 +122,7 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	}
 
 	for _, record := range res {
-		f.Store.Add((map[string]interface{})(record))
+		f.Store.AddRef((map[string]interface{})(record), find.Key)
 	}
 
 	f.Log("MongoProvider.FindProc", "Do", "Completed")

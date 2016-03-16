@@ -13,6 +13,15 @@ import (
 
 //==============================================================================
 
+// EventLog defines event logger that allows us to record events for a specific
+// action that occured.
+type EventLog interface {
+	Log(context interface{}, name string, message string, data ...interface{})
+	Error(context interface{}, name string, err error, message string, data ...interface{})
+}
+
+//==============================================================================
+
 // Truthtable defines a map of string values with a bool value.
 type Truthtable map[string]bool
 
@@ -634,7 +643,14 @@ func PullKeys(rec map[string]interface{}, key string) (interface{}, bool) {
 }
 
 func finder(target map[string]interface{}, ks []string) (interface{}, bool) {
-	mv, ok := target[ks[0]]
+
+	if len(ks) == 0 {
+		return nil, false
+	}
+
+	first := ks[0]
+
+	mv, ok := target[first]
 	if !ok {
 		return nil, false
 	}
