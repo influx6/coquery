@@ -1,8 +1,6 @@
 package mongo
 
 import (
-	"errors"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -66,7 +64,7 @@ func (r MError) Error() string {
 
 // FindProc provides a find working for handling find requests.
 type FindProc struct {
-	Log   EventLog
+	EventLog
 	Mongo Mongo
 	Query Query
 }
@@ -78,18 +76,17 @@ func (f *FindProc) Name() string {
 
 // Do performs the necessary tasks passed to FindProc
 func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
-	f.Log.Log("MongoProvider.FindProc", "Do", "Started : %s", f.Query.Query(data))
+	f.Log("MongoProvider.FindProc", "Do", "Started : %s", f.Query.Query(data))
 
 	if err != nil {
-		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
+		f.Error("MongoProvider.FindProc", "Do", err, "Completed")
 		return nil, err
 	}
 
 	find, ok := data.(*coquery.Find)
 	if !ok {
-		err = errors.New("Invalid Query Type")
-		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
-		return nil, err
+		f.Error("MongoProvider.FindProc", "Do", coquery.ErrInvalidRequestType, "Completed")
+		return nil, coquery.ErrInvalidRequestType
 	}
 
 	var res coquery.Parameters
@@ -97,17 +94,17 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	fn := func(c *mgo.Collection) error {
 		q := bson.M{}
 		q[find.Key] = find.Value
-		f.Log.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", f.Query.Query(q))
+		f.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", f.Query.Query(q))
 		return c.Find(q).All(&res)
 	}
 
 	err = f.Mongo.ExecuteDB("MongoProvider.FindProc", find.Doc, fn)
 	if err != nil {
-		f.Log.Error("MongoProvider.FindProc", "Do", err, "Completed")
+		f.Error("MongoProvider.FindProc", "Do", err, "Completed")
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
 
-	f.Log.Log("MongoProvider.FindProc", "Do", "Completed")
+	f.Log("MongoProvider.FindProc", "Do", "Completed")
 
 	return &coquery.Response{
 		Req:  find,

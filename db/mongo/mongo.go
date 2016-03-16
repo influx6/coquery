@@ -45,7 +45,8 @@ type EventLog interface {
 type Mongnod struct {
 	*Config
 	EventLog
-	m *mgo.Session
+	m  *mgo.Session
+	rl sync.RWMutex
 }
 
 // New returns a new Mongnod instance.
@@ -93,13 +94,18 @@ func (m *Mongnod) Query(ms interface{}) string {
 func (m *Mongnod) Shutdown(context interface{}) {
 	m.Log(context, "Shutdown", "Started : Db[%s]", m.DB)
 
+	m.rl.RLock()
 	m.m.Close()
+	m.rl.RUnlock()
 	// key := m.Host + ":" + m.DB
 	//
 	// // Remove this session from list to master list.
 	// masterListLock.Lock()
 	// delete(masterList, key)
 	// masterListLock.Unlock()
+	m.rl.Lock()
+	m.m = nil
+	m.rl.Unlock()
 
 	m.Log(context, "Shutdown", "Completed")
 }
@@ -114,7 +120,15 @@ var ErrCollectionNoExist = fmt.Errorf("Collection does not exist")
 func (m *Mongnod) ExecuteDB(context interface{}, collectionName string, f func(*mgo.Collection) error) error {
 	m.Log(context, "executeDB", "Started : Db[%s] : Collection[%s]", m.DB, collectionName)
 
-	ses := m.m.Copy()
+	if m.m == nil {
+		if err := m.connectDB(context); err != nil {
+			return err
+		}
+	}
+
+	m.rl.RLock()
+	ses := m.m
+	m.rl.RUnlock()
 
 	// If we have a nil session then return an appropriate error.
 	if ses == nil {
@@ -172,16 +186,16 @@ func (m *Mongnod) connectDB(context interface{}) error {
 		}
 
 		ses.SetMode(mgo.Monotonic, true)
+
+		m.rl.Lock()
 		m.m = ses
+		m.rl.Unlock()
 
 		new = true
 
-		// Set the session adequately.
-		// ms = m.m.Copy()
-
 		// Add to master list.
 		masterListLock.Lock()
-		masterList[key] = m.m.Copy()
+		masterList[key] = ses.Copy()
 		masterListLock.Unlock()
 	}
 

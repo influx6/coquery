@@ -1,11 +1,13 @@
 package coquery
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"sync/atomic"
 
 	"github.com/influx6/coquery/parser"
+	"github.com/influx6/faux/panics"
 )
 
 //==============================================================================
@@ -18,6 +20,10 @@ type EventLog interface {
 }
 
 //==============================================================================
+
+// ErrInvalidRequestType os returned when a request does not match
+// its receiver.
+var ErrInvalidRequestType = errors.New("Invalid Request Type")
 
 // RecordRequest defines a base type for the supported request types
 type RecordRequest interface {
@@ -142,6 +148,9 @@ func (d *DocRoute) Document(context interface{}, subPath string, qs QueryProcess
 	return d
 }
 
+// ErrDocumentRoutePanic is returned when a document internal processing panics.
+var ErrDocumentRoutePanic = errors.New("Document Paniced")
+
 // Serve takes the requests needed and serves up the requests lists to the
 // response writer.
 func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, queries []string, rw ResponseWriter) {
@@ -188,7 +197,12 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 		return
 	}
 
-	set.doc.Handle(context, reqs, rw)
+	panics.DeferReport(func() {
+		set.doc.Handle(context, reqs, rw)
+	}, func(report *bytes.Buffer) {
+		d.Error(context, "Serve", ErrDocumentRoutePanic, "Panic : \n%s", report.String())
+	})
+
 	d.Log(context, "Serve", "Completed")
 }
 
