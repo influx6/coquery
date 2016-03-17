@@ -121,9 +121,9 @@ func ResponseStream(e EventLog, context interface{}, maxWait time.Duration, rid 
 				return
 
 			case <-time.After(maxWait):
-				err := coquery.CoError{Rid: rid, Msg: "Timeout", IError: ErrRequestTimout}
-				e.Log(context, "ResponseStream.GoRoutine", "Info : Received Error Response : ID[%s]", rid)
-				outerr <- &err
+				err := &coquery.CoError{Rid: rid, Msg: "Timeout", IError: ErrRequestTimout}
+				e.Error(context, "ResponseStream.GoRoutine", err, "Info : Received Error Response : ID[%s]", rid)
+				outerr <- err
 				e.Log(context, "ResponseStream.GoRoutine", "Completed")
 				return
 
@@ -174,9 +174,9 @@ func New(c Config) *StreamOS {
 
 	os := StreamOS{
 		Config:  &c,
-		Streams: sumex.New(c.Workers, StreamOSHandler),
-		inport:  sumex.Identity(c.Workers),
-		outport: sumex.Identity(c.Workers),
+		Streams: sumex.New(c.Workers, c.Log, StreamOSHandler),
+		inport:  sumex.Identity(c.Workers, c.Log),
+		outport: sumex.Identity(c.Workers, c.Log),
 	}
 
 	return &os
@@ -197,10 +197,6 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 
 	for index, request := range rqs {
 
-		// Continuesly send each request into the stream of processor and await
-		// a response from the processor.
-		s.inport.Inject(request)
-
 		wait := s.Wait
 
 		// If we have a request that wants to be smart about its wait period, then
@@ -210,9 +206,26 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 			wait = ts.Wait()
 		}
 
+		var res *coquery.Response
+		var err coquery.ResponseError
+
 		s.Log.Log(context, "Handle", "Info : Request[%s] : Type[%s] : Wait Period [%s]", request.RequestID(), request.RequestName(), wait)
-		// Read the response for this requests and if possible its error.
-		res, err := ReadResponse(s.Config.Log, context, wait, request.RequestID(), s.outport)
+
+		// Collect the coquery.Response and error channels
+		rs, re := ResponseStream(s.Config.Log, context, wait, request.RequestID(), s.outport)
+
+		// Continuesly send each request into the stream of processor and await
+		// a response from the processor.
+		s.inport.Inject(request)
+
+		select {
+		case res = <-rs:
+		case err = <-re:
+		}
+
+		// // Read the response for this requests and if possible its error.
+		// res, err := ReadResponse(s.Config.Log, context, wait, request.RequestID(), s.outport)
+
 		if err != nil {
 
 			// If we failed, write the response and break this loop, we have no

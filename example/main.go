@@ -47,7 +47,7 @@ func main() {
 		Events:   events,
 		Store:    store,
 		Workers:  20,
-		Wait:     2 * time.Minute,
+		Wait:     20 * time.Second,
 		Host:     "127.0.0.1:27017",
 		AuthDB:   "contacts",
 		DB:       "contacts",

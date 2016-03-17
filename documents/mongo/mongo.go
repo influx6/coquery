@@ -96,7 +96,7 @@ func New(config DocumentConfig) *Document {
 	}
 
 	// Set up the processors for this provider
-	dc.Stream(sumex.New(config.Workers, &house.FindProc{
+	dc.Stream(sumex.New(config.Workers, config.Events, &house.FindProc{
 		EventLog: config.Events,
 		Mongo:    dc.mg,
 		Query:    dc.qm,
