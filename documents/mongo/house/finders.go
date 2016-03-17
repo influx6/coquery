@@ -38,10 +38,16 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 		return nil, coquery.ErrInvalidRequestType
 	}
 
+	var val interface{}
+
+	if utils.IsDigits(find.Value) {
+		val, _ = utils.ParseInt(find.Value)
+	}
+
 	var res coquery.Parameters
 	found := true
 
-	records, err := f.Store.GetByRef(find.Key, find.Value)
+	records, err := f.Store.GetByRef(find.Key, val)
 	if err != nil {
 		found = false
 		f.Error("MongoProvider.FindProc", "Do", err, "Completed : Store : Not Found")
@@ -52,17 +58,13 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 			res = append(res, coquery.Parameter(recs))
 		}
 
+		f.Log("MongoProvider.FindProc", "Do", "Info : Store : Record Found")
+
 		f.Log("MongoProvider.FindProc", "Do", "Completed")
 		return &coquery.Response{
 			Req:  find,
 			Data: res,
 		}, nil
-	}
-
-	var val interface{}
-
-	if utils.IsDigits(find.Value) {
-		val, _ = utils.ParseInt(find.Value)
 	}
 
 	fn := func(c *mgo.Collection) error {

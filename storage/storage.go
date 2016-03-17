@@ -139,7 +139,7 @@ type Store interface {
 	Delete(string) error
 
 	Get(string) (map[string]interface{}, error)
-	GetByRef(string, string) ([]map[string]interface{}, error)
+	GetByRef(string, interface{}) ([]map[string]interface{}, error)
 
 	TaintedRecords() []string
 	DeletedRecords() []string
@@ -420,7 +420,7 @@ var ErrInvalidValue = errors.New("Invalid Value for Reference key")
 
 // GetByRef returns the all internal Records with a specific reference key and
 // value.
-func (u *under) GetByRef(key string, value string) ([]map[string]interface{}, error) {
+func (u *under) GetByRef(key string, value interface{}) ([]map[string]interface{}, error) {
 	u.rl.RLock()
 	defer u.rl.RUnlock()
 
@@ -631,6 +631,16 @@ func PullKeys(rec map[string]interface{}, key string) (interface{}, bool) {
 	last := len(keys) - 1
 	lastKey := keys[last]
 	subs := keys[:last]
+
+	if len(subs) < 1 {
+		val, ok := rec[lastKey]
+
+		if !ok {
+			return nil, false
+		}
+
+		return val, true
+	}
 
 	val, ok := finder(rec, subs)
 	if !ok {
