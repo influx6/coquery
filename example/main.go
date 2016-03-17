@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"time"
 
@@ -40,7 +39,7 @@ var context = "example-app"
 
 func main() {
 
-	store := storage.NewExpirable("uid", 5*time.Minute)
+	store := storage.NewExpirable("uid", 1*time.Minute)
 	app := cohttp.New(events)
 
 	app.Route(context, "docs").
@@ -57,5 +56,5 @@ func main() {
 		QueryDoc: "users",
 	}))
 
-	http.ListenAndServe(":3000", app)
+	app.ListenAndServe(context, ":3000")
 }

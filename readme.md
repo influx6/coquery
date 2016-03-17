@@ -114,7 +114,8 @@ func main() {
 		QueryDoc: "users",
 	}))
 
-	http.ListenAndServe(":3000", app)
+	// http.ListenAndServe(":3000", app)
+	app.ListenAndServe(context, ":3000")
 }
 
 ```

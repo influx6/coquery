@@ -65,6 +65,7 @@ func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 type CoqueryHTTP interface {
 	coquery.Engine
 	http.Handler
+	ListenAndServe(context interface{}, addr string)
 }
 
 // New returns a new CoqueryHTTP http server to respond to all coquery requests.
