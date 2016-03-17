@@ -1,4 +1,4 @@
-package mongo_test
+package house_test
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
-	"github.com/influx6/coquery/db/mongo"
-	hmongo "github.com/influx6/coquery/houses/mongo"
+	mongo "github.com/influx6/coquery/documents/mongo/db"
+	hmongo "github.com/influx6/coquery/documents/mongo/house"
 	"github.com/influx6/coquery/streams"
 	"github.com/influx6/faux/sumex"
 )

@@ -39,6 +39,14 @@ type Documents interface {
 	Handle(context interface{}, rq RecordRequests, rw ResponseWriter)
 }
 
+// DocumentOS provides a interface that allows a single-level of responsibility
+// for the object that provides both its Document system and
+// its QueryProcessor.
+type DocumentOS interface {
+	Document() Documents
+	Queries() QueryProcessor
+}
+
 //==============================================================================
 
 // CoError provides a custom error message for requests types.
@@ -72,6 +80,7 @@ func (r *CoError) Error() string {
 // DocumentRouter defines a interface that defines a means for registering
 // document providers for request processing.
 type DocumentRouter interface {
+	DocumentWith(context interface{}, path string, dos DocumentOS) DocumentRouter
 	Document(context interface{}, path string, qs QueryProcessor, d Documents) DocumentRouter
 	Serve(context interface{}, rid string, path string, queries []string, rw ResponseWriter)
 }
@@ -99,6 +108,31 @@ func NewDocRoute(elog EventLog) *DocRoute {
 	}
 
 	return &dr
+}
+
+// DocumentWith provides a function which uses a DocumentOS to
+// simplifies the argument lists and uses the central system to provide
+// its QueryProcessor and Documents operating system.
+func (d *DocRoute) DocumentWith(context interface{}, subPath string, dos DocumentOS) DocumentRouter {
+	d.Log(context, "Document", "Started : Register Document : %s", subPath)
+	var ok bool
+
+	atomic.AddInt64(&d.docAdd, 1)
+	{
+		_, ok = d.documents[subPath]
+	}
+	atomic.AddInt64(&d.docAdd, -1)
+
+	if !ok {
+		atomic.AddInt64(&d.docAdd, 1)
+		{
+			d.documents[subPath] = &docSet{query: dos.Queries(), doc: dos.Document()}
+		}
+		atomic.AddInt64(&d.docAdd, -1)
+	}
+
+	d.Log(context, "Document", "Completed")
+	return d
 }
 
 // Document provides the method to register a document processor for a specific

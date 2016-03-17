@@ -43,13 +43,123 @@ type RecordRequests []RecordRequest
 
 //==============================================================================
 
+// FindN defines a record request to retrieve data based on a set amount.
+type FindN struct {
+	Doc    string `json:"doc" bson:"doc"`
+	RID    string `json:"rid" bson:"rid"`
+	Skip   int    `json:"skip" bson:"skip"`
+	Amount int    `json:"limit" bson:"limit"`
+}
+
+// RequestName returns the name for the giving request type.
+func (f *FindN) RequestName() string {
+	return "findN"
+}
+
+// RequestID returns the request id for this request object.
+func (f *FindN) RequestID() string {
+	return f.RID
+}
+
+// Example returns a string that showcase a sample of this request.
+// In truth this provides a code-level sample information and nothing more.
+func (f *FindN) Example() []string {
+	return []string{"findN(10,20)", "findN(-1)", "findN(10)"}
+}
+
+//==============================================================================
+
+// Find defines a record retrieve request based on the KV query.
+type Find struct {
+	Doc   string      `json:"doc" bson:"doc"`
+	RID   string      `json:"rid" bson:"rid"`
+	Key   string      `json:"key" bson:"key"`
+	Value interface{} `json:"value" bson:"value"`
+}
+
+// RequestName returns the name for the giving request type.
+func (f *Find) RequestName() string {
+	return "find"
+}
+
+// RequestID returns the request id for this request object.
+func (f *Find) RequestID() string {
+	return f.RID
+}
+
+// Example returns a string that showcase a sample of this request.
+// In truth this provides a code-level sample information and nothing more.
+func (f *Find) Example() []string {
+	return []string{"find(id,4023)", "find(name,'alex')"}
+}
+
+//==============================================================================
+
+// Collects retrieves specific keyed items from the coquery stores.
+type Collects struct {
+	RID  string   `json:"rid" bson:"rid"`
+	Keys []string `json:"keys" bson:"keys"`
+}
+
+// RequestName returns the name for the giving request type.
+func (f *Collects) RequestName() string {
+	return "collects"
+}
+
+// RequestID returns the request id for this request object.
+func (f *Collects) RequestID() string {
+	return f.RID
+}
+
+// Example returns a string that showcase a sample of this request.
+// In truth this provides a code-level sample information and nothing more.
+func (f *Collects) Example() []string {
+	return []string{"collect(name,age,created_at)"}
+}
+
+//==============================================================================
+
+// Mutate provides json data to be saved/augmented into a new version of the
+// current document.
+type Mutate struct {
+	RID       string    `json:"rid" bson:"rid"`
+	Parameter Parameter `json:"params" bson:"params"`
+}
+
+// RequestID returns the request id for this request object.
+func (f *Mutate) RequestID() string {
+	return f.RID
+}
+
+// RequestName returns the name for the giving request type.
+func (f *Mutate) RequestName() string {
+	return "mutate"
+}
+
+// Example returns a string that showcase a sample of this request.
+func (f *Mutate) Example() []string {
+	return []string{"mutate({name:'alex'})"}
+}
+
+//==============================================================================
+
 // BasicQueries provides a base level query processsor for the coquery library.
-type BasicQueries struct{ EventLog }
+type BasicQueries struct {
+	EventLog
+	Doc string
+}
 
 // Generate takes the underline queries and generates the corresponding query
 // objects matching the giving functions, if it finds an unrecognized function,
 // it returns a ResponseError instead.
 func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, queries []string) (RecordRequests, ResponseError) {
+
+	// If we are alocated a custom document name, over-write the incoming with
+	// this.
+	if b.Doc != "" {
+		doc = b.Doc
+	}
+
 	b.Log(context, "BasicQueries.Generate", "Started : Doc[%s] : Queries : %s", doc, queries)
 
 	var reqs RecordRequests
@@ -214,106 +324,6 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 
 	b.Log(context, "BasicQueries.Generate", "Completed")
 	return reqs, nil
-}
-
-//==============================================================================
-
-// FindN defines a record request to retrieve data based on a set amount.
-type FindN struct {
-	Doc    string `json:"doc" bson:"doc"`
-	RID    string `json:"rid" bson:"rid"`
-	Skip   int    `json:"skip" bson:"skip"`
-	Amount int    `json:"limit" bson:"limit"`
-}
-
-// RequestName returns the name for the giving request type.
-func (f *FindN) RequestName() string {
-	return "findN"
-}
-
-// RequestID returns the request id for this request object.
-func (f *FindN) RequestID() string {
-	return f.RID
-}
-
-// Example returns a string that showcase a sample of this request.
-// In truth this provides a code-level sample information and nothing more.
-func (f *FindN) Example() []string {
-	return []string{"findN(10,20)", "findN(-1)", "findN(10)"}
-}
-
-//==============================================================================
-
-// Find defines a record retrieve request based on the KV query.
-type Find struct {
-	Doc   string      `json:"doc" bson:"doc"`
-	RID   string      `json:"rid" bson:"rid"`
-	Key   string      `json:"key" bson:"key"`
-	Value interface{} `json:"value" bson:"value"`
-}
-
-// RequestName returns the name for the giving request type.
-func (f *Find) RequestName() string {
-	return "find"
-}
-
-// RequestID returns the request id for this request object.
-func (f *Find) RequestID() string {
-	return f.RID
-}
-
-// Example returns a string that showcase a sample of this request.
-// In truth this provides a code-level sample information and nothing more.
-func (f *Find) Example() []string {
-	return []string{"find(id,4023)", "find(name,'alex')"}
-}
-
-//==============================================================================
-
-// Collects retrieves specific keyed items from the coquery stores.
-type Collects struct {
-	RID  string   `json:"rid" bson:"rid"`
-	Keys []string `json:"keys" bson:"keys"`
-}
-
-// RequestName returns the name for the giving request type.
-func (f *Collects) RequestName() string {
-	return "collects"
-}
-
-// RequestID returns the request id for this request object.
-func (f *Collects) RequestID() string {
-	return f.RID
-}
-
-// Example returns a string that showcase a sample of this request.
-// In truth this provides a code-level sample information and nothing more.
-func (f *Collects) Example() []string {
-	return []string{"collect(name,age,created_at)"}
-}
-
-//==============================================================================
-
-// Mutate provides json data to be saved/augmented into a new version of the
-// current document.
-type Mutate struct {
-	RID       string    `json:"rid" bson:"rid"`
-	Parameter Parameter `json:"params" bson:"params"`
-}
-
-// RequestID returns the request id for this request object.
-func (f *Mutate) RequestID() string {
-	return f.RID
-}
-
-// RequestName returns the name for the giving request type.
-func (f *Mutate) RequestName() string {
-	return "mutate"
-}
-
-// Example returns a string that showcase a sample of this request.
-func (f *Mutate) Example() []string {
-	return []string{"mutate({name:'alex'})"}
 }
 
 //==============================================================================

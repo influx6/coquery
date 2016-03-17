@@ -1,4 +1,4 @@
-package mongo
+package db
 
 import (
 	"encoding/json"
@@ -97,12 +97,7 @@ func (m *Mongnod) Shutdown(context interface{}) {
 	m.rl.RLock()
 	m.m.Close()
 	m.rl.RUnlock()
-	// key := m.Host + ":" + m.DB
-	//
-	// // Remove this session from list to master list.
-	// masterListLock.Lock()
-	// delete(masterList, key)
-	// masterListLock.Unlock()
+
 	m.rl.Lock()
 	m.m = nil
 	m.rl.Unlock()

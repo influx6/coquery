@@ -146,8 +146,7 @@ type osHandler struct{}
 
 // Do performs the action for the OSHandler processor.
 func (os osHandler) Do(data interface{}, err error) (interface{}, error) {
-
-	return nil, nil
+	return data, err
 }
 
 // Config provies a configuration for the a new StreamOS.
