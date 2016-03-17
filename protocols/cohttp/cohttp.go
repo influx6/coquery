@@ -1,7 +1,7 @@
-// Package http provides a http protocol engine that builds on the coquery
+// Package cohttp provides a http protocol engine that builds on the coquery
 // base level engine to allow tying this system into a http request-response
 // server.
-package http
+package cohttp
 
 import (
 	"encoding/json"

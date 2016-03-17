@@ -111,8 +111,8 @@ func (d *Document) Document() coquery.Documents {
 	return d.handler
 }
 
-// Query returns the processor interface for using this document.
-func (d *Document) Query() coquery.QueryProcessor {
+// Queries returns the processor interface for using this document.
+func (d *Document) Queries() coquery.QueryProcessor {
 	return d.query
 }
 

@@ -52,58 +52,71 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
 */
 
-
 ```
 
-  Example API:
+## Example
 
 ```go
 package main
 
 import (
-  "github.com/influx6/coquery"
-  dbMongo "github.com/influx6/db/mongo"
-  smMongo "github.com/influx6/streams/mongo"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/ardanlabs/kit/log"
+	"github.com/influx6/coquery/documents/mongo"
+	"github.com/influx6/coquery/protocols/cohttp"
+	"github.com/influx6/coquery/storage"
 )
 
+func init() {
+	log.Init(os.Stdout, func() int { return log.DEV }, log.Ldefault)
+}
+
+//=============================================================================
+
+var events eventlog
+
 // logg provides a concrete implementation of a logger.
-type logg struct{}
+type eventlog struct{}
 
 // Log logs all standard log reports.
-func (l *logg) Log(context interface{}, name string, message string, data ...interface{}) {
-	fmt.Printf("Log : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+func (l eventlog) Log(context interface{}, name string, message string, data ...interface{}) {
+	log.Dev(context, name, message, data...)
 }
 
 // Error logs all error reports.
-func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
-	fmt.Printf("Error : %s : %s : %s", context, name, fmt.Sprintf(message, data...))
+func (l eventlog) Error(context interface{}, name string, err error, message string, data ...interface{}) {
+	log.Error(context, name, err, message, data...)
 }
 
-func main(){
+//=============================================================================
 
-  var context = "example"
-  log := &logg{}
+var context = "example-app"
 
-  var engine = coquery.New(log)
+//=============================================================================
 
-  mdb, err := dmongo.New(log,dbMongo.Config{
-		Host:     "db.mongohouse.com:5430",
-		AuthDB:   "mob",
-		DB:       "mob",
+func main() {
+
+	store := storage.NewExpirable("uid", 5*time.Minute)
+	app := cohttp.New(events)
+
+	app.Route(context, "docs").
+		DocumentWith(context, "users", mongo.New(mongo.DocumentConfig{
+		Events:   events,
+		Store:    store,
+		Workers:  20,
+		Wait:     5 * time.Minute,
+		Host:     "127.0.0.1:27017",
+		AuthDB:   "users",
+		DB:       "users",
 		User:     "box",
 		Password: "box",
-  })
+		QueryDoc: "users",
+	}))
 
-  if err != nil {
-    panic(err)
-  }
-
-  engine.Route(context,"docs")
-  .Document(context,"users",smMongo.New(logger,mdb))
-  .Document(context,"admins",smMongo.New(logger,mdb))
-  .Document(context,"reports",smMongo.New(logger,mdb))
-
-  http.ListenAndServe(":3000",engine)
+	http.ListenAndServe(":3000", app)
 }
 
 ```
