@@ -39,7 +39,7 @@ var context = "example-app"
 
 func main() {
 
-	store := storage.NewExpirable("uid", 1*time.Minute)
+	store := storage.NewExpirable("uid", 1*time.Hour)
 	app := cohttp.New(events)
 
 	app.Route(context, "docs").
