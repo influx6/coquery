@@ -1,10 +1,9 @@
 package house
 
 import (
-	"fmt"
-
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/storage"
+	"github.com/influx6/coquery/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -40,9 +39,15 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	}
 
 	var res coquery.Parameters
+	found := true
 
-	if records, err := f.Store.GetByRef(find.Key, fmt.Sprintf("%s", find.Value)); err == nil {
+	records, err := f.Store.GetByRef(find.Key, find.Value)
+	if err != nil {
+		found = false
+		f.Error("MongoProvider.FindProc", "Do", err, "Completed : Store : Not Found")
+	}
 
+	if found {
 		for _, recs := range records {
 			res = append(res, coquery.Parameter(recs))
 		}
@@ -54,9 +59,14 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 		}, nil
 	}
 
+	var val interface{}
+
+	if utils.IsDigits(find.Value) {
+		val, _ = utils.ParseInt(find.Value)
+	}
+
 	fn := func(c *mgo.Collection) error {
-		q := bson.M{find.Key: find.Value}
-		// q[find.Key] = find.Value
+		q := bson.M{find.Key: val}
 		f.Log("MongoProvider.FindProc", "DBAction", "db.%s.find(%s)", c.Name, f.Query.Query(q))
 		return c.Find(q).All(&res)
 	}
@@ -66,6 +76,8 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 		f.Error("MongoProvider.FindProc", "Do", err, "Completed")
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
+
+	f.Log("MongoProvider.FindProc", "Do", "Info : Response : %s", f.Query.Query(res))
 
 	for _, record := range res {
 		f.Store.AddRef((map[string]interface{})(record), find.Key)

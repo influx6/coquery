@@ -210,7 +210,7 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 	}
 
 	// Let the handler work in a go-routine and report a panic if any.
-	panics.DeferReport(func() {
+	panics.Defer(func() {
 		d.Log(context, "Serve.GoRoutine", "Started : Req %s", requestID)
 		set.doc.Handle(context, reqs, rw)
 		d.Log(context, "Serve.GoRoutine", "Completed")

@@ -44,15 +44,13 @@ func main() {
 
 	app.Route(context, "docs").
 		DocumentWith(context, "users", mongo.New(mongo.DocumentConfig{
-		Events:  events,
-		Store:   store,
-		Workers: 20,
-		Wait:    5 * time.Minute,
-		Host:    "127.0.0.1:27017",
-		AuthDB:  "users",
-		DB:      "users",
-		// User:     "box",
-		// Password: "box",
+		Events:   events,
+		Store:    store,
+		Workers:  20,
+		Wait:     5 * time.Minute,
+		Host:     "127.0.0.1:27017",
+		AuthDB:   "contacts",
+		DB:       "contacts",
 		QueryDoc: "users",
 	}))
 

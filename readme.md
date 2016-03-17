@@ -109,8 +109,8 @@ func main() {
 		Workers:  20,
 		Wait:     5 * time.Minute,
 		Host:     "127.0.0.1:27017",
-		AuthDB:   "users",
-		DB:       "users",
+		AuthDB:   "contacts",
+		DB:       "contacts",
 		QueryDoc: "users",
 	}))
 

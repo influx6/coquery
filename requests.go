@@ -71,10 +71,10 @@ func (f *FindN) Example() []string {
 
 // Find defines a record retrieve request based on the KV query.
 type Find struct {
-	Doc   string      `json:"doc" bson:"doc"`
-	RID   string      `json:"rid" bson:"rid"`
-	Key   string      `json:"key" bson:"key"`
-	Value interface{} `json:"value" bson:"value"`
+	Doc   string `json:"doc" bson:"doc"`
+	RID   string `json:"rid" bson:"rid"`
+	Key   string `json:"key" bson:"key"`
+	Value string `json:"value" bson:"value"`
 }
 
 // RequestName returns the name for the giving request type.

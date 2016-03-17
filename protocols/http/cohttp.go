@@ -38,40 +38,41 @@ type ResWriter struct {
 // Write implements the coquery.ResponseWriter interface onto the
 // ResWriter struct.
 func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.ResponseError) error {
-	h.Log(context, "cohttp.ResWriter.Write", "Started")
+	var status string
 
-	if re != nil {
-		h.Error(context, "cohttp.ResWriter.Write", re, "Completed")
-		h.res.WriteHeader(http.StatusBadRequest)
-		_, err := h.res.Write([]byte(re.Error()))
-		if err != nil {
-			h.Error(context, "cohttp.ResWriter.Write", err, "Info : Response Write Error")
-			return err
-		}
-
-		return nil
+	if rs != nil {
+		status = "OK!"
+	} else {
+		status = "Error!"
 	}
 
-	h.Log(context, "cohttp.ResWriter.Write", "Info : JSON.Marshal : %s", fmt.Sprintf("%+v", rs.Data))
+	h.Log(context, "Write", "HTTP : ResponseWriter : Status : %s", status)
+
+	if re != nil {
+		h.Error(context, "Write", re, "Completed")
+		h.res.WriteHeader(http.StatusBadRequest)
+		_, err := h.res.Write([]byte(re.Error()))
+		return err
+	}
+
+	h.Log(context, "Write", "Info : Marshalling Data To JSON : %s", fmt.Sprintf("%+v", rs.Data))
+
 	data, err := json.Marshal(rs.Data)
 	if err != nil {
-		h.Error(context, "cohttp.ResWriter.Write", err, "Completed")
+		h.Error(context, "Write", err, "Completed")
 		h.res.WriteHeader(http.StatusBadRequest)
 		h.res.Write([]byte(err.Error()))
 		return err
 	}
 
-	h.Log(context, "cohttp.ResWriter.Write", "Info : Response JSON : %s", data)
-
-	h.res.Header().Set("Content-Type", "application/json")
-	h.res.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+	h.Log(context, "Write", "Info : Write JSON : %s", data)
 	_, err = h.res.Write(data)
 	if err != nil {
-		h.Error(context, "cohttp.ResWriter.Write", err, "Completed")
+		h.Error(context, "Write", err, "Completed")
 		return err
 	}
 
-	h.Log(context, "cohttp.ResWriter.Write", "Completed")
+	h.Log(context, "Write", "Completed")
 	return nil
 }
 
@@ -82,7 +83,6 @@ func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 type CoqueryHTTP interface {
 	coquery.Engine
 	http.Handler
-	ListenAndServe(context interface{}, addr string)
 }
 
 // New returns a new CoqueryHTTP http server to respond to all coquery requests.
@@ -184,20 +184,22 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		}
 
 	case "get", "patch":
-		// xco := req.Header.Get("X-Coquery-Request")
+		xco := req.Header.Get("X-Coquery-Request")
 
 		// If there exists no such then report as failure.
-		// if xco == "" {
+		if xco == "" {
 
-		req.ParseForm()
+			req.ParseForm()
 
-		reqID = req.FormValue("rid")
-		query = req.FormValue("coquery")
-
-		if query == "" {
-			res.WriteHeader(http.StatusOK)
-			return
+			reqID = req.FormValue("rid")
+			xco = req.FormValue("coquery")
+			if xco == "" {
+				res.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
+
+		query = xco
 	}
 
 	if reqID == "" {
@@ -207,11 +209,7 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
 	res.Header().Set("X-CoQuery-Request-ID", reqID)
 
-	h.Serve("httpCoquery", reqID, query, &ResWriter{
-		EventLog: h.EventLog,
-		res:      res,
-		req:      req,
-	})
+	h.Serve("httpCoquery", reqID, query, &ResWriter{res: res, req: req})
 }
 
 //==============================================================================

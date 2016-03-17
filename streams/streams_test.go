@@ -118,7 +118,7 @@ func TestStreamOSWithEngine(t *testing.T) {
 
 			qid := "432UFY"
 
-			engine.Serve(context, qid, "docs.marine_metric_history.find(station_id,GMZ657)", writer)
+			go engine.Serve(context, qid, "docs.marine_metric_history.find(station_id,GMZ657)", writer)
 
 			var res *coquery.Response
 			var err coquery.ResponseError
