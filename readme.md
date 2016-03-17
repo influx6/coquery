@@ -111,8 +111,6 @@ func main() {
 		Host:     "127.0.0.1:27017",
 		AuthDB:   "users",
 		DB:       "users",
-		User:     "box",
-		Password: "box",
 		QueryDoc: "users",
 	}))
 
