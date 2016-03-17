@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -278,21 +279,28 @@ func (u *under) Has(rec string) bool {
 // ValidRecord returns true/false if the map[string]interface{} has the needed key within it.
 // of the needed type.
 func (u *under) ValidRecord(rec map[string]interface{}) bool {
-	if m, ok := rec[u.key]; ok {
-		if _, osk := m.(string); !osk {
-			return false
-		}
+	m, ok := rec[u.key]
+	if !ok {
+		return false
 	}
 
-	return true
+	switch m.(type) {
+	case string, rune, float64, float32, int, int64, uint, uint32, uint64:
+		return true
+	default:
+		return false
+	}
+
 }
 
 // HasRecord returns true/false whether the map[string]interface{} into the storage maps.
 func (u *under) HasRecord(rec map[string]interface{}) bool {
-	key, ok := rec[u.key].(string)
+	ukey, ok := rec[u.key]
 	if !ok {
 		return false
 	}
+
+	key := fmt.Sprintf("%+v", ukey)
 
 	u.rl.RLock()
 	defer u.rl.RUnlock()
@@ -309,7 +317,7 @@ func (u *under) RemoveByValue(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := rec[u.key].(string)
+	key := fmt.Sprintf("%+v", rec[u.key])
 
 	u.rl.RLock()
 	inrec := u.records[key]
@@ -325,7 +333,7 @@ func (u *under) RemoveByKey(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := rec[u.key].(string)
+	key := fmt.Sprintf("%+v", rec[u.key])
 
 	u.rl.RLock()
 	inrec := u.records[key]
@@ -368,7 +376,7 @@ func (u *under) Remove(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := rec[u.key].(string)
+	key := fmt.Sprintf("%+v", rec[u.key])
 
 	u.rl.Lock()
 	defer u.rl.Unlock()
@@ -457,7 +465,7 @@ func (u *under) Add(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := rec[u.key].(string)
+	key := fmt.Sprintf("%+v", rec[u.key])
 
 	u.rl.RLock()
 	inrec, ok := u.records[key]
@@ -537,7 +545,7 @@ func (u *under) AddRef(rec map[string]interface{}, refKey string) error {
 	}
 
 	var new bool
-	recKey := rec[u.key].(string)
+	recKey := fmt.Sprintf("%+v", rec[u.key])
 
 	if !u.Has(recKey) {
 		new = true
@@ -554,7 +562,7 @@ func (u *under) ModRefBy(rec map[string]interface{}, refKey string, new bool) er
 		return ErrNoKeyInRecord
 	}
 
-	coreKey := rec[u.key].(string)
+	coreKey := fmt.Sprintf("%+v", rec[u.key])
 
 	if new {
 		u.Add(rec)

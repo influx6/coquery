@@ -80,7 +80,9 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 	f.Log("MongoProvider.FindProc", "Do", "Info : Response : %s", f.Query.Query(res))
 
 	for _, record := range res {
-		f.Store.AddRef((map[string]interface{})(record), find.Key)
+		if err := f.Store.AddRef((map[string]interface{})(record), find.Key); err != nil {
+			f.Error("MongoProvider.FindProc", "Do", err, "Info : Store.AddRef : Key[%s]", find.Key)
+		}
 	}
 
 	f.Log("MongoProvider.FindProc", "Do", "Completed")
