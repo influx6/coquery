@@ -92,7 +92,7 @@ func TestStreamOSWithEngine(t *testing.T) {
 				Workers: 4,
 			})
 
-			streamos.Stream(sumex.New(3, &hmongo.FindProc{
+			streamos.Stream(sumex.New(3, lg, &hmongo.FindProc{
 				EventLog: lg,
 				Mongo:    mo,
 				Query:    mo,

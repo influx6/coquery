@@ -141,7 +141,7 @@ func TestFindProcStream(t *testing.T) {
 				Query:    mo,
 			}
 
-			findStream := sumex.New(3, finder)
+			findStream := sumex.New(3, lg, finder)
 
 			findStream.Inject(request)
 
