@@ -21,6 +21,8 @@ var ErrInvalidRequestType = errors.New("Invalid Request Type")
 type RecordRequest interface {
 	Identity
 	RequestName() string
+	// LastRequest() RecordRequest
+	// LastResponse() *Response
 }
 
 // RecordTimedRequest provides an interface where a requests overrides
@@ -42,6 +44,15 @@ type RecordRequestExample interface {
 type RecordRequests []RecordRequest
 
 //==============================================================================
+
+// Request presents a request to be served to the underline system which
+// allows each request access to its previous result and request apart from
+// its current request.
+type Request struct {
+	R            RecordRequest
+	Last         RecordRequest
+	LastResponse *Response
+}
 
 // FindN defines a record request to retrieve data based on a set amount.
 type FindN struct {

@@ -195,6 +195,9 @@ func (s *StreamOS) Stream(hs sumex.Streams) sumex.Streams {
 func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw coquery.ResponseWriter) {
 	s.Log.Log(context, "Handle", "Started : Recieved New Requests : Total[%d]", len(rqs))
 
+	var previous coquery.RecordRequest
+	var previousRes *coquery.Response
+
 	for index, request := range rqs {
 
 		wait := s.Wait
@@ -216,7 +219,11 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 
 		// Continuesly send each request into the stream of processor and await
 		// a response from the processor.
-		s.inport.Inject(request)
+		s.inport.Inject(&coquery.Request{
+			R:            request,
+			Last:         previous,
+			LastResponse: previousRes,
+		})
 
 		select {
 		case res = <-rs:
@@ -249,7 +256,10 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 			rw.Write(context, res, nil)
 		}
 
+		previous = request
+		previousRes = res
 		s.Inject(res)
+
 		s.Log.Log(context, "Handle", "Completed : Request[%s] : Type[%s] : Status[%s]", request.RequestID(), request.RequestName(), "Ok")
 	}
 

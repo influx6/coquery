@@ -5,7 +5,9 @@ more control of what they want from the backend than the formal prescribed
 approach of defined endpoints(Restful CRUD) that only define routes for
 such operations. We are entering into grounds where exact requirements of
 parts of the UI are differing and allowing clients to only receive what matters
-to them as become as critical as any part of our application behaviour.
+to them as become as critical as any part of our application behaviour. It
+takes inspiration from [Falcor](https://netflix.github.com/falcor) and other
+libraries that provides similiar behaviours.
 
 ## Install
 
@@ -14,10 +16,19 @@ go get -u github.com/influx/coquery/...
 ```
 
 ## API Design
- Coquery was designed to support a flexible approach in how data is retrieved and
- stored on the backend using a interesting query dsl.
+ Coquery was designed to support a flexible approach in how data is retrieved and stored on the backend using a interesting query dsl.
 
-  Example Query Patterns:
+### Query Paths:
+  While thinking hard about what the form and look for the query system, I
+  I understood, I wanted a system that was familiar and yet robust but not
+  become to complicated to become something that needed deep explanations.
+  I believe that a complex system that can be expressed as simple as possible
+  makes for a great system and Coquery follows that principle at heart.
+
+  Every section of a Query path is an operation that must be performed on the
+  previous based on the result of the previous operation which allows the
+  system to provide flexibility in the representation of the end result. 
+
 
 ```bash
 

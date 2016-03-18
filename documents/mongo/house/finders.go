@@ -32,7 +32,13 @@ func (f *FindProc) Do(data interface{}, err error) (interface{}, error) {
 		return nil, err
 	}
 
-	find, ok := data.(*coquery.Find)
+	req, ok := data.(*coquery.Request)
+	if !ok {
+		f.Error("MongoProvider.FindProc", "Do", coquery.ErrInvalidRequestType, "Completed")
+		return nil, coquery.ErrInvalidRequestType
+	}
+
+	find, ok := req.R.(*coquery.Find)
 	if !ok {
 		f.Error("MongoProvider.FindProc", "Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
