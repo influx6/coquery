@@ -27,7 +27,7 @@ go get -u github.com/influx/coquery/...
 
   Every section of a Query path is an operation that must be performed on the
   previous based on the result of the previous operation which allows the
-  system to provide flexibility in the representation of the end result. 
+  system to provide flexibility in the representation of the end result.
 
 
 ```bash
@@ -64,6 +64,66 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 */
 
 ```
+
+### API Reply
+  Coquery provides a specific reply pattern to all requests which are returned
+  from regardless of the query and result, this is set to provide the flexibility of including meta details to the responses received from the
+  API.
+
+```JSON
+  {
+     "lastdelta": "36564-423266-656dA232",
+     "results": [{}],
+     "total": 20,
+     "deltas": [""],
+  }
+```
+  The Coquery JSON response will contain standard attributes which provide
+  information to the client side on the result of the operation. These tags are
+  as follows:
+
+  - "lastdelta"
+   The lastdelta is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which
+   delta for record changes it sent last and which the client has last.
+
+   - "results"
+   The "results" attribute contains the actual result of the query which was
+   sent to the API.
+
+   - "total"
+   The "total" attribute contains the total result returned from the query which was returned from the backend.
+
+   - "deltas"
+   The "deltaKeys" is a optional attribute that contains record IDs which
+   were established on the backend and allows the client to make requests
+   for this records accordingly to their respective needs.
+
+  Depending on the presence of specific headers within the requests, coquery
+  returns addition meta information for a requests, this headers include
+
+  - X-CoQuery-WantDelta:
+   e.g "X-CoQuery-WantDelta" : "1"
+
+   This sets the coquery API to report record delta changes back to the requests which allows the API to be able to fetch delta changes for records
+   watched by the API.
+
+  - X-CoQuery-DUID:
+
+   e.g "X-CoQuery-DUID" : "454HF-F34GH8-4395343G"
+
+   This represents the last generated requests UID that identifies what
+   previous delta/record change update where included or alluded to from the
+   last request. This is also set as a cookie also. This makes the API add the
+   "deltaKeys" field which will contain all records that the API knows has changed, so the requester could make requests for all this records.
+
+  - X-CoQuery-DeltaWatch:
+
+   e.g "X-CoQuery-DeltaWatch" : "[56434, 32231, 32322]"
+
+   This represents a list of records for which the request desires report on
+   changes for, this allows all request to cherrypick the delta updates to be
+   reported back to them as the "deltas" field within the JSON response.
+
 
 ## Example
 
