@@ -40,12 +40,10 @@ type Diff struct {
 // Implements the Diffs interface.
 type DiffStore struct {
 	EventLog
-	lifeTime time.Time
-	maxAge   time.Duration
-	everyms  time.Duration
-	dl       sync.RWMutex
-	diffs    []*Diff
-	keys     map[string]int
+	maxAge time.Duration
+	dl     sync.RWMutex
+	diffs  []*Diff
+	keys   map[string]int
 }
 
 // NewDiffs returns a new instance of a DiffStore which does not expire it
@@ -67,7 +65,6 @@ func NewExpiringDiffs(el EventLog, maxAge time.Duration) *DiffStore {
 	diff := DiffStore{
 		EventLog: el,
 		maxAge:   maxAge,
-		lifeTime: time.Now().Add(maxAge),
 		keys:     make(map[string]int),
 	}
 
