@@ -21,8 +21,6 @@ var ErrInvalidRequestType = errors.New("Invalid Request Type")
 type RecordRequest interface {
 	Identity
 	RequestName() string
-	// LastRequest() RecordRequest
-	// LastResponse() *Response
 }
 
 // RecordTimedRequest provides an interface where a requests overrides

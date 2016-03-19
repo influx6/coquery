@@ -16,7 +16,7 @@ go get -u github.com/influx/coquery/...
 ```
 
 ## API Design
- Coquery was designed to support a flexible approach in how data is retrieved and stored on the backend using a interesting query dsl.
+ Coquery was designed to support a flexible approach in how data is retrieved and stored on the backend using a interesting query DSL.
 
 ### Query Paths:
   While thinking hard about what the form and look for the query system, I
@@ -70,20 +70,42 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   from regardless of the query and result, this is set to provide the flexibility of including meta details to the responses received from the
   API.
 
+#### Single Request
+  When single query requests to the API are made, it responds with the following json.
+
+  Request Example: docs.users.find(id,3)
+
 ```JSON
   {
-     "lastdelta": "36564-423266-656dA232",
+     "delta_id": "36564-423266-656dA232",
+     "batch": false,
      "results": [{}],
      "total": 20,
      "deltas": [""],
   }
 ```
-  The Coquery JSON response will contain standard attributes which provide
-  information to the client side on the result of the operation. These tags are
-  as follows:
 
-  - "lastdelta"
-   The lastdelta is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which
+#### Batch Request
+  When batch query requests to the API are made, it responds with the following json.
+
+  Request Example: [docs.users.find(id,3), docs.books.find(uid,30)]
+
+```JSON
+  {
+     "delta_id": "36564-423266-656dA232",
+     "batch": true,
+     "results": [{"data":[{}] }],
+     "total": 20,
+     "deltas": [""],
+  }
+```
+
+The Coquery JSON response will contain standard attributes which provide
+information to the client side on the result of the operation. These tags are
+as follows:
+
+  - "delta_id"
+   The last_delta is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which
    delta for record changes it sent last and which the client has last.
 
    - "results"
@@ -94,9 +116,9 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
    The "total" attribute contains the total result returned from the query which was returned from the backend.
 
    - "deltas"
-   The "deltaKeys" is a optional attribute that contains record IDs which
-   were established on the backend and allows the client to make requests
-   for this records accordingly to their respective needs.
+   The "delta" is a optional attribute that contains record IDs which
+   were established as changed on the backend and allows the client to make
+   requests for this records accordingly to their respective needs.
 
   Depending on the presence of specific headers within the requests, coquery
   returns addition meta information for a requests, this headers include

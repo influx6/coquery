@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/influx6/coquery/parser"
+	"github.com/influx6/coquery/storage"
 	"github.com/influx6/faux/panics"
 )
 
@@ -226,17 +227,18 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 // Engine defines a interface for a coquery service providers.
 type Engine interface {
 	Route(context interface{}, root string) DocumentRouter
-	Serve(context interface{}, requestID string, query string, rw ResponseWriter)
+	Serve(context interface{}, ctx *RequestContext, rw ResponseWriter)
 }
 
 // New returns a new Engine implementing structure for interfacing with
 // other API.
-func New(el EventLog) Engine {
+func New(el EventLog, diff Diffs, store storage.Store) Engine {
 	co := CoEngine{
 		EventLog: el,
+		store:    store,
+		diff:     diff,
 		routers:  make(map[string]DocumentRouter),
 	}
-
 	return &co
 }
 
@@ -247,26 +249,86 @@ func New(el EventLog) Engine {
 // multiple response engines for different backends.
 type CoEngine struct {
 	EventLog
-	routers  map[string]DocumentRouter
+	diff     Diffs
 	routeAdd int64
+	store    storage.Store
+	routers  map[string]DocumentRouter
 }
 
 // Serve processes the query using the coquery parser and runs the internal
 // pieces accordingly sending the parts into the appropriate route else
 // responding with an appropriate error.
-func (co *CoEngine) Serve(context interface{}, requestID string, query string, rw ResponseWriter) {
-	co.Log(context, "Serve", "Started : requestID[%s] : Query[%s]", requestID, query)
+func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw ResponseWriter) {
+	co.Log(context, "Serve", "Started : Request ID[%s] : Queries %s", rctx.RequestID, rctx.Query)
+
+	if len(rctx.Query) == 0 {
+		err := &CoError{
+			Rid:    rctx.RequestID,
+			Msg:    "No Request Generated",
+			IError: errors.New("404"),
+		}
+
+		rw.Write(context, nil, err)
+		return
+	}
+
+	// The final ResponseWriter for this request.
+	var rws ResponseWriter
+
+	// The internal writer for this request.
+	var inRws ResponseWriter
+
+	// If RequestContext.NoJSON is false, then we are allowed to wrap the
+	// response writer with our JSONResponseWriter else use the provided response
+	// writer.
+	if !rctx.NoJSON {
+
+		// Create the JSON response writer for this request.
+		inRws = &JSONResponseWriter{
+			Ctx:   rctx,
+			Res:   rw,
+			store: co.store,
+			diff:  co.diff,
+		}
+
+	} else {
+		inRws = rw
+	}
+
+	// Is this request a query batch type?
+	// If so, then batch the create the BatchResponseWriter to adequately batch
+	// the response before using its provided writer to write the final response.
+	if rctx.Batched {
+		rws = &BatchResponseWriter{
+			Res:   inRws,
+			total: len(rctx.Query),
+		}
+	} else {
+		rws = inRws
+	}
+
+	for _, qry := range rctx.Query {
+		co.serve(context, qry, rctx, rws)
+	}
+
+	co.Log(context, "Serve", "Completed")
+}
+
+// serve processes the individual query strings that are to be processed by
+// the coquery.API, using the appropriate API calls needed.
+func (co *CoEngine) serve(context interface{}, query string, rctx *RequestContext, rw ResponseWriter) {
+	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, rctx.Query)
 
 	queryList := parser.ParseQuery(context, query)
 
 	if dl := len(queryList); dl < 3 {
 		err := &CoError{
-			Rid:    requestID,
+			Rid:    rctx.RequestID,
 			Msg:    fmt.Sprintf("Invalid Query: %s", query),
 			IError: fmt.Errorf("Invalid Query Length %d", dl),
 		}
 
-		co.Error(context, "Serve", err, "Completed")
+		co.Error(context, "serve", err, "Completed")
 		rw.Write(context, nil, err)
 		return
 	}
@@ -284,12 +346,12 @@ func (co *CoEngine) Serve(context interface{}, requestID string, query string, r
 
 	if !ok {
 		err := &CoError{
-			Rid:    requestID,
+			Rid:    rctx.RequestID,
 			Msg:    fmt.Sprintf("Invalid Query Path[%s]", root),
 			IError: errors.New("504"),
 		}
 
-		co.Error(context, "Serve", err, "Completed")
+		co.Error(context, "serve", err, "Completed")
 		rw.Write(context, nil, err)
 		return
 	}
@@ -297,8 +359,8 @@ func (co *CoEngine) Serve(context interface{}, requestID string, query string, r
 	sub := queryList[1]
 	qs := queryList[2:]
 
-	set.Serve(context, requestID, sub, qs, rw)
-	co.Log(context, "Serve", "Completed")
+	set.Serve(context, rctx.RequestID, sub, qs, rw)
+	co.Log(context, "serve", "Completed")
 }
 
 // Route sets up a document router for handling subdocuments for this

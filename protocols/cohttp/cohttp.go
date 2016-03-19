@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/storage"
 	"github.com/pborman/uuid"
 )
 
@@ -86,10 +87,10 @@ type CoqueryHTTP interface {
 }
 
 // New returns a new CoqueryHTTP http server to respond to all coquery requests.
-func New(e EventLog) CoqueryHTTP {
+func New(e EventLog, diff coquery.Diffs, store storage.Store) CoqueryHTTP {
 	coq := httpCoquery{
 		EventLog: e,
-		Engine:   coquery.New(e),
+		Engine:   coquery.New(e, diff, store),
 	}
 
 	return &coq

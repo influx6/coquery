@@ -2,6 +2,23 @@ package coquery
 
 //==============================================================================
 
+// RequestContext provides a request context which details the needed information
+// a coquery.Request entails. It allows us organize the behaviour and response
+// for a request.
+type RequestContext struct {
+	Query     []string
+	Batched   bool
+	RequestID string
+	Diffing   bool
+	DiffTag   string
+	DiffWatch []string
+
+	// NoJSON allows a request avoid wrapping its writer with a JSONResponseWriter.
+	NoJSON bool
+}
+
+//==============================================================================
+
 // Parameter defines the basic data type for all data received from the
 // providers.
 type Parameter map[string]interface{}
