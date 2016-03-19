@@ -76,13 +76,15 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   Request Example: docs.users.find(id,3)
 
 ```JSON
-  {
+  [{
+     "request_id": "36564-423266-656dA232",
+     "last_delta_id": "36564-423266-656dA232",
      "delta_id": "36564-423266-656dA232",
      "batch": false,
      "results": [{}],
      "total": 20,
      "deltas": [""],
-  }
+  }]
 ```
 
 #### Batch Request
@@ -91,32 +93,38 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   Request Example: [docs.users.find(id,3), docs.books.find(uid,30)]
 
 ```JSON
-  {
+  [{
+     "request_id": "36564-423266-656dA232",
      "delta_id": "36564-423266-656dA232",
+     "last_delta_id": "36564-423266-656dA232",
      "batch": true,
      "results": [{"data":[{}] }],
      "total": 20,
      "deltas": [""],
-  }
+  }]
 ```
 
 The Coquery JSON response will contain standard attributes which provide
 information to the client side on the result of the operation. These tags are
 as follows:
 
+  - "last_delta_id"
+   The `last_delta_id` is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which delta for record changes it sent last and which the client has last.
+   This is included in the client response headers and client cookies.
+
   - "delta_id"
-   The last_delta is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which
-   delta for record changes it sent last and which the client has last.
+   The `delta_id` is a optional attribute that contains the UUID of the current delta report sent to the client, usually this signifies to the client which
+   delta for record changes is sent to it, this is also included in the response headers and as client cookies.
 
    - "results"
-   The "results" attribute contains the actual result of the query which was
+   The `results` attribute contains the actual result of the query which was
    sent to the API.
 
    - "total"
-   The "total" attribute contains the total result returned from the query which was returned from the backend.
+   The `total` attribute contains the total result returned from the query which was returned from the backend.
 
    - "deltas"
-   The "delta" is a optional attribute that contains record IDs which
+   The `deltas` is a optional attribute that contains record IDs which
    were established as changed on the backend and allows the client to make
    requests for this records accordingly to their respective needs.
 

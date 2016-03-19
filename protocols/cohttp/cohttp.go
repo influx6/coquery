@@ -55,6 +55,7 @@ func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 
 	h.Log(context, "cohttp.ResWriter.Write", "Info : JSON.Marshal : %s", fmt.Sprintf("%+v", rs.Data))
 	data, err := json.Marshal(rs.Data)
+
 	if err != nil {
 		h.Error(context, "cohttp.ResWriter.Write", err, "Completed")
 		h.res.WriteHeader(http.StatusBadRequest)

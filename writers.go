@@ -64,16 +64,61 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 // JSONResponseWriter provides the coquery API JSON spec writer, which ensures
 // we adequately provide proper response for our API requests.
 type JSONResponseWriter struct {
-	Res   ResponseWriter
+	res   ResponseWriter
 	store storage.Store
-	Ctx   *RequestContext
+	ctx   *RequestContext
 	diff  Diffs
 }
 
 // Write writes out the json response for the received request.
 func (br *JSONResponseWriter) Write(context interface{}, res *Response, err ResponseError) error {
 
-	return nil
+	// Record the diff record and store it for reporting as needed.
+	br.diff.Put(br.store.TaintedRecords())
+	br.store.ClearTainted()
+
+	// Create the map to hold our json response.
+	data := make(Parameter)
+
+	data["request_id"] = br.ctx.RequestID
+	data["batch"] = br.ctx.Batched
+
+	if br.ctx.Diffing && br.ctx.DiffTag != "" {
+		data["last_delta_id"] = br.ctx.DiffTag
+	}
+
+	if br.ctx.Diffing {
+
+		// If we have no diffing tag then collect all the diffs and use the
+		// last diff tag in the diff store as the new diff tag.
+		if br.ctx.DiffTag == "" {
+			diffs, tags := br.diff.All()
+
+			if len(tags) > 0 {
+				last := len(tags) - 1
+				data["delta_id"] = tags[last]
+			}
+
+			data["deltas"] = diffs
+		}
+	}
+
+	if res != nil {
+
+		// data["results"] = Parameter{
+		// 	"Error":   err.Error(),
+		// 	"Message": err.Message(),
+		// }
+		// data["total"] = 1
+
+		data["results"] = res.Data
+		data["total"] = len(res.Data)
+	}
+
+	return br.res.Write(context, &Response{
+		Req:  res.Req,
+		Data: Parameters{data},
+	}, err)
 }
 
 //==============================================================================

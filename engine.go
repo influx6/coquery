@@ -285,8 +285,8 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 
 		// Create the JSON response writer for this request.
 		inRws = &JSONResponseWriter{
-			Ctx:   rctx,
-			Res:   rw,
+			ctx:   rctx,
+			res:   rw,
 			store: co.store,
 			diff:  co.diff,
 		}
