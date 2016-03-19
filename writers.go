@@ -72,6 +72,9 @@ type JSONResponseWriter struct {
 
 // Write writes out the json response for the received request.
 func (br *JSONResponseWriter) Write(context interface{}, res *Response, err ResponseError) error {
+	if err != nil {
+		return br.res.Write(context, nil, err)
+	}
 
 	// Record the diff record and store it for reporting as needed.
 	br.diff.Put(br.store.TaintedRecords())
@@ -87,21 +90,19 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 		data["last_delta_id"] = br.ctx.DiffTag
 	}
 
-	if res != nil {
+	var req RecordRequest
 
-		// data["results"] = Parameter{
-		// 	"Error":   err.Error(),
-		// 	"Message": err.Message(),
-		// }
-		// data["total"] = 1
+	data["results"] = res.Data
+	data["total"] = len(res.Data)
+	req = res.Req
 
-		data["results"] = res.Data
-		data["total"] = len(res.Data)
-	}
+	// if req == nil {
+	// 	req = &dupReq{ResponseError: err}
+	// }
 
 	if !br.ctx.Diffing {
 		return br.res.Write(context, &Response{
-			Req:  res.Req,
+			Req:  req,
 			Data: Parameters{data},
 		}, err)
 	}

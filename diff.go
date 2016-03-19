@@ -101,6 +101,7 @@ func (diff *DiffStore) Analyze(keys []string) map[string]bool {
 
 	truths := make(map[string]bool)
 	changes := diff.Diffs()
+	diff.Log("DiffStore", "Analyze", "Info : Diffs %s", changes)
 
 	for _, key := range keys {
 		if _, ok := changes[key]; ok {
@@ -131,6 +132,8 @@ func (diff *DiffStore) AnalyzeWith(lastID string, keys []string) map[string]bool
 	if len(changes) < 1 {
 		return truths
 	}
+
+	diff.Log("DiffStore", "AnalyzeWith", "Info : Diffs %s", changes)
 
 	// Run throug the changes and set true for the changed keys.
 	for _, id := range changes {
@@ -251,10 +254,16 @@ func (diff *DiffStore) Get(record string) []string {
 func (diff *DiffStore) Put(record []string) string {
 	diff.Log("DiffStore", "Put", "Started : Adding New Record : %s", fmt.Sprintf("%+v", record))
 
+	key := uuid.New()
+
+	if len(record) < 1 {
+		diff.Error("DiffStore", "Put", fmt.Errorf("Empty Record"), "Completed")
+		return key
+	}
+
 	diff.dl.Lock()
 	defer diff.dl.Unlock()
 
-	key := uuid.New()
 	df := &Diff{Key: key, Diff: record, Time: time.Now()}
 	diff.keys[key] = len(diff.diffs)
 	diff.diffs = append(diff.diffs, df)

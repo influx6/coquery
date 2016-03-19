@@ -30,12 +30,16 @@ type eventlog struct{}
 
 // Log logs all standard log reports.
 func (l eventlog) Log(context interface{}, name string, message string, data ...interface{}) {
-	log.Dev(context, name, message, data...)
+	if testing.Verbose() {
+		log.Dev(context, name, message, data...)
+	}
 }
 
 // Error logs all error reports.
 func (l eventlog) Error(context interface{}, name string, err error, message string, data ...interface{}) {
-	log.Error(context, name, err, message, data...)
+	if testing.Verbose() {
+		log.Error(context, name, err, message, data...)
+	}
 }
 
 //==============================================================================
@@ -129,9 +133,11 @@ func TestCoEngine(t *testing.T) {
 			t.Logf("\t%s\tShould have received response with request Id[%s]", tests.Success, qid)
 
 			first := res.Data[0]
+			result := (first.Get("results").(coquery.Parameters))[0]
 
-			if first.Get("greeting") != "Hello World!" {
-				t.Fatalf("\t%s\tShould have successfull matched greetings as 'Hello Word!': %s", tests.Failed, first.Get("greeting"))
+			if result.Get("greeting") != "Hello World!" {
+				t.Logf("\t\t%+s\n", result)
+				t.Fatalf("\t%s\tShould have successfull matched greetings as 'Hello Word!': %s", tests.Failed, result.Get("greeting"))
 			}
 			t.Logf("\t%s\tShould have successfull matched greetings as 'Hello Word!'", tests.Success)
 
