@@ -42,6 +42,7 @@ type DiffStore struct {
 	EventLog
 	lifeTime time.Time
 	maxAge   time.Duration
+	everyms  time.Duration
 	dl       sync.RWMutex
 	diffs    []*Diff
 	keys     map[string]int
@@ -60,6 +61,8 @@ func NewDiffs(el EventLog) *DiffStore {
 
 // NewExpiringDiffs returns a new instance of a DiffStore which expires its
 // records after a specific lifetime duration.
+// You can set the maximum age for records and the intervals you want to
+// check for expiration of records.
 func NewExpiringDiffs(el EventLog, maxAge time.Duration) *DiffStore {
 	diff := DiffStore{
 		EventLog: el,
@@ -68,41 +71,14 @@ func NewExpiringDiffs(el EventLog, maxAge time.Duration) *DiffStore {
 		keys:     make(map[string]int),
 	}
 
-	// Start up the expiration cleaner.
-	go func() {
-		for {
-			<-time.After(maxAge)
-			diff.clean()
-		}
-	}()
-
 	return &diff
-}
-
-// clean removes all expired records from the lists.
-func (diff *DiffStore) clean() {
-	age := time.Now()
-
-	diff.dl.Lock()
-	defer diff.dl.Unlock()
-
-	for key, ind := range diff.keys {
-		rec := diff.diffs[ind]
-		if age.Sub(rec.Time) < diff.maxAge {
-			continue
-		}
-
-		rec.expired = true
-
-		delete(diff.keys, key)
-		diff.diffs = append(diff.diffs[:ind], diff.diffs[ind+1:]...)
-	}
 }
 
 // Analyze analyzes the giving record keys with its internal records and returns
 // a truth map to indicate which record has changed or not.
 func (diff *DiffStore) Analyze(keys []string) map[string]bool {
 	diff.Log("DiffStore", "Analyze", "Started : Records %s", keys)
+	diff.clean()
 
 	truths := make(map[string]bool)
 	changes := diff.Diffs()
@@ -125,6 +101,7 @@ func (diff *DiffStore) Analyze(keys []string) map[string]bool {
 // key indeed was registed to have changed.
 func (diff *DiffStore) AnalyzeWith(lastID string, keys []string) map[string]bool {
 	diff.Log("DiffStore", "AnalyzeWith", "Started : Last Diff Key[%s] : Records %s", lastID, keys)
+	diff.clean()
 
 	truths := make(map[string]bool)
 
@@ -156,6 +133,7 @@ func (diff *DiffStore) AnalyzeWith(lastID string, keys []string) map[string]bool
 // If no such key exists, it returns an empty string.
 func (diff *DiffStore) PullFrom(id string) []string {
 	diff.Log("DiffStore", "PullFrom", "Started : Last Record ID[%s]", id)
+	diff.clean()
 
 	diff.dl.RLock()
 	defer diff.dl.RUnlock()
@@ -195,6 +173,7 @@ func (diff *DiffStore) PullFrom(id string) []string {
 // Diffs returns a map of all changed record keys.
 func (diff *DiffStore) Diffs() map[string]struct{} {
 	diff.Log("DiffStore", "Keys", "Started")
+	diff.clean()
 
 	diff.dl.RLock()
 	defer diff.dl.RUnlock()
@@ -218,6 +197,7 @@ func (diff *DiffStore) Diffs() map[string]struct{} {
 // Keys returns a lists of records keys within the store.
 func (diff *DiffStore) Keys() []string {
 	diff.Log("DiffStore", "Keys", "Started")
+	diff.clean()
 
 	diff.dl.RLock()
 	defer diff.dl.RUnlock()
@@ -241,6 +221,7 @@ var ErrRecordNotFound = errors.New("Record Not Found")
 // Get retrieves a key diff record if it keys.
 func (diff *DiffStore) Get(record string) []string {
 	diff.Log("DiffStore", "Get", "Started : Retrieve Record : Key[%s]", record)
+	diff.clean()
 
 	diff.dl.RLock()
 	defer diff.dl.RUnlock()
@@ -260,6 +241,7 @@ func (diff *DiffStore) Get(record string) []string {
 // Put stores a list of diffs and returns the associated key for this diff.
 func (diff *DiffStore) Put(record []string) string {
 	diff.Log("DiffStore", "Put", "Started : Adding New Record : %s", fmt.Sprintf("%+v", record))
+	diff.clean()
 
 	key := uuid.New()
 
@@ -303,6 +285,36 @@ func (diff *DiffStore) Has(key string) bool {
 
 	diff.Log("DiffStore", "Has", "Completed")
 	return true
+}
+
+// clean removes all expired records from the lists.
+func (diff *DiffStore) clean() {
+	diff.Log("DiffStore", "clean", "Started")
+
+	if diff.maxAge == 0 {
+		diff.Log("DiffStore", "clean", "Info : No Checks")
+		diff.Log("DiffStore", "clean", "Completed")
+		return
+	}
+
+	age := time.Now()
+
+	diff.dl.Lock()
+	defer diff.dl.Unlock()
+
+	for key, ind := range diff.keys {
+		rec := diff.diffs[ind]
+		if age.Sub(rec.Time) < diff.maxAge {
+			continue
+		}
+
+		rec.expired = true
+
+		delete(diff.keys, key)
+		diff.diffs = append(diff.diffs[:ind], diff.diffs[ind+1:]...)
+	}
+
+	diff.Log("DiffStore", "clean", "Completed")
 }
 
 //==============================================================================

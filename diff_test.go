@@ -40,11 +40,11 @@ func TestExpiringDiff(t *testing.T) {
 		t.Logf("\tWhen giving a coquery.Diff")
 		{
 
-			diff := coquery.NewExpiringDiffs(events, 20*time.Millisecond)
+			diff := coquery.NewExpiringDiffs(events, 300*time.Millisecond)
 
 			id := diff.Put([]string{"1", "2", "3"})
 
-			<-time.After(21 * time.Second)
+			<-time.After(600 * time.Millisecond)
 
 			if changes := diff.Get(id); len(changes) > 0 {
 				t.Logf("\t\tChanges: %s\n", changes)
