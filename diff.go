@@ -65,33 +65,38 @@ func NewExpiringDiffs(el EventLog, maxAge time.Duration) *DiffStore {
 		EventLog: el,
 		maxAge:   maxAge,
 		lifeTime: time.Now().Add(maxAge),
+		keys:     make(map[string]int),
 	}
 
 	// Start up the expiration cleaner.
 	go func() {
 		for {
 			<-time.After(maxAge)
-
-			age := time.Now()
-
-			diff.dl.Lock()
-			defer diff.dl.Unlock()
-
-			for key, ind := range diff.keys {
-				rec := diff.diffs[ind]
-				if age.Sub(rec.Time) < maxAge {
-					continue
-				}
-
-				rec.expired = true
-
-				delete(diff.keys, key)
-				diff.diffs = append(diff.diffs[:ind], diff.diffs[ind+1:]...)
-			}
+			diff.clean()
 		}
 	}()
 
 	return &diff
+}
+
+// clean removes all expired records from the lists.
+func (diff *DiffStore) clean() {
+	age := time.Now()
+
+	diff.dl.Lock()
+	defer diff.dl.Unlock()
+
+	for key, ind := range diff.keys {
+		rec := diff.diffs[ind]
+		if age.Sub(rec.Time) < diff.maxAge {
+			continue
+		}
+
+		rec.expired = true
+
+		delete(diff.keys, key)
+		diff.diffs = append(diff.diffs[:ind], diff.diffs[ind+1:]...)
+	}
 }
 
 // Analyze analyzes the giving record keys with its internal records and returns
@@ -246,8 +251,10 @@ func (diff *DiffStore) Get(record string) []string {
 		return nil
 	}
 
+	dl := diff.diffs[rec]
+
 	diff.Log("DiffStore", "Get", "Completed")
-	return diff.diffs[rec].Diff
+	return dl.Diff
 }
 
 // Put stores a list of diffs and returns the associated key for this diff.

@@ -3,6 +3,7 @@ package coquery_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
@@ -30,6 +31,29 @@ func BenchmarkDiff(b *testing.B) {
 		so.Get(key)
 	}
 
+}
+
+// TestExpiringDiff validates the coquery.Diff behaviour.
+func TestExpiringDiff(t *testing.T) {
+	t.Logf("Given the need to use the expiring coquery.Diff")
+	{
+		t.Logf("\tWhen giving a coquery.Diff")
+		{
+
+			diff := coquery.NewExpiringDiffs(events, 20*time.Millisecond)
+
+			id := diff.Put([]string{"1", "2", "3"})
+
+			<-time.After(21 * time.Second)
+
+			if changes := diff.Get(id); len(changes) > 0 {
+				t.Logf("\t\tChanges: %s\n", changes)
+				t.Fatalf("\t%s\tShould have the records for key[%s] expired after 1 second", tests.Failed, id)
+			}
+			t.Logf("\t%s\tShould have the records for key[%s] expired after 1 second", tests.Success, id)
+
+		}
+	}
 }
 
 // TestDiff validates the coquery.Diff behaviour.
