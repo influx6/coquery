@@ -165,6 +165,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/kit/log"
+	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/documents/mongo"
 	"github.com/influx6/coquery/protocols/cohttp"
 	"github.com/influx6/coquery/storage"
@@ -199,7 +200,7 @@ var context = "example-app"
 
 func main() {
 
-	diff := coquey.NewExpiringDiffs(events, 1*time.Hour)
+	diff := coquery.NewExpiringDiffs(events, 1*time.Hour)
 	store := storage.NewExpirable("uid", 1*time.Hour)
 	app := cohttp.New(events, diff, store)
 
