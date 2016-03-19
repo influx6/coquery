@@ -193,20 +193,7 @@ func NewExpirable(recordKey string, maxAge time.Duration) Store {
 	go func() {
 		for {
 			<-time.After(maxAge)
-
-			un.afl.RLock()
-			defer un.afl.RUnlock()
-
-			for key, state := range un.active {
-				if du := atomic.LoadInt64(&state); du-1 <= 0 {
-					un.Delete(key)
-					continue
-				}
-
-				atomic.StoreInt64(&state, 1)
-				un.active[key] = state
-			}
-
+			un.clean()
 		}
 
 	}()
@@ -619,6 +606,22 @@ func (u *under) ModRefBy(rec map[string]interface{}, refKey string, new bool) er
 	u.afl.Unlock()
 
 	return nil
+}
+
+// clean sanitizes the records store wihtin the inmemory store.
+func (u *under) clean() {
+	u.afl.RLock()
+	defer u.afl.RUnlock()
+
+	for key, state := range u.active {
+		if du := atomic.LoadInt64(&state); du-1 <= 0 {
+			u.Delete(key)
+			continue
+		}
+
+		atomic.StoreInt64(&state, 1)
+		u.active[key] = state
+	}
 }
 
 //==============================================================================
