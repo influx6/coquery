@@ -165,7 +165,6 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// req.ParseMultipartForm(maxMemory int64)
 
 	var rctx coquery.RequestContext
-	var ok bool
 
 	contentType := req.Header.Get("Content-Type")
 
@@ -211,17 +210,17 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 
 	rctx.Queries = []string{qrs}
-	ok = true
+
 	// }
 
 	res.Header().Set("X-Coquery-Request-ID", rctx.RequestID)
 
-	// Did we catch our target content-types? If not fail the request.
-	if !ok {
-		res.WriteHeader(http.StatusBadRequest)
-		h.Error("HTTPCoquery", "ServeHTTP", fmt.Errorf("Bad Request: %d", http.StatusBadGateway), "Completed")
-		return
-	}
+	// // Did we catch our target content-types? If not fail the request.
+	// if !ok {
+	// 	res.WriteHeader(http.StatusBadRequest)
+	// 	h.Error("HTTPCoquery", "ServeHTTP", fmt.Errorf("Bad Request: %d", http.StatusBadGateway), "Completed")
+	// 	return
+	// }
 
 	h.Serve("httpCoquery", &rctx, &ResWriter{
 		EventLog: h.EventLog,
