@@ -1,5 +1,76 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": []
+	"package": [
+		{
+			"path": "github.com/ardanlabs/kit/cfg",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/db",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/db/mongo",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/log",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/tests",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/influx6/faux/panics",
+			"revision": "39b0a8a0e0be04ec2639d30a54f057d9e7c77618",
+			"revisionTime": "2016-03-17T23:30:05+01:00"
+		},
+		{
+			"path": "github.com/influx6/faux/sumex",
+			"revision": "39b0a8a0e0be04ec2639d30a54f057d9e7c77618",
+			"revisionTime": "2016-03-17T23:30:05+01:00"
+		},
+		{
+			"path": "github.com/pborman/uuid",
+			"revision": "c55201b036063326c5b1b89ccfe45a184973d073",
+			"revisionTime": "2016-02-16T08:37:10-08:00"
+		},
+		{
+			"origin": "github.com/influx6/faux/vendor/github.com/satori/go.uuid",
+			"path": "github.com/satori/go.uuid",
+			"revision": "39b0a8a0e0be04ec2639d30a54f057d9e7c77618",
+			"revisionTime": "2016-03-17T23:30:05+01:00"
+		},
+		{
+			"origin": "github.com/influx6/coquery/vendor/gopkg.in/mgo.v2",
+			"path": "gopkg.in/mgo.v2",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"origin": "github.com/influx6/coquery/vendor/gopkg.in/mgo.v2/bson",
+			"path": "gopkg.in/mgo.v2/bson",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"origin": "github.com/influx6/coquery/vendor/gopkg.in/mgo.v2/internal/sasl",
+			"path": "gopkg.in/mgo.v2/internal/sasl",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"origin": "github.com/influx6/coquery/vendor/gopkg.in/mgo.v2/internal/scram",
+			"path": "gopkg.in/mgo.v2/internal/scram",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		}
+	]
 }
