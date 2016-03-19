@@ -87,22 +87,6 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 		data["last_delta_id"] = br.ctx.DiffTag
 	}
 
-	if br.ctx.Diffing {
-
-		// If we have no diffing tag then collect all the diffs and use the
-		// last diff tag in the diff store as the new diff tag.
-		if br.ctx.DiffTag == "" {
-			diffs, tags := br.diff.All()
-
-			if len(tags) > 0 {
-				last := len(tags) - 1
-				data["delta_id"] = tags[last]
-			}
-
-			data["deltas"] = diffs
-		}
-	}
-
 	if res != nil {
 
 		// data["results"] = Parameter{
@@ -114,6 +98,71 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 		data["results"] = res.Data
 		data["total"] = len(res.Data)
 	}
+
+	if !br.ctx.Diffing {
+		return br.res.Write(context, &Response{
+			Req:  res.Req,
+			Data: Parameters{data},
+		}, err)
+	}
+
+	var key string
+	keys := br.diff.Keys()
+	last := len(keys) - 1
+
+	if last > -1 && last < len(keys) {
+		key = keys[last]
+		data["delta_id"] = keys[last]
+	}
+
+	// If we have no diffing tag then collect all the diffs and use the
+	// last diff tag in the diff store as the new diff tag.
+	if !br.diff.Has(br.ctx.DiffTag) {
+
+		var diff []string
+
+		if len(br.ctx.DiffWatch) > 0 {
+
+			// Collect the changes map.
+			changes := br.diff.Analyze(br.ctx.DiffWatch)
+
+			// Collect only keys that indeed have changed.
+			for key, status := range changes {
+				if status {
+					diff = append(diff, key)
+				}
+			}
+
+		} else {
+			diff = br.diff.Get(key)
+		}
+
+		data["deltas"] = diff
+
+		return br.res.Write(context, &Response{
+			Req:  res.Req,
+			Data: Parameters{data},
+		}, err)
+	}
+
+	var diff []string
+
+	if len(br.ctx.DiffWatch) > 0 {
+		changes := br.diff.AnalyzeWith(br.ctx.DiffTag, br.ctx.DiffWatch)
+
+		// Collect only keys that indeed have changed.
+		for key, status := range changes {
+			if status {
+				diff = append(diff, key)
+			}
+		}
+
+	} else {
+		diff = br.diff.PullFrom(br.ctx.DiffTag)
+	}
+
+	data["delta_id"] = key
+	data["deltas"] = diff
 
 	return br.res.Write(context, &Response{
 		Req:  res.Req,

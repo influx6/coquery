@@ -39,8 +39,9 @@ var context = "example-app"
 
 func main() {
 
+	diff := coquey.NewExpiringDiffs(events, 1*time.Hour)
 	store := storage.NewExpirable("uid", 1*time.Hour)
-	app := cohttp.New(events)
+	app := cohttp.New(events, diff, store)
 
 	app.Route(context, "docs").
 		DocumentWith(context, "users", mongo.New(mongo.DocumentConfig{

@@ -161,7 +161,6 @@ as follows:
 package main
 
 import (
-	"net/http"
 	"os"
 	"time"
 
@@ -175,7 +174,7 @@ func init() {
 	log.Init(os.Stdout, func() int { return log.DEV }, log.Ldefault)
 }
 
-//=============================================================================
+//==============================================================================
 
 var events eventlog
 
@@ -192,30 +191,30 @@ func (l eventlog) Error(context interface{}, name string, err error, message str
 	log.Error(context, name, err, message, data...)
 }
 
-//=============================================================================
+//==============================================================================
 
 var context = "example-app"
 
-//=============================================================================
+//==============================================================================
 
 func main() {
 
+	diff := coquey.NewExpiringDiffs(events, 1*time.Hour)
 	store := storage.NewExpirable("uid", 1*time.Hour)
-	app := cohttp.New(events)
+	app := cohttp.New(events, diff, store)
 
 	app.Route(context, "docs").
 		DocumentWith(context, "users", mongo.New(mongo.DocumentConfig{
 		Events:   events,
 		Store:    store,
 		Workers:  20,
-		Wait:     5 * time.Minute,
+		Wait:     20 * time.Second,
 		Host:     "127.0.0.1:27017",
 		AuthDB:   "contacts",
 		DB:       "contacts",
 		QueryDoc: "users",
 	}))
 
-	// http.ListenAndServe(":3000", app)
 	app.ListenAndServe(context, ":3000")
 }
 
