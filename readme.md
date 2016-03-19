@@ -70,11 +70,65 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   from regardless of the query and result, this is set to provide the flexibility of including meta details to the responses received from the
   API.
 
+  When making request for queries, be it batched or single queries, coquery
+  accepts content type of a `application/x-www-form-urlencoded` for single
+  queries or a `application/json` for both single and multiple queries.
+
+  When sending using the `application/json` format which provides more
+  possibilities for richer meta details and also the defactor pattern when
+  desiring to use advance features like batch requests and delta metas.
+
+  - URL Encoded request
+  When using the `application/x-www-form-urlencoded` content-type for request,
+  the query will be read of a `coquery=` parameter from the parsed form of
+  the request and a `requestid=` parameter for the request id if present.
+  Using this approach limits the queries to only single query requests.
+
+```js
+
+  GET:
+   /URL?coquery="docs.users.find(id,4022)"&requestid="3232453-322323232-3234"
+
+  Response:
+
+  [{
+     "request_id": "36564-423266-656dA232",
+     "results": [{}],
+     "total": 20,
+  }]
+
+```
+
+  - JSON Encoded request
+  When using the `application/json` content-type for request, the coquery API
+  will attempt to load the data into the RequestContext struct, which allows
+  controls on how the request will be treated and also allows control of what
+  format of json is returned where either a json of the result alone or the
+  format coquery JSON format describe in the coming sections through the
+  `NoJSON` attribute.
+
+
+  Note: Infact only one attribute `Queries` is required and the rest can be
+  left unfield as they only enable specific reply fields.
+
+```go
+type RequestContext struct {
+	RequestID string   `json:"request_id"`
+	Queries   []string `json:"queries"`
+	Batched   bool     `json:"batched"`
+	Diffs     bool     `json:"diffing"`
+	DiffTag   string   `json:"diff_tag"`
+	DiffWatch []string `json:"diff_watch"`
+	NoJSON    bool     `json:"no_json"`
+}
+```
+
 #### Single Request
   When single query requests to the API are made, it responds with the following json.
 
   Request Example: docs.users.find(id,3)
 
+  Request Response:
 ```JSON
   [{
      "request_id": "36564-423266-656dA232",
@@ -92,6 +146,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
   Request Example: [docs.users.find(id,3), docs.books.find(uid,30)]
 
+  Request Response:
 ```JSON
   [{
      "request_id": "36564-423266-656dA232",
@@ -127,33 +182,6 @@ as follows:
    The `deltas` is a optional attribute that contains record IDs which
    were established as changed on the backend and allows the client to make
    requests for this records accordingly to their respective needs.
-
-  Depending on the presence of specific headers within the requests, coquery
-  returns addition meta information for a requests, this headers include
-
-  - X-CoQuery-WantDelta:
-   e.g "X-CoQuery-WantDelta" : "1"
-
-   This sets the coquery API to report record delta changes back to the requests which allows the API to be able to fetch delta changes for records
-   watched by the API.
-
-  - X-CoQuery-DUID:
-
-   e.g "X-CoQuery-DUID" : "454HF-F34GH8-4395343G"
-
-   This represents the last generated requests UID that identifies what
-   previous delta/record change update where included or alluded to from the
-   last request. This is also set as a cookie also. This makes the API add the
-   "deltaKeys" field which will contain all records that the API knows has changed, so the requester could make requests for all this records.
-
-  - X-CoQuery-DeltaWatch:
-
-   e.g "X-CoQuery-DeltaWatch" : "[56434, 32231, 32322]"
-
-   This represents a list of records for which the request desires report on
-   changes for, this allows all request to cherrypick the delta updates to be
-   reported back to them as the "deltas" field within the JSON response.
-
 
 ## Example
 

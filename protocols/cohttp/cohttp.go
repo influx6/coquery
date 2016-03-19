@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/storage"
+	"github.com/pborman/uuid"
 )
 
 //==============================================================================
@@ -82,6 +84,7 @@ type CoqueryHTTP interface {
 	coquery.Engine
 	http.Handler
 	ListenAndServe(context interface{}, addr string)
+	EnableCORS()
 }
 
 // New returns a new CoqueryHTTP http server to respond to all coquery requests.
@@ -101,6 +104,7 @@ func New(e EventLog, diff coquery.Diffs, store storage.Store) CoqueryHTTP {
 type httpCoquery struct {
 	EventLog
 	coquery.Engine
+	useCORS bool
 }
 
 // ListenAndServe runs a http server with the httpCoquery instance wired
@@ -122,9 +126,15 @@ func (h *httpCoquery) ListenAndServe(context interface{}, addr string) {
 	h.Log(context, "ListenAndServe", "Completed")
 }
 
+// EnableCORS flips the flag to add CORS headers to all response to true.
+func (h *httpCoquery) EnableCORS() {
+	h.useCORS = true
+}
+
 // ServeHTTP provides the http.Handler ServeHTTP method to serve http requests
 // to a coquery.Engine.
 func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	h.Log("HTTPCoquery", "ServeHTTP", "Started : Request %s : Method %s", req.URL.String(), req.Method)
 
 	// We want to provide flexibility in how a coquery request is received
 	// from the user endpoint.
@@ -133,84 +143,93 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// 2. When a GET and has a X-Coquery-Request header else checks if there is
 	// a url parameter that has coquery="" which contains the query request.
 
-	// var query string
-	// var reqID string
-	//
-	// switch strings.ToLower(req.Method) {
-	// case "head":
-	// 	req.ParseForm()
-	// 	reqID = req.FormValue("rid")
-	//
-	// 	if reqID == "" {
-	// 		reqID = uuid.New()
-	// 	}
-	//
-	// 	res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
-	// 	res.Header().Set("X-CoQuery-Request-ID", reqID)
-	// 	res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
-	// 	res.Header().Set("Accepts", "application/x-www-form-urlencoded;")
-	// 	return
-	//
-	// case "post", "put":
-	// 	contentType := req.Header.Get("Content-Type")
-	//
-	// 	isQuery := strings.Contains(contentType, "application/x-coquery")
-	// 	isForm := strings.Contains(contentType, "application/x-www-form-urlencoded")
-	//
-	// 	if !isForm && !isQuery {
-	// 		res.WriteHeader(http.StatusBadRequest)
-	// 		return
-	// 	}
-	//
-	// 	if isForm {
-	// 		req.ParseForm()
-	//
-	// 		query = req.FormValue("coquery")
-	// 		reqID = req.FormValue("rid")
-	// 	}
-	//
-	// 	if isQuery {
-	// 		defer req.Body.Close()
-	//
-	// 		bo, err := ioutil.ReadAll(req.Body)
-	// 		if err != nil {
-	// 			res.WriteHeader(http.StatusBadRequest)
-	// 			res.Write([]byte(err.Error()))
-	// 			return
-	// 		}
-	//
-	// 		query = string(bo)
-	// 	}
-	//
-	// case "get", "patch":
-	// 	// xco := req.Header.Get("X-Coquery-Request")
-	//
-	// 	// If there exists no such then report as failure.
-	// 	// if xco == "" {
-	//
-	// 	req.ParseForm()
-	//
-	// 	reqID = req.FormValue("rid")
-	// 	query = req.FormValue("coquery")
-	//
-	// 	if query == "" {
-	// 		res.WriteHeader(http.StatusOK)
-	// 		return
-	// 	}
+	res.Header().Set("X-Coquery-Version", "1.0")
+	res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
+
+	if h.useCORS {
+		res.Header().Set("Access-Control-Allow-Origin", "*")
+		res.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		res.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		res.Header().Set("Access-Control-Max-Age", "86400")
+		res.Header().Set("Content-Type", "application/json")
+	}
+
+	method := strings.ToLower(req.Method)
+
+	// If this is a head method then stop here.
+	if method == "head" {
+		return
+	}
+
+	req.ParseForm()
+	// req.ParseMultipartForm(maxMemory int64)
+
+	var rctx coquery.RequestContext
+	var ok bool
+
+	contentType := req.Header.Get("Content-Type")
+
+	if strings.Contains(contentType, "application/json") {
+
+		if err := json.NewDecoder(req.Body).Decode(&rctx); err != nil {
+			req.Body.Close()
+			res.WriteHeader(http.StatusBadRequest)
+			res.Write([]byte(err.Error()))
+			h.Error("HTTPCoquery", "ServeHTTP", err, "Completed")
+			return
+		}
+
+		req.Body.Close()
+
+		res.Header().Set("X-Coquery-Request-ID", rctx.RequestID)
+
+		h.Serve("httpCoquery", &rctx, &ResWriter{
+			EventLog: h.EventLog,
+			res:      res,
+			req:      req,
+		})
+
+		h.Log("HTTPCoquery", "ServeHTTP", "Completed")
+		return
+	}
+
+	// if strings.Contains(contentType, "application/x-www-form-urlencoded") {
+	rid := req.Form.Get("requestid")
+
+	if strings.TrimSpace(rid) != "" {
+		rctx.RequestID = rid
+	} else {
+		rctx.RequestID = uuid.New()
+	}
+
+	qrs := req.Form.Get("coquery")
+
+	if strings.TrimSpace(qrs) == "" {
+		res.WriteHeader(http.StatusBadRequest)
+		h.Error("HTTPCoquery", "ServeHTTP", fmt.Errorf("Bad Request: %d", http.StatusBadGateway), "Completed")
+		return
+	}
+
+	rctx.Queries = []string{qrs}
+	ok = true
 	// }
-	//
-	// if reqID == "" {
-	// 	reqID = uuid.New()
-	// }
-	//
-	// res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
-	// res.Header().Set("X-CoQuery-Request-ID", reqID)
-	//
-	// h.Serve("httpCoquery", reqID, query, &ResWriter{
-	// 	EventLog: h.EventLog,
-	// 	res:      res,
-	// 	req:      req,
-	// })
+
+	res.Header().Set("X-Coquery-Request-ID", rctx.RequestID)
+
+	// Did we catch our target content-types? If not fail the request.
+	if !ok {
+		res.WriteHeader(http.StatusBadRequest)
+		h.Error("HTTPCoquery", "ServeHTTP", fmt.Errorf("Bad Request: %d", http.StatusBadGateway), "Completed")
+		return
+	}
+
+	h.Serve("httpCoquery", &rctx, &ResWriter{
+		EventLog: h.EventLog,
+		res:      res,
+		req:      req,
+	})
+
+	h.Log("HTTPCoquery", "ServeHTTP", "Completed")
 }
 
 //==============================================================================

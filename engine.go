@@ -259,9 +259,9 @@ type CoEngine struct {
 // pieces accordingly sending the parts into the appropriate route else
 // responding with an appropriate error.
 func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw ResponseWriter) {
-	co.Log(context, "Serve", "Started : Request ID[%s] : Queries %s", rctx.RequestID, rctx.Query)
+	co.Log(context, "Serve", "Started : Request ID[%s] : Queries %s", rctx.RequestID, rctx.Queries)
 
-	if len(rctx.Query) == 0 {
+	if len(rctx.Queries) == 0 {
 		err := &CoError{
 			Rid:    rctx.RequestID,
 			Msg:    "No Request Generated",
@@ -301,13 +301,13 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 	if rctx.Batched {
 		rws = &BatchResponseWriter{
 			Res:   inRws,
-			total: len(rctx.Query),
+			total: len(rctx.Queries),
 		}
 	} else {
 		rws = inRws
 	}
 
-	for _, qry := range rctx.Query {
+	for _, qry := range rctx.Queries {
 		co.serve(context, qry, rctx, rws)
 	}
 
@@ -317,7 +317,7 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 // serve processes the individual query strings that are to be processed by
 // the coquery.API, using the appropriate API calls needed.
 func (co *CoEngine) serve(context interface{}, query string, rctx *RequestContext, rw ResponseWriter) {
-	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, rctx.Query)
+	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, rctx.Queries)
 
 	queryList := parser.ParseQuery(context, query)
 

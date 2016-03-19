@@ -5,16 +5,15 @@ package coquery
 // RequestContext provides a request context which details the needed information
 // a coquery.Request entails. It allows us organize the behaviour and response
 // for a request.
+// NoJSON allows a request avoid wrapping its writer with a JSONResponseWriter.
 type RequestContext struct {
-	Query     []string
-	Batched   bool
-	RequestID string
-	Diffing   bool
-	DiffTag   string
-	DiffWatch []string
-
-	// NoJSON allows a request avoid wrapping its writer with a JSONResponseWriter.
-	NoJSON bool
+	RequestID string   `json:"request_id"`
+	Queries   []string `json:"queries"`
+	Batched   bool     `json:"batched"`
+	Diffs     bool     `json:"diffing"`
+	DiffTag   string   `json:"diff_tag"`
+	DiffWatch []string `json:"diff_watch"`
+	NoJSON    bool     `json:"no_json"`
 }
 
 //==============================================================================

@@ -86,7 +86,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	data["request_id"] = br.ctx.RequestID
 	data["batch"] = br.ctx.Batched
 
-	if br.ctx.Diffing && br.ctx.DiffTag != "" {
+	if br.ctx.Diffs && br.ctx.DiffTag != "" {
 		data["last_delta_id"] = br.ctx.DiffTag
 	}
 
@@ -100,7 +100,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	// 	req = &dupReq{ResponseError: err}
 	// }
 
-	if !br.ctx.Diffing {
+	if !br.ctx.Diffs {
 		return br.res.Write(context, &Response{
 			Req:  req,
 			Data: Parameters{data},
