@@ -190,6 +190,17 @@ as follows:
    requests for this records accordingly to their respective needs.
 
 ## Example
+  Run example code in the coquery/example folder and send the request URL
+  using your browser or curl.
+
+  ```bash
+    > cd coquery/example
+    > go run main.go
+  ```
+
+  ```js
+    http://localhost:3000/?coquery=docs.users.find(uid,4432)
+  ```
 
 ```go
 package main
