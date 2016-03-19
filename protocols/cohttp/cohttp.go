@@ -6,15 +6,12 @@ package cohttp
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/storage"
-	"github.com/pborman/uuid"
 )
 
 //==============================================================================
@@ -136,84 +133,84 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// 2. When a GET and has a X-Coquery-Request header else checks if there is
 	// a url parameter that has coquery="" which contains the query request.
 
-	var query string
-	var reqID string
-
-	switch strings.ToLower(req.Method) {
-	case "head":
-		req.ParseForm()
-		reqID = req.FormValue("rid")
-
-		if reqID == "" {
-			reqID = uuid.New()
-		}
-
-		res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
-		res.Header().Set("X-CoQuery-Request-ID", reqID)
-		res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
-		res.Header().Set("Accepts", "application/x-www-form-urlencoded;")
-		return
-
-	case "post", "put":
-		contentType := req.Header.Get("Content-Type")
-
-		isQuery := strings.Contains(contentType, "application/x-coquery")
-		isForm := strings.Contains(contentType, "application/x-www-form-urlencoded")
-
-		if !isForm && !isQuery {
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if isForm {
-			req.ParseForm()
-
-			query = req.FormValue("coquery")
-			reqID = req.FormValue("rid")
-		}
-
-		if isQuery {
-			defer req.Body.Close()
-
-			bo, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				res.WriteHeader(http.StatusBadRequest)
-				res.Write([]byte(err.Error()))
-				return
-			}
-
-			query = string(bo)
-		}
-
-	case "get", "patch":
-		// xco := req.Header.Get("X-Coquery-Request")
-
-		// If there exists no such then report as failure.
-		// if xco == "" {
-
-		req.ParseForm()
-
-		reqID = req.FormValue("rid")
-		query = req.FormValue("coquery")
-
-		if query == "" {
-			res.WriteHeader(http.StatusOK)
-			return
-		}
-	}
-
-	if reqID == "" {
-		reqID = uuid.New()
-	}
-
-	res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
-	res.Header().Set("X-CoQuery-Request-ID", reqID)
-
-	h.Serve("httpCoquery", reqID, query, &ResWriter{
-		EventLog: h.EventLog,
-		res:      res,
-		req:      req,
-	})
+	// var query string
+	// var reqID string
+	//
+	// switch strings.ToLower(req.Method) {
+	// case "head":
+	// 	req.ParseForm()
+	// 	reqID = req.FormValue("rid")
+	//
+	// 	if reqID == "" {
+	// 		reqID = uuid.New()
+	// 	}
+	//
+	// 	res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
+	// 	res.Header().Set("X-CoQuery-Request-ID", reqID)
+	// 	res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
+	// 	res.Header().Set("Accepts", "application/x-www-form-urlencoded;")
+	// 	return
+	//
+	// case "post", "put":
+	// 	contentType := req.Header.Get("Content-Type")
+	//
+	// 	isQuery := strings.Contains(contentType, "application/x-coquery")
+	// 	isForm := strings.Contains(contentType, "application/x-www-form-urlencoded")
+	//
+	// 	if !isForm && !isQuery {
+	// 		res.WriteHeader(http.StatusBadRequest)
+	// 		return
+	// 	}
+	//
+	// 	if isForm {
+	// 		req.ParseForm()
+	//
+	// 		query = req.FormValue("coquery")
+	// 		reqID = req.FormValue("rid")
+	// 	}
+	//
+	// 	if isQuery {
+	// 		defer req.Body.Close()
+	//
+	// 		bo, err := ioutil.ReadAll(req.Body)
+	// 		if err != nil {
+	// 			res.WriteHeader(http.StatusBadRequest)
+	// 			res.Write([]byte(err.Error()))
+	// 			return
+	// 		}
+	//
+	// 		query = string(bo)
+	// 	}
+	//
+	// case "get", "patch":
+	// 	// xco := req.Header.Get("X-Coquery-Request")
+	//
+	// 	// If there exists no such then report as failure.
+	// 	// if xco == "" {
+	//
+	// 	req.ParseForm()
+	//
+	// 	reqID = req.FormValue("rid")
+	// 	query = req.FormValue("coquery")
+	//
+	// 	if query == "" {
+	// 		res.WriteHeader(http.StatusOK)
+	// 		return
+	// 	}
+	// }
+	//
+	// if reqID == "" {
+	// 	reqID = uuid.New()
+	// }
+	//
+	// res.Header().Set("X-CoQuery-Version", "CoQuery.v1.0")
+	// res.Header().Set("X-CoQuery-Request-ID", reqID)
+	//
+	// h.Serve("httpCoquery", reqID, query, &ResWriter{
+	// 	EventLog: h.EventLog,
+	// 	res:      res,
+	// 	req:      req,
+	// })
 }
 
 //==============================================================================

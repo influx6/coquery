@@ -2,11 +2,13 @@ package coquery_test
 
 import (
 	"errors"
-	"fmt"
+	"os"
 	"testing"
 
+	"github.com/ardanlabs/kit/log"
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/storage"
 )
 
 //==============================================================================
@@ -15,21 +17,25 @@ var context = "testing"
 
 //==============================================================================
 
+func init() {
+	log.Init(os.Stdout, func() int { return log.DEV }, log.Ldefault)
+}
+
+//==============================================================================
+
+var events eventlog
+
 // logg provides a concrete implementation of a logger.
-type logg struct{}
+type eventlog struct{}
 
 // Log logs all standard log reports.
-func (l *logg) Log(context interface{}, name string, message string, data ...interface{}) {
-	if testing.Verbose() {
-		fmt.Printf("Log : %s : %s : %s\n", context, name, fmt.Sprintf(message, data...))
-	}
+func (l eventlog) Log(context interface{}, name string, message string, data ...interface{}) {
+	log.Dev(context, name, message, data...)
 }
 
 // Error logs all error reports.
-func (l *logg) Error(context interface{}, name string, err error, message string, data ...interface{}) {
-	if testing.Verbose() {
-		fmt.Printf("Error : %s : %s : %s : %q\n", context, name, fmt.Sprintf(message, data...), err.Error())
-	}
+func (l eventlog) Error(context interface{}, name string, err error, message string, data ...interface{}) {
+	log.Error(context, name, err, message, data...)
 }
 
 //==============================================================================
@@ -51,7 +57,6 @@ func (im *inMemory) Handle(context interface{}, reqs coquery.RecordRequests, res
 
 	res.Write(context, &coquery.Response{
 		Req:  reqs[0],
-		RID:  id,
 		Data: []coquery.Parameter{{"id": 1, "greeting": "Hello World!"}},
 	}, nil)
 }
@@ -83,11 +88,10 @@ func TestCoEngine(t *testing.T) {
 	t.Logf("Given the need to pass requests to a coquery.Engine")
 	{
 
-		log := &logg{}
-		eos := coquery.New(log)
+		eos := coquery.New(events, coquery.NewDiffs(events), storage.New("id"))
 
 		eos.Route(context, "doc").
-			Document(context, "greetings", &coquery.BasicQueries{EventLog: log}, &inMemory{})
+			Document(context, "greetings", &coquery.BasicQueries{EventLog: events}, &inMemory{})
 
 		q1 := "doc.greetings.find(id,1)"
 		t.Logf("\tWhen giving a query with one request: %q", q1)
@@ -100,7 +104,10 @@ func TestCoEngine(t *testing.T) {
 
 			qid := "432UFY"
 
-			eos.Serve(context, qid, q1, writer)
+			eos.Serve(context, &coquery.RequestContext{
+				RequestID: qid,
+				Query:     []string{q1},
+			}, writer)
 
 			var res *coquery.Response
 			var err coquery.ResponseError
@@ -141,7 +148,10 @@ func TestCoEngine(t *testing.T) {
 
 			qid := "632UFY"
 
-			eos.Serve(context, qid, q2, writer)
+			eos.Serve(context, &coquery.RequestContext{
+				RequestID: qid,
+				Query:     []string{q2},
+			}, writer)
 
 			// var res *coquery.Response
 			var err coquery.ResponseError
