@@ -144,7 +144,13 @@ type RequestContext struct {
 #### Batch Request
   When batch query requests to the API are made, it responds with the following json.
 
-  Request Example: [docs.users.find(id,3), docs.books.find(uid,30)]
+  Request Example:
+
+```json
+  {
+    "queries":["docs.users.find(id,3)", "docs.books.find(uid,30)"]
+  }
+```
 
   Request Response:
 ```JSON
