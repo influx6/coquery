@@ -112,15 +112,15 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   left unfield as they only enable specific reply fields.
 
 ```go
-type RequestContext struct {
-	RequestID string   `json:"request_id"`
-	Queries   []string `json:"queries"`
-	Batched   bool     `json:"batched"`
-	Diffs     bool     `json:"diffing"`
-	DiffTag   string   `json:"diff_tag"`
-	DiffWatch []string `json:"diff_watch"`
-	NoJSON    bool     `json:"no_json"`
-}
+  type RequestContext struct {
+  	RequestID string   `json:"request_id"`
+  	Queries   []string `json:"queries"`
+  	Batched   bool     `json:"batched"`
+  	Diffs     bool     `json:"diffing"`
+  	DiffTag   string   `json:"diff_tag"`
+  	DiffWatch []string `json:"diff_watch"`
+  	NoJSON    bool     `json:"no_json"`
+  }
 ```
 
 #### Single Request
