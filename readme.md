@@ -91,11 +91,11 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
   Response:
 
-  [{
+  {
      "request_id": "36564-423266-656dA232",
      "results": [{}],
      "total": 20,
-  }]
+  }
 
 ```
 
@@ -115,8 +115,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   type RequestContext struct {
   	RequestID string   `json:"request_id"`
   	Queries   []string `json:"queries"`
-  	Batched   bool     `json:"batched"`
-  	Diffs     bool     `json:"diffing"`
+  	Diffs     bool     `json:"diffs"`
   	DiffTag   string   `json:"diff_tag"`
   	DiffWatch []string `json:"diff_watch"`
   	NoJSON    bool     `json:"no_json"`
@@ -130,7 +129,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
   Request Response:
 ```JSON
-  [{
+  {
      "request_id": "36564-423266-656dA232",
      "last_delta_id": "36564-423266-656dA232",
      "delta_id": "36564-423266-656dA232",
@@ -138,7 +137,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
      "results": [{}],
      "total": 20,
      "deltas": [""],
-  }]
+  }
 ```
 
 #### Batch Request
@@ -154,7 +153,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
   Request Response:
 ```JSON
-  [{
+  {
      "request_id": "36564-423266-656dA232",
      "delta_id": "36564-423266-656dA232",
      "last_delta_id": "36564-423266-656dA232",
@@ -162,7 +161,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
      "results": [{"data":[{}] }],
      "total": 20,
      "deltas": [""],
-  }]
+  }
 ```
 
 The Coquery JSON response will contain standard attributes which provide

@@ -298,7 +298,7 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 	// Is this request a query batch type?
 	// If so, then batch the create the BatchResponseWriter to adequately batch
 	// the response before using its provided writer to write the final response.
-	if rctx.Batched {
+	if len(rctx.Queries) > 1 {
 		rws = &BatchResponseWriter{
 			Res:   inRws,
 			total: len(rctx.Queries),

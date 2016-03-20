@@ -53,7 +53,15 @@ func (h *ResWriter) Write(context interface{}, rs *coquery.Response, re coquery.
 	}
 
 	h.Log(context, "cohttp.ResWriter.Write", "Info : JSON.Marshal : %s", fmt.Sprintf("%+v", rs.Data))
-	data, err := json.Marshal(rs.Data)
+
+	var data []byte
+	var err error
+
+	if len(rs.Data) > 1 {
+		data, err = json.Marshal(rs.Data)
+	} else {
+		data, err = json.Marshal(rs.Data[0])
+	}
 
 	if err != nil {
 		h.Error(context, "cohttp.ResWriter.Write", err, "Completed")

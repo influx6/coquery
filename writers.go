@@ -84,7 +84,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	data := make(Parameter)
 
 	data["request_id"] = br.ctx.RequestID
-	data["batch"] = br.ctx.Batched
+	data["batch"] = len(br.ctx.Queries) > 1
 
 	if br.ctx.Diffs && br.ctx.DiffTag != "" {
 		data["last_delta_id"] = br.ctx.DiffTag

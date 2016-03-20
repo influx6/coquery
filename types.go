@@ -9,7 +9,6 @@ package coquery
 type RequestContext struct {
 	RequestID string   `json:"request_id"`
 	Queries   []string `json:"queries"`
-	Batched   bool     `json:"batched"`
 	Diffs     bool     `json:"diffing"`
 	DiffTag   string   `json:"diff_tag"`
 	DiffWatch []string `json:"diff_watch"`
