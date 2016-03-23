@@ -281,7 +281,7 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 	}
 
 	fn = func(c *mgo.Collection) error {
-		a.Log("MongoProvider.All", "DBAction", "db.%s.find({}).skip(%d).limit(%d)", c.Name, find.Amount, find.Skip)
+		a.Log("MongoProvider.All", "DBAction", "db.%s.find({}).skip(%d).limit(%d)", c.Name, find.Skip, find.Amount)
 		return c.Find(nil).Skip(find.Skip).Limit(find.Amount).All(&res)
 	}
 
