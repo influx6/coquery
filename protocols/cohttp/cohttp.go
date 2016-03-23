@@ -230,7 +230,7 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// 	return
 	// }
 
-	h.Serve("httpCoquery", &rctx, &ResWriter{
+	h.Serve(rctx.RequestID, &rctx, &ResWriter{
 		EventLog: h.EventLog,
 		res:      res,
 		req:      req,
