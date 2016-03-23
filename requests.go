@@ -106,6 +106,7 @@ func (f *Find) Example() []string {
 
 // Collects retrieves specific keyed items from the coquery stores.
 type Collects struct {
+	Doc  string   `json:"doc" bson:"doc"`
 	RID  string   `json:"rid" bson:"rid"`
 	Keys []string `json:"keys" bson:"keys"`
 }
@@ -131,6 +132,7 @@ func (f *Collects) Example() []string {
 // Mutate provides json data to be saved/augmented into a new version of the
 // current document.
 type Mutate struct {
+	Doc       string    `json:"doc" bson:"doc"`
 	RID       string    `json:"rid" bson:"rid"`
 	Parameter Parameter `json:"params" bson:"params"`
 }
@@ -282,6 +284,7 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 
 			reqs = append(reqs, &Collects{
 				RID:  reqid,
+				Doc:  doc,
 				Keys: params,
 			})
 			continue
@@ -314,6 +317,7 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 
 			reqs = append(reqs, &Mutate{
 				RID:       reqid,
+				Doc:       doc,
 				Parameter: pm,
 			})
 

@@ -124,6 +124,7 @@ type Store interface {
 	ClearTainted()
 	ClearDeleted()
 
+	Key() string
 	Has(string) bool
 	HasRecord(map[string]interface{}) bool
 
@@ -138,11 +139,15 @@ type Store interface {
 	RemoveByValue(map[string]interface{}) error
 	Delete(string) error
 
+	BuildRef(string)
 	Get(string) (map[string]interface{}, error)
 	GetByRef(string, interface{}) ([]map[string]interface{}, error)
 
 	TaintedRecords() []string
 	DeletedRecords() []string
+
+	Length() int
+	Select(int, int) []map[string]interface{}
 }
 
 // under provides an adequate means of storing full large scale json/json graph
@@ -203,6 +208,11 @@ func NewExpirable(recordKey string, maxAge time.Duration) Store {
 
 //==============================================================================
 
+// Key returns the key name being used by the store
+func (u *under) Key() string {
+	return u.key
+}
+
 // ErrNoKeyInRecord is returned when the map[string]interface{} lacks the wanted key.
 var ErrNoKeyInRecord = errors.New("map[string]interface{} Lacks Wanted key")
 
@@ -253,6 +263,41 @@ func (u *under) DeletedRecords() []string {
 }
 
 //==============================================================================
+
+// Select returns the possible nearest sized of records giving by the size
+// supplied.
+func (u *under) Select(n int, skip int) []map[string]interface{} {
+	var records []map[string]interface{}
+
+	u.rl.RLock()
+	defer u.rl.RUnlock()
+
+	var count int
+	var collected int
+
+	for _, rec := range u.records {
+		if count < skip {
+			count++
+			continue
+		}
+
+		if collected >= n {
+			break
+		}
+
+		records = append(records, CopyMap(rec))
+		collected++
+	}
+
+	return records
+}
+
+// Length returns the total records in the store.
+func (u *under) Length() int {
+	u.rl.RLock()
+	defer u.rl.RUnlock()
+	return len(u.records)
+}
 
 // Has returns true/false whether the map[string]interface{} into the storage maps.
 func (u *under) Has(rec string) bool {
@@ -468,6 +513,8 @@ func (u *under) Add(rec map[string]interface{}) error {
 		u.afl.Lock()
 		u.active[key] = 2
 		u.afl.Unlock()
+
+		// u.BuildRef(rec[u.key])
 		return nil
 	}
 
@@ -495,6 +542,13 @@ func (u *under) Add(rec map[string]interface{}) error {
 // ErrInvalidRefKey is returned when the reference key is not found in the
 // provided map[string]interface{}.
 var ErrInvalidRefKey = errors.New("Invalid Reference Key")
+
+// Build refs builds up a reference for a specific key within the store.
+func (u *under) BuildRef(refKey string) {
+	for key := range u.records {
+		u.AdjustRef(key, refKey)
+	}
+}
 
 // AdjustRef adjusts the reference data within the map[string]interface{} lists.
 // By adding a new reference map[string]interface{} for a specific refrence key.
@@ -595,6 +649,7 @@ func (u *under) ModRefBy(rec map[string]interface{}, refKey string, new bool) er
 	}
 
 	atomic.StoreInt64(&us, 0)
+	// u.scans[refKey] = us
 
 	u.afl.RLock()
 	d := u.active[coreKey]

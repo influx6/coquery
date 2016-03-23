@@ -38,10 +38,10 @@ docs.users.findN(-1).collects(name,age,address)
 // Retrieve 10 records and collect only the "name","age" and "address" properties.
 docs.users.findN(10).collects(name,age,address)
 
-// Retrieve 10 records for the first 10 set and collect only the "name","age" and "address" properties.
+// Retrieve 10 records for after the first 10 set and collect only the "name","age" and "address" properties.
 docs.users.findN(10,10).collects(name,age,address)
 
-// Retrieve 10 records for the first 20 after the first and collect only the "name","age" and "address" properties.
+// Retrieve 10 records for after the first 20 after the first and collect only the "name","age" and "address" properties.
 docs.users.findN(10,20).collects(name,age,address)
 
 // Retrieve record with the id=10 and collect only the "name","age" and "address" properties.

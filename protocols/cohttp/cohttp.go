@@ -148,8 +148,8 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// from the user endpoint.
 	// 1. When a POST and a ContentType application/x-www-form-urlencoded, that
 	// has a query parameter
-	// 2. When a GET and has a X-Coquery-Request header else checks if there is
-	// a url parameter that has coquery="" which contains the query request.
+	// 2. When a GET and has a coquery parameter in its url query
+	// 3. When a POST and a ContentType application/json
 
 	res.Header().Set("X-Coquery-Version", "1.0")
 	res.Header().Set("Methods", "HEAD, GET, POST, PUT, PATCH")
