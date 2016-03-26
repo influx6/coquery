@@ -81,7 +81,7 @@ func (r *CoError) Error() string {
 // DocumentRouter defines a interface that defines a means for registering
 // document providers for request processing.
 type DocumentRouter interface {
-	DocumentWith(context interface{}, path string, dos Doc) DocumentRouter
+	DocumentWith(context interface{}, path string, doc Doc) DocumentRouter
 	Document(context interface{}, path string, qs QueryProcessor, d Document) DocumentRouter
 	Serve(context interface{}, rid string, path string, queries []string, rw ResponseWriter)
 }
