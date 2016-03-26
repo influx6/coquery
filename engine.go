@@ -34,17 +34,17 @@ type ResponseWriter interface {
 	Write(context interface{}, rs *Response, re ResponseError) error
 }
 
-// Documents define an interface for a backend provider which handles and
+// Document define an interface for a backend provider which handles and
 // replies the needed requests from a
-type Documents interface {
+type Document interface {
 	Handle(context interface{}, rq RecordRequests, rw ResponseWriter)
 }
 
-// DocumentOS provides a interface that allows a single-level of responsibility
+// Doc provides a interface that allows a single-level of responsibility
 // for the object that provides both its Document system and
 // its QueryProcessor.
-type DocumentOS interface {
-	Document() Documents
+type Doc interface {
+	Document() Document
 	Queries() QueryProcessor
 }
 
@@ -81,8 +81,8 @@ func (r *CoError) Error() string {
 // DocumentRouter defines a interface that defines a means for registering
 // document providers for request processing.
 type DocumentRouter interface {
-	DocumentWith(context interface{}, path string, dos DocumentOS) DocumentRouter
-	Document(context interface{}, path string, qs QueryProcessor, d Documents) DocumentRouter
+	DocumentWith(context interface{}, path string, dos Doc) DocumentRouter
+	Document(context interface{}, path string, qs QueryProcessor, d Document) DocumentRouter
 	Serve(context interface{}, rid string, path string, queries []string, rw ResponseWriter)
 }
 
@@ -90,7 +90,7 @@ type DocumentRouter interface {
 // Engine pair.
 type docSet struct {
 	query QueryProcessor
-	doc   Documents
+	doc   Document
 }
 
 // DocRoute defines a coquery engine system for routing and management of
@@ -111,10 +111,10 @@ func NewDocRoute(elog EventLog) *DocRoute {
 	return &dr
 }
 
-// DocumentWith provides a function which uses a DocumentOS to
+// DocumentWith provides a function which uses a Doc to
 // simplifies the argument lists and uses the central system to provide
 // its QueryProcessor and Documents operating system.
-func (d *DocRoute) DocumentWith(context interface{}, subPath string, dos DocumentOS) DocumentRouter {
+func (d *DocRoute) DocumentWith(context interface{}, subPath string, doc Doc) DocumentRouter {
 	d.Log(context, "Document", "Started : Register Document : %s", subPath)
 	var ok bool
 
@@ -127,7 +127,7 @@ func (d *DocRoute) DocumentWith(context interface{}, subPath string, dos Documen
 	if !ok {
 		atomic.AddInt64(&d.docAdd, 1)
 		{
-			d.documents[subPath] = &docSet{query: dos.Queries(), doc: dos.Document()}
+			d.documents[subPath] = &docSet{query: doc.Queries(), doc: doc.Document()}
 		}
 		atomic.AddInt64(&d.docAdd, -1)
 	}
@@ -139,7 +139,7 @@ func (d *DocRoute) DocumentWith(context interface{}, subPath string, dos Documen
 // Document provides the method to register a document processor for a specific
 // subroute of a router. If a subrouter is already being used, the request is
 // ignored.
-func (d *DocRoute) Document(context interface{}, subPath string, qs QueryProcessor, dc Documents) DocumentRouter {
+func (d *DocRoute) Document(context interface{}, subPath string, qs QueryProcessor, dc Document) DocumentRouter {
 	d.Log(context, "Document", "Started : Register Document : %s", subPath)
 	var ok bool
 

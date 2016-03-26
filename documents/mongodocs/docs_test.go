@@ -1,4 +1,4 @@
-package house_test
+package mongodocs_test
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 
 	"github.com/ardanlabs/kit/tests"
 	"github.com/influx6/coquery"
-	mongo "github.com/influx6/coquery/documents/mongo/db"
-	hmongo "github.com/influx6/coquery/documents/mongo/house"
+	"github.com/influx6/coquery/db/mongo"
+	"github.com/influx6/coquery/documents/mongodocs"
 	"github.com/influx6/coquery/streams"
 	"github.com/influx6/faux/sumex"
 )
@@ -50,13 +50,16 @@ func TestFindProc(t *testing.T) {
 			var lg coquery.EventLog
 			lg = &logg{}
 
-			mo, merr := mongo.New(lg, mongo.Config{
-				Host:     "127.0.0.1:27017",
-				AuthDB:   "outcast",
-				DB:       "outcast",
-				User:     "box",
-				Password: "box",
-			})
+			mor := mongo.Mongnod{
+				Events: lg,
+				Config: mongo.Config{
+					Host:     "127.0.0.1:27017",
+					AuthDB:   "outcast",
+					DB:       "outcast",
+					User:     "box",
+					Password: "box",
+				},
+			}
 
 			if merr != nil {
 				t.Fatalf("\t%s\tShould have successfully connected to mongodb instance: %q", tests.Failed, merr)
@@ -72,10 +75,9 @@ func TestFindProc(t *testing.T) {
 				Value: "GMZ657",
 			}
 
-			finder := &hmongo.FindProc{
+			finder := &mongodocs.FindProc{
 				EventLog: lg,
 				Mongo:    mo,
-				Query:    mo,
 			}
 
 			if finder.Name() != "find" {
@@ -135,7 +137,7 @@ func TestFindProcStream(t *testing.T) {
 				Value: "GMZ657",
 			}
 
-			finder := &hmongo.FindProc{
+			finder := &mongodocs.FindProc{
 				EventLog: lg,
 				Mongo:    mo,
 				Query:    mo,
