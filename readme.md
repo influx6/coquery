@@ -67,39 +67,12 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
 ### API Reply
   Coquery provides a specific reply pattern to all requests which are returned
-  from regardless of the query and result, this is set to provide the flexibility of including meta details to the responses received from the
-  API.
+  from regardless of the query and result, this is set to provide the flexibility
+  of including meta details to the responses received from the API.
 
-  When making request for queries, be it batched or single queries, coquery
-  accepts content type of a `application/x-www-form-urlencoded` for single
-  queries or a `application/json` for both single and multiple queries.
+  *When sending request, the API expects to find the request to be
+  a `application/json` content type format.*
 
-  When sending using the `application/json` format which provides more
-  possibilities for richer meta details and also the defactor pattern when
-  desiring to use advance features like batch requests and delta metas.
-
-  - URL Encoded request
-  When using the `application/x-www-form-urlencoded` content-type for request,
-  the query will be read of a `coquery=` parameter from the parsed form of
-  the request and a `requestid=` parameter for the request id if present.
-  Using this approach limits the queries to only single query requests.
-
-```js
-
-  GET:
-   /URL?coquery="docs.users.find(id,4022)"&requestid="3232453-322323232-3234"
-
-  Response:
-
-  {
-     "request_id": "36564-423266-656dA232",
-     "results": [{}],
-     "total": 20,
-  }
-
-```
-
-  - JSON Encoded request
   When using the `application/json` content-type for request, the coquery API
   will attempt to load the data into the RequestContext struct, which allows
   controls on how the request will be treated and also allows control of what
@@ -122,25 +95,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   }
 ```
 
-#### Single Request
-  When single query requests to the API are made, it responds with the following json.
-
-  Request Example: docs.users.find(id,3)
-
-  Request Response:
-```JSON
-  {
-     "request_id": "36564-423266-656dA232",
-     "last_delta_id": "36564-423266-656dA232",
-     "delta_id": "36564-423266-656dA232",
-     "batch": false,
-     "results": [{}],
-     "total": 20,
-     "deltas": [""],
-  }
-```
-
-#### Batch Request
+#### Request
   When batch query requests to the API are made, it responds with the following json.
 
   Request Example:
@@ -154,6 +109,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   Request Response:
 ```JSON
   {
+     "record_key": "_id",
      "request_id": "36564-423266-656dA232",
      "delta_id": "36564-423266-656dA232",
      "last_delta_id": "36564-423266-656dA232",
@@ -167,6 +123,11 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 The Coquery JSON response will contain standard attributes which provide
 information to the client side on the result of the operation. These tags are
 as follows:
+
+  - "record_key"
+   The `record_key` defines the actual key being used to reference records within
+   the server store. This key is the means through which records are organized
+   and allows clients to requests updates for these specific records.
 
   - "last_delta_id"
    The `last_delta_id` is a optional attribute that contains the UUID of the last delta report sent to the client, usually this signifies to the API which delta for record changes it sent last and which the client has last.

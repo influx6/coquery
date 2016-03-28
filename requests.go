@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/influx6/coquery/parser"
+	"github.com/influx6/coquery/storage"
 )
 
 //==============================================================================
@@ -157,6 +158,7 @@ func (f *Mutate) Example() []string {
 // BasicQueries provides a base level query processsor for the coquery library.
 type BasicQueries struct {
 	EventLog
+	storage.Store
 	Doc string
 }
 
@@ -282,6 +284,7 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 
 		case "collects":
 
+			params = append([]string{b.Store.Key()}, params...)
 			reqs = append(reqs, &Collects{
 				RID:  reqid,
 				Doc:  doc,

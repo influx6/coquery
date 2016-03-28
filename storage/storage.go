@@ -349,10 +349,12 @@ func (u *under) RemoveByValue(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := fmt.Sprintf("%+v", rec[u.key])
+	// key := rec[u.key]
+	ukey := fmt.Sprintf("%+v", rec[u.key])
+	delete(rec, u.key)
 
 	u.rl.RLock()
-	inrec := u.records[key]
+	inrec := u.records[ukey]
 	u.rl.RUnlock()
 
 	RemoveValuesDiff(inrec, rec)
@@ -365,10 +367,12 @@ func (u *under) RemoveByKey(rec map[string]interface{}) error {
 		return ErrNoKeyInRecord
 	}
 
-	key := fmt.Sprintf("%+v", rec[u.key])
+	// key := rec[u.key]
+	ukey := fmt.Sprintf("%+v", rec[u.key])
+	delete(rec, u.key)
 
 	u.rl.RLock()
-	inrec := u.records[key]
+	inrec := u.records[ukey]
 	u.rl.RUnlock()
 
 	RemoveMapDiff(inrec, rec)

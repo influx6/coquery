@@ -11,7 +11,7 @@ import (
 
 // Find provides a find working for handling find requests.
 type Find struct {
-	EventLog
+	Events
 	Db    DB
 	Store storage.Store
 }
@@ -27,7 +27,7 @@ func (f *Find) Do(data interface{}, err error) (interface{}, error) {
 
 	req, ok := data.(*coquery.Request)
 	if !ok {
-		f.Error("mongodocs.Find", coquery.ErrInvalidRequestType, "Completed")
+		f.Error("mongodocs.Find", "Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 

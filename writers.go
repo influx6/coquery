@@ -83,6 +83,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	// Create the map to hold our json response.
 	data := make(Parameter)
 
+	data["record_key"] = br.store.Key()
 	data["request_id"] = br.ctx.RequestID
 	data["batch"] = len(br.ctx.Queries) > 1
 

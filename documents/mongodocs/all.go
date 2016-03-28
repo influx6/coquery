@@ -3,19 +3,19 @@ package mongodocs
 import (
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/storage"
-	"gopkg.in/mgo.v2"
+	"github.com/influx6/coquery/utils"
 )
 
 // All provides a find working for handling find requests.
 type All struct {
-	EventLog
+	Events
 	Db    DB
 	Store storage.Store
 }
 
 // Do performs the necessary tasks passed to FindProc
 func (a *All) Do(data interface{}, err error) (interface{}, error) {
-	a.Log("mongodocs.All", "Do", "Started : %s", a.Query.Query(data))
+	a.Log("mongodocs.All", "Do", "Started : %s", utils.Query.Query(data))
 
 	if err != nil {
 		a.Error("mongodocs.All", "Do", err, "Completed")
@@ -66,27 +66,17 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 		}, nil
 	}
 
-	db, session, err := f.Db.New(find.RequestID())
+	db, session, err := a.Db.New(find.RequestID())
 	if err != nil {
-		f.Error(find.RequestID(), "db.New", err, "Completed : New Session")
+		a.Error(find.RequestID(), "db.New", err, "Completed : New Session")
 		return nil, &MError{Rid: find.RID, Msg: "New Session Failed", IError: err}
 	}
 
 	defer session.Close()
 
-	fn := func(c *mgo.Collection) error {
-		count, err := c.Find(nil).Count()
-		if err != nil {
-			return err
-		}
-
-		total = count
-		return nil
-	}
-
 	a.Log(find.RequestID(), "DBAction", "db.%s.find({}).count()", find.Doc)
 
-	total, err = db.C(find.Doc).Find(nil).Count
+	total, err = db.C(find.Doc).Find(nil).Count()
 	if err != nil {
 		a.Error(find.RequestID(), "Do", err, "Completed")
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
@@ -119,7 +109,7 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
 
-	a.Log(find.RequestID(), "Do", "Info : Response : %s", a.Query.Query(res))
+	a.Log(find.RequestID(), "Do", "Info : Response : %s", utils.Query.Query(res))
 
 	for _, record := range res {
 		if err := a.Store.Add((map[string]interface{})(record)); err != nil {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/ardanlabs/kit/log"
 	"github.com/influx6/coquery"
-	"github.com/influx6/coquery/documents/mongo"
+	"github.com/influx6/coquery/documents/mongodocs"
 	"github.com/influx6/coquery/protocols/cohttp"
 	"github.com/influx6/coquery/storage"
 )
@@ -45,7 +45,7 @@ func main() {
 	app := cohttp.New(events, diff, store)
 
 	app.Route(context, "docs").
-		DocumentWith(context, "users", mongo.New(mongo.DocumentConfig{
+		DocumentWith(context, "users", mongodocs.New(mongodocs.DocumentConfig{
 		Events:   events,
 		Store:    store,
 		Workers:  20,

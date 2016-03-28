@@ -1,4 +1,4 @@
-package mongo
+package mongodocs
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"gopkg.in/mgo.v2"
 
 	"github.com/influx6/coquery"
-	"github.com/influx6/coquery/documents/mongo/db"
+	"github.com/influx6/coquery/db/mongo"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/coquery/streams"
 	"github.com/influx6/faux/sumex"
@@ -88,7 +88,7 @@ type Document struct {
 	*DocumentConfig
 	sumex.Streams
 
-	handler coquery.Documents
+	handler coquery.Document
 	query   coquery.QueryProcessor
 }
 
@@ -104,6 +104,7 @@ func New(config DocumentConfig) *Document {
 
 	queries := &coquery.BasicQueries{
 		EventLog: config.Events,
+		Store:    config.Store,
 		Doc:      config.QueryDoc,
 	}
 
@@ -115,9 +116,9 @@ func New(config DocumentConfig) *Document {
 	}
 
 	// Initalize the db provider for connecting to the database.
-	db := db.Mongnod{
-		Events: config.Events,
-		Config: db.Config{
+	db := &mongo.Mongnod{
+		EventLog: config.Events,
+		Config: mongo.Config{
 			Host:     config.Host,
 			AuthDB:   config.AuthDB,
 			DB:       config.DB,
@@ -127,29 +128,29 @@ func New(config DocumentConfig) *Document {
 	}
 
 	// Set up the processors for this provider
-	dc.Stream(sumex.New(config.Workers, config.Events, &house.Find{
-		EventLog: config.Events,
-		Mongo:    db,
-		Store:    config.Store,
+	dc.Stream(sumex.New(config.Workers, config.Events, &Find{
+		Events: config.Events,
+		Db:     db,
+		Store:  config.Store,
 	}))
 
-	dc.Stream(sumex.New(config.Workers, config.Events, &house.Mutate{
-		EventLog: config.Events,
-		Mongo:    db,
-		Store:    config.Store,
+	dc.Stream(sumex.New(config.Workers, config.Events, &Mutate{
+		Events: config.Events,
+		Db:     db,
+		Store:  config.Store,
 	}))
 
-	dc.Stream(sumex.New(config.Workers, config.Events, &house.All{
-		EventLog: config.Events,
-		Mongo:    db,
-		Store:    config.Store,
+	dc.Stream(sumex.New(config.Workers, config.Events, &All{
+		Events: config.Events,
+		Db:     db,
+		Store:  config.Store,
 	}))
 
 	return &dc
 }
 
 // Document returns the processor interface for using this document.
-func (d *Document) Document() coquery.Documents {
+func (d *Document) Document() coquery.Document {
 	return d.handler
 }
 

@@ -11,7 +11,7 @@ import (
 
 // Mutate provides a record mutator for the mongo storage system.
 type Mutate struct {
-	EventLog
+	Events
 	Db    DB
 	Store storage.Store
 }
@@ -39,10 +39,10 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 	// 	return nil, err
 	// }
 
-	db, session, err := f.Db.New(find.RequestID())
+	db, session, err := m.Db.New(mux.RequestID())
 	if err != nil {
-		f.Error(mux.RequestID(), "db.New", err, "Completed : New Session")
-		return nil, &MError{Rid: find.RID, Msg: "New Session Failed", IError: err}
+		m.Error(mux.RequestID(), "db.New", err, "Completed : New Session")
+		return nil, &MError{Rid: mux.RequestID(), Msg: "New Session Failed", IError: err}
 	}
 
 	defer session.Close()
@@ -77,9 +77,9 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 			val := newRec[m.Store.Key()]
 			qry := bson.M{m.Store.Key(): val}
 
-			m.Log(mux.RequestID(), "DBAction", "db.%s.upsert(%s,%s)", mux.Doc, utils.Query.Query(qry), utils.Query.Query(d))
+			m.Log(mux.RequestID(), "DBAction", "db.%s.upsert(%s,%s)", mux.Doc, utils.Query.Query(qry), utils.Query.Query(newRec))
 
-			if err := db.C(mux.Doc).Upsert(qry, d); err != nil {
+			if _, err := db.C(mux.Doc).Upsert(qry, newRec); err != nil {
 				m.Error(mux.RequestID(), "DBAction", err, "Completed")
 				return nil, &MError{
 					Rid:    mux.RequestID(),
@@ -89,6 +89,11 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 			}
 		}
 
+		m.Log(mux.RequestID(), "Do", "Completed")
+		return &coquery.Response{
+			Req:  mux,
+			Data: records,
+		}, nil
 	}
 
 	if new {
@@ -103,13 +108,13 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 
 		qry := bson.M{m.Store.Key(): val}
 
-		m.Log(mux.RequestID(), "DBAction", "db.%s.upsert(%s,%s)", mux.Doc, utils.Query.Query(qry), utils.Query.Query(d))
+		m.Log(mux.RequestID(), "DBAction", "db.%s.upsert(%s,%s)", mux.Doc, utils.Query.Query(qry), utils.Query.Query(param))
 
-		if err := db.C(mux.Doc).Upsert(qry, param); err != nil {
+		if _, err := db.C(mux.Doc).Upsert(qry, param); err != nil {
 			m.Error(mux.RequestID(), "DBAction", err, "Completed")
 			return nil, &MError{
 				Rid:    mux.RequestID(),
-				Msg:    fmt.Sprintf("Mutate DB Update: Record : %s", utils.Query.Query(newRec)),
+				Msg:    fmt.Sprintf("Mutate DB Update: Record : %s", utils.Query.Query(param)),
 				IError: err,
 			}
 		}
@@ -119,7 +124,7 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 	m.Log(mux.RequestID(), "Do", "Completed")
 	return &coquery.Response{
 		Req:  mux,
-		Data: records,
+		Data: coquery.Parameters{mux.Parameter},
 	}, nil
 }
 
