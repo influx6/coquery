@@ -3,16 +3,17 @@ package client
 import (
 	"sync/atomic"
 
-	"github.com/influx6/coquery/client/data"
+	"github.com/influx6/coquery"
+	"github.com/pborman/uuid"
 )
 
 //==============================================================================
 
 // PerRequestHandler defines a handler type for receving a per data response.
-type PerRequestHandler func(error, data.Response)
+type PerRequestHandler func(error, coquery.Parameter)
 
 // RequestHandler defines a handler type for receving a per data response.
-type RequestHandler func(error, []data.Response)
+type RequestHandler func(error, coquery.Parameters)
 
 // Requestor provides a interface for requesting data from the giving endpoint.
 type Requestor interface {
@@ -20,7 +21,7 @@ type Requestor interface {
 	UUID() string
 	Listen(rx RequestHandler)
 	ListenFor(key interface{}, rx PerRequestHandler)
-	Receive(err error, d data.Pack)
+	Receive(err error, d coquery.ResponsePack)
 	ShouldUpdate(deltas []string) bool
 }
 
@@ -39,6 +40,18 @@ type BaseRequestor struct {
 	keyUpdate int64
 }
 
+// NewBaseRequester returns a new BaseRequestor struct instance.
+func NewBaseRequester(query string, server Server) *BaseRequestor {
+	br := BaseRequestor{
+		records: make(map[interface{}]bool),
+		uuid:    uuid.New(),
+		query:   query,
+		server:  server,
+	}
+
+	return &br
+}
+
 // Do sends of the query to be serviced by the server, processing all necessary
 // and passing information off to interested handlers.
 func (b *BaseRequestor) Do() error {
@@ -48,11 +61,11 @@ func (b *BaseRequestor) Do() error {
 // ListenFor allows listening for a specific record recieved from the server
 // using the provided key for that record. Because BaseRequestor stores all
 // record keys retrieved from the server using the key attribute received
-// from the server in the data.Pack.
+// from the server in the coquery.ResponsePack.
 func (b *BaseRequestor) ListenFor(key interface{}, rx PerRequestHandler) {
 	atomic.StoreInt64(&b.pending, 1)
 	{
-		b.handles = append(b.handles, func(err error, records []data.Response) {
+		b.handles = append(b.handles, func(err error, records coquery.Parameters) {
 			if err != nil {
 				rx(err, nil)
 				return
@@ -103,7 +116,7 @@ func (b *BaseRequestor) ShouldUpdate(deltas []string) bool {
 
 // Receive provides the central method for providing record updates to the
 // registered callbacks for this
-func (b *BaseRequestor) Receive(err error, data data.Pack) {
+func (b *BaseRequestor) Receive(err error, data coquery.ResponsePack) {
 	// If error occured, to ensure our callbacks are not left starving, notify
 	// everyone of error and let them react accordingly.
 	if err != nil {

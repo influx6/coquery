@@ -75,11 +75,7 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
 
   When using the `application/json` content-type for request, the coquery API
   will attempt to load the data into the RequestContext struct, which allows
-  controls on how the request will be treated and also allows control of what
-  format of json is returned where either a json of the result alone or the
-  format coquery JSON format describe in the coming sections through the
-  `NoJSON` attribute.
-
+  controls on how the request will be treated.
 
   Note: Infact only one attribute `Queries` is required and the rest can be
   left unfield as they only enable specific reply fields.
@@ -91,7 +87,6 @@ docs.user.find(id,0).mutate(b64("XHg3N1x4NjVceDZjXHg2OVx4NmVceDY3XHg2OFx4NzRceDZ
   	Diffs     bool     `json:"diffs"`
   	DiffTag   string   `json:"diff_tag"`
   	DiffWatch []string `json:"diff_watch"`
-  	NoJSON    bool     `json:"no_json"`
   }
 ```
 

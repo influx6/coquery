@@ -42,6 +42,18 @@ type Parameters []Parameter
 
 //==============================================================================
 
+// ResponsePack defines the response to be recieved back from the API.
+type ResponsePack struct {
+	RecordKey string     `json:"record_key"`
+	RequestID string     `json:"request_id"`
+	Batched   bool       `json:"batch"`
+	DeltaID   string     `json:"delta_id"`
+	Deltas    []string   `json:"delta_id"`
+	Results   Parameters `json:"results"`
+}
+
+//==============================================================================
+
 // Identity provides a interface that defines a request ID member method.
 type Identity interface {
 	RequestID() string
