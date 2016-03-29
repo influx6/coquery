@@ -8,6 +8,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 //==============================================================================
@@ -683,6 +685,50 @@ func (u *under) clean() {
 
 //==============================================================================
 
+// LastKey returns the last key in a period delimited string.
+func LastKey(key string) string {
+	keys := strings.Split(key, ".")
+	keyLen := len(keys)
+
+	if keyLen == 1 {
+		return keys[0]
+	}
+
+	return keys[keyLen-1:][0]
+}
+
+// BuildMap takes a period delimited key and creates the necessary corresponding
+// level and depth structure map, returning the root and the last inner
+// map.
+func BuildMap(key string) (root, last map[string]interface{}) {
+	root = make(map[string]interface{})
+	last = root
+
+	prev := root
+
+	keys := strings.Split(key, ".")
+	keyLen := len(keys)
+
+	if keyLen == 1 {
+		root[keys[0]] = nil
+		return
+	}
+
+	for index, key := range keys {
+		if index >= keyLen {
+			last = make(map[string]interface{})
+			prev[key] = last
+			return
+		}
+
+		tmp := make(map[string]interface{})
+		prev[key] = tmp
+		prev = tmp
+	}
+
+	return
+}
+
 // PullKeys will pull out a key values even when presented by a period delimited
 // depth keys. It returns true/false as second value if all keys where found.
 func PullKeys(rec map[string]interface{}, key string) (interface{}, bool) {
@@ -815,27 +861,27 @@ func MergeMaps(to, from map[string]interface{}) {
 	for key, value := range from {
 
 		switch value.(type) {
-		//
-		// case bson.M:
-		// 	valMap := value.(bson.M)
-		//
-		// 	var tom map[string]interface{}
-		//
-		// 	item, ok := to[key]
-		// 	if !ok {
-		// 		tom = make(map[string]interface{})
-		// 	} else {
-		// 		if mo, ok := item.(map[string]interface{}); ok {
-		// 			tom = mo
-		// 		} else {
-		// 			continue
-		// 		}
-		// 	}
-		//
-		// 	MergeMaps(tom, BSONtoMap(valMap))
-		// 	to[key] = tom
-		// 	continue
-		//
+
+		case bson.M:
+			valMap := value.(bson.M)
+
+			var tom map[string]interface{}
+
+			item, ok := to[key]
+			if !ok {
+				tom = make(map[string]interface{})
+			} else {
+				if mo, ok := item.(map[string]interface{}); ok {
+					tom = mo
+				} else {
+					continue
+				}
+			}
+
+			MergeMaps(tom, BSONtoMap(valMap))
+			to[key] = tom
+			continue
+
 		case map[string]interface{}:
 			valMap := value.(map[string]interface{})
 			var tom map[string]interface{}
@@ -886,41 +932,41 @@ func CopyMap(m map[string]interface{}) map[string]interface{} {
 	return to
 }
 
-// // BSONtoMap copies a bson.M map into a raw map structure.
-// func BSONtoMap(m bson.M) map[string]interface{} {
-// 	to := make(map[string]interface{})
-// 	bsonCopy(to, m)
-// 	return to
-// }
+// BSONtoMap copies a bson.M map into a raw map structure.
+func BSONtoMap(m bson.M) map[string]interface{} {
+	to := make(map[string]interface{})
+	bsonCopy(to, m)
+	return to
+}
 
-// // bsonCopy copies one bson.M file, cloning as necessary down the data trees.
-// func bsonCopy(to map[string]interface{}, from bson.M) {
-// 	for key, value := range from {
-// 		switch value.(type) {
-// 		// case bson.M:
-// 		// 	mn := make(map[string]interface{})
-// 		// 	bsonCopy(mn, value.(bson.M))
-// 		// 	to[key] = mn
-// 		// 	continue
-// 		case map[string]interface{}:
-// 			mapCopy(to, value.(map[string]interface{}))
-// 			continue
-// 		default:
-// 			to[key] = value
-// 			continue
-// 		}
-// 	}
-// }
+// bsonCopy copies one bson.M file, cloning as necessary down the data trees.
+func bsonCopy(to map[string]interface{}, from bson.M) {
+	for key, value := range from {
+		switch value.(type) {
+		case bson.M:
+			mn := make(map[string]interface{})
+			bsonCopy(mn, value.(bson.M))
+			to[key] = mn
+			continue
+		case map[string]interface{}:
+			mapCopy(to, value.(map[string]interface{}))
+			continue
+		default:
+			to[key] = value
+			continue
+		}
+	}
+}
 
 // mapCopy copies one map details, cloning as necessary down the data trees.
 func mapCopy(to, from map[string]interface{}) {
 	for key, value := range from {
 		switch value.(type) {
-		// case bson.M:
-		// 	mn := make(map[string]interface{})
-		// 	bsonCopy(mn, value.(bson.M))
-		// 	to[key] = mn
-		// 	continue
+		case bson.M:
+			mn := make(map[string]interface{})
+			bsonCopy(mn, value.(bson.M))
+			to[key] = mn
+			continue
 		case map[string]interface{}:
 			mn := make(map[string]interface{})
 			mapCopy(mn, value.(map[string]interface{}))

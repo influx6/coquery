@@ -20,23 +20,23 @@ type Mutate struct {
 // Do performs the operations for mutating a record within the internal coqery
 // store and if successfully, send it into the db for storage.
 func (m *Mutate) Do(dataReq interface{}, err error) (interface{}, error) {
-	m.Log("mongodocs.Mutate", "Do", "Started : %s", utils.Query.Query(dataReq))
+	m.Log("mongodocs", "Mutate.Do", "Started : %s", utils.Query.Query(dataReq))
 
 	req, ok := dataReq.(*coquery.Request)
 	if !ok {
-		m.Error("mongodocs.Mutate", "Do", coquery.ErrInvalidRequestType, "Completed")
+		m.Error("mongodocs", "Mutate.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
 	mux, ok := req.R.(*coquery.Mutate)
 	if !ok {
-		m.Error("mongodocs.Mutate", "Do", coquery.ErrInvalidRequestType, "Completed")
+		m.Error("mongodocs", "Mutate.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
 	// if req.LastResponse == nil {
 	// 	err := errors.New("Mutate Only works on already selected records")
-	// 	m.Error(mux.RequestID(), "Do", err, "Completed")
+	// 	m.Error(mux.RequestID(), "Mutate.Do", err, "Completed")
 	// 	return nil, err
 	// }
 
@@ -62,7 +62,7 @@ func (m *Mutate) Do(dataReq interface{}, err error) (interface{}, error) {
 
 			// If the error failed, then stop and return as failure.
 			if err := m.Store.Add(mrec); err != nil {
-				m.Error(mux.RequestID(), "Do", err, "Completed")
+				m.Error(mux.RequestID(), "Mutate.Do", err, "Completed")
 				return nil, &MError{
 					Rid:    mux.RequestID(),
 					Msg:    fmt.Sprintf("Mutate Failed: Record : %s", utils.Query.Query(rec)),
@@ -90,7 +90,7 @@ func (m *Mutate) Do(dataReq interface{}, err error) (interface{}, error) {
 			}
 		}
 
-		m.Log(mux.RequestID(), "Do", "Completed")
+		m.Log(mux.RequestID(), "Mutate.Do", "Completed")
 		return &coquery.Response{
 			Req:  mux,
 			Data: records,
@@ -122,7 +122,9 @@ func (m *Mutate) Do(dataReq interface{}, err error) (interface{}, error) {
 
 	}
 
-	m.Log(mux.RequestID(), "Do", "Completed")
+	m.Log(mux.RequestID(), "Mutate.Do", "Completed")
+	m.Log("mongodocs", "Mutate.Do", "Completed")
+
 	return &coquery.Response{
 		Req:  mux,
 		Data: data.Parameters{mux.Parameter},

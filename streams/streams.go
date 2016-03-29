@@ -2,6 +2,7 @@ package streams
 
 import (
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -115,14 +116,14 @@ func ResponseStream(e EventLog, context interface{}, maxWait time.Duration, rid 
 					continue
 				}
 
-				e.Log(context, "ResponseStream.GoRoutine", "Info : Received Error Response : ID[%s]", res.RequestID())
+				e.Error(context, "ResponseStream.GoRoutine", res, "Info : Received Error Response : ID[%s]", res.RequestID())
 				outerr <- res
 				e.Log(context, "ResponseStream.GoRoutine", "Completed")
 				return
 
 			case <-time.After(maxWait):
 				err := &coquery.CoError{Rid: rid, Msg: "Timeout", IError: ErrRequestTimout}
-				e.Error(context, "ResponseStream.GoRoutine", err, "Info : Received Error Response : ID[%s]", rid)
+				e.Error(context, "ResponseStream.GoRoutine", err, "Info : Received Timeout Error Response : ID[%s]", rid)
 				outerr <- err
 				e.Log(context, "ResponseStream.GoRoutine", "Completed")
 				return
@@ -195,6 +196,8 @@ func (s *StreamOS) Stream(hs sumex.Streams) sumex.Streams {
 func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw coquery.ResponseWriter) {
 	s.Log.Log(context, "Handle", "Started : Recieved New Requests : Total[%d]", len(rqs))
 
+	total := len(rqs)
+
 	var previous coquery.RecordRequest
 	var previousRes *coquery.Response
 
@@ -249,10 +252,12 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 			return
 		}
 
+		fmt.Printf("Providing index: %d\n", index)
+
 		// If we passed, send out the response to anyone who cares.
 		// Are we at the last request, if so, write it to the ResponseWriter, else
 		// continue until the last one.
-		if index >= len(rqs)-1 {
+		if index >= total-1 {
 			rw.Write(context, res, nil)
 		}
 

@@ -44,7 +44,7 @@ func main() {
 
 	clientServo := client.NewServo("http://127.0.0.1:3000", 300*time.Millisecond, js.HTTP)
 
-	all := clientServo.Register("docs.users.findN(-1)")
+	all := clientServo.Register("docs.users.findN(-1).collects(name,nationality)")
 
 	all.Listen(func(err error, records data.Parameters) {
 

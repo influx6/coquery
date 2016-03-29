@@ -7,6 +7,7 @@ import (
 
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/db/mongo"
+	"github.com/influx6/coquery/documents/crossdocs"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/coquery/streams"
 	"github.com/influx6/faux/sumex"
@@ -131,6 +132,11 @@ func New(config DocumentConfig) *Document {
 	dc.Stream(sumex.New(config.Workers, config.Events, &Find{
 		Events: config.Events,
 		Db:     db,
+		Store:  config.Store,
+	}))
+
+	dc.Stream(sumex.New(config.Workers, config.Events, &crossdocs.Collect{
+		Events: config.Events,
 		Store:  config.Store,
 	}))
 

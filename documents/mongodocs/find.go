@@ -19,22 +19,22 @@ type Find struct {
 
 // Do performs the necessary tasks passed to FindProc
 func (f *Find) Do(dataReq interface{}, err error) (interface{}, error) {
-	f.Log("mongodocs.Find", "Do", "Started : %s", utils.Query.Query(dataReq))
+	f.Log("mongodocs", "Find.Do", "Started : %s", utils.Query.Query(dataReq))
 
 	if err != nil {
-		f.Error("mongodocs.Find", "Do", err, "Completed")
+		f.Error("mongodocs", "Find.Do", err, "Completed")
 		return nil, err
 	}
 
 	req, ok := dataReq.(*coquery.Request)
 	if !ok {
-		f.Error("mongodocs.Find", "Do", coquery.ErrInvalidRequestType, "Completed")
+		f.Error("mongodocs.Find", "Find.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
 	find, ok := req.R.(*coquery.Find)
 	if !ok {
-		f.Error(req.R.RequestID(), "Do", coquery.ErrInvalidRequestType, "Completed")
+		f.Error(req.R.RequestID(), "Find.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
@@ -50,7 +50,7 @@ func (f *Find) Do(dataReq interface{}, err error) (interface{}, error) {
 	records, err := f.Store.GetByRef(find.Key, val)
 	if err != nil {
 		found = false
-		f.Error(req.R.RequestID(), "Do", coquery.ErrInvalidRequestType, "Completed")
+		f.Error(req.R.RequestID(), "Find.Do", coquery.ErrInvalidRequestType, "Completed")
 	}
 
 	if found {
@@ -58,9 +58,9 @@ func (f *Find) Do(dataReq interface{}, err error) (interface{}, error) {
 			res = append(res, data.Parameter(recs))
 		}
 
-		f.Log(find.RequestID(), "Do", "Info : Store : Record Found")
+		f.Log(find.RequestID(), "Find.Do", "Info : Store : Record Found")
 
-		f.Log(find.RequestID(), "Do", "Completed")
+		f.Log(find.RequestID(), "Find.Do", "Completed")
 		return &coquery.Response{
 			Req:  find,
 			Data: res,
@@ -83,15 +83,16 @@ func (f *Find) Do(dataReq interface{}, err error) (interface{}, error) {
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
 
-	f.Log(find.RequestID(), "Do", "Info : Response : %s", utils.Query.Query(res))
+	f.Log(find.RequestID(), "Find.Do", "Info : Response : %s", utils.Query.Query(res))
 
 	for _, record := range res {
 		if err := f.Store.AddRef((map[string]interface{})(record), find.Key); err != nil {
-			f.Error(find.RequestID(), "Do", err, "Info : Store.AddRef : Key[%s]", find.Key)
+			f.Error(find.RequestID(), "Find.Do", err, "Info : Store.AddRef : Key[%s]", find.Key)
 		}
 	}
 
-	f.Log(find.RequestID(), "Do", "Completed")
+	f.Log(find.RequestID(), "Find.Do", "Completed")
+	f.Log("mongodocs", "Find.Do", "Completed")
 
 	return &coquery.Response{
 		Req:  find,

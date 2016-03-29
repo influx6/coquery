@@ -16,22 +16,22 @@ type All struct {
 
 // Do performs the necessary tasks passed to FindProc
 func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
-	a.Log("mongodocs.All", "Do", "Started : %s", utils.Query.Query(dataReq))
+	a.Log("mongodocs", "All.Do", "Started : %s", utils.Query.Query(dataReq))
 
 	if err != nil {
-		a.Error("mongodocs.All", "Do", err, "Completed")
+		a.Error("mongodocs", "All.Do", err, "Completed")
 		return nil, err
 	}
 
 	req, ok := dataReq.(*coquery.Request)
 	if !ok {
-		a.Error("mongodocs.All", "Do", coquery.ErrInvalidRequestType, "Completed")
+		a.Error("mongodocs", "All.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
 	find, ok := req.R.(*coquery.FindN)
 	if !ok {
-		a.Error(find.RequestID(), "Do", coquery.ErrInvalidRequestType, "Completed")
+		a.Error("mongodocs", "All.Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
 	}
 
@@ -58,9 +58,9 @@ func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
 			res = append(res, data.Parameter(recs))
 		}
 
-		a.Log(find.RequestID(), "Do", "Info : Store : Record Found")
+		a.Log(find.RequestID(), "All.Do", "Info : Store : Record Found")
 
-		a.Log(find.RequestID(), "Do", "Completed")
+		a.Log(find.RequestID(), "All.Do", "Completed")
 		return &coquery.Response{
 			Req:  find,
 			Data: res,
@@ -79,7 +79,7 @@ func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
 
 	total, err = db.C(find.Doc).Find(nil).Count()
 	if err != nil {
-		a.Error(find.RequestID(), "Do", err, "Completed")
+		a.Error(find.RequestID(), "All.Do", err, "Completed")
 		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
 	}
 
@@ -94,9 +94,9 @@ func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
 			res = append(res, data.Parameter(recs))
 		}
 
-		a.Log(find.RequestID(), "Do", "Info : Store : Record Found")
+		a.Log(find.RequestID(), "All.Do", "Info : Store : Record Found")
 
-		a.Log(find.RequestID(), "Do", "Completed")
+		a.Log(find.RequestID(), "All.Do", "Completed")
 		return &coquery.Response{
 			Req:  find,
 			Data: res,
@@ -110,15 +110,16 @@ func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
 		return nil, &MError{Rid: find.RID, Msg: "All Failed", IError: err}
 	}
 
-	a.Log(find.RequestID(), "Do", "Info : Response : %s", utils.Query.Query(res))
+	a.Log(find.RequestID(), "All.Do", "Info : Response : %s", utils.Query.Query(res))
 
 	for _, record := range res {
 		if err := a.Store.Add((map[string]interface{})(record)); err != nil {
-			a.Error(find.RequestID(), "Do", err, "Info : Store.Add")
+			a.Error(find.RequestID(), "All.Do", err, "Info : Store.Add")
 		}
 	}
 
-	a.Log(find.RequestID(), "Do", "Completed")
+	a.Log(find.RequestID(), "All.Do", "Completed")
+	a.Log("mongodocs", "All.Do", "Completed")
 
 	return &coquery.Response{
 		Req:  find,
