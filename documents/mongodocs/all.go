@@ -107,7 +107,7 @@ func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
 
 	if err := db.C(find.Doc).Find(nil).Skip(find.Skip).Limit(find.Amount).All(&res); err != nil {
 		a.Error(find.RequestID(), "DBAction", err, "Completed")
-		return nil, &MError{Rid: find.RID, Msg: "FindProc Failed", IError: err}
+		return nil, &MError{Rid: find.RID, Msg: "All Failed", IError: err}
 	}
 
 	a.Log(find.RequestID(), "Do", "Info : Response : %s", utils.Query.Query(res))

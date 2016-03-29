@@ -43,6 +43,7 @@ func main() {
 	diff := coquery.NewExpiringDiffs(events, 1*time.Hour)
 	store := storage.NewExpirable("uid", 1*time.Hour)
 	app := cohttp.New(events, diff, store)
+	app.EnableCORS()
 
 	app.Route(context, "docs").
 		DocumentWith(context, "users", mongodocs.New(mongodocs.DocumentConfig{

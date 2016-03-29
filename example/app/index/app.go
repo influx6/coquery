@@ -28,7 +28,7 @@ func (l eventlog) Log(context interface{}, name string, message string, data ...
 
 // Error logs all error reports.
 func (l eventlog) Error(context interface{}, name string, err error, message string, data ...interface{}) {
-	fmt.Printf("Error: %s : %s : %s : %s\n", context, "DEV", name, fmt.Sprintf(message, data...))
+	fmt.Printf("Error: %s : %s : %s : %s : Error %s\n", context, "DEV", name, fmt.Sprintf(message, data...), err)
 }
 
 //==============================================================================

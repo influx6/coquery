@@ -15,7 +15,7 @@ import (
 
 // ClientTimeout sets the default timeout for a requests based on the
 // xhr XMLRequestHTTP API.
-var ClientTimeout = 30 * time.Second
+var ClientTimeout = 60 * time.Second
 
 // HTTP provides the transport layer build on the XMLRequestHTTP provided by
 // the browser to allow requests to be made to the backend from the client side.
@@ -37,8 +37,8 @@ func (jsHTTP) Do(addr string, body io.Reader) (data.ResponsePack, error) {
 	}
 
 	req := xhr.NewRequest("POST", addr)
-	req.Timeout = int(ClientTimeout.Seconds())
-	req.ResponseType = xhr.JSON
+	// req.Timeout = int(ClientTimeout.Seconds())
+	req.ResponseType = xhr.Text
 
 	if err := req.Send(jsonBuff); err != nil {
 		return d, err
@@ -48,6 +48,8 @@ func (jsHTTP) Do(addr string, body io.Reader) (data.ResponsePack, error) {
 	if req.Status < 200 || req.Status >= 300 {
 		return d, ErrFailedRequest
 	}
+
+	// fmt.Printf("%+s\n", req.Response.())
 
 	var buf bytes.Buffer
 	buf.Write([]byte(req.ResponseText))
