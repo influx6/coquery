@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/influx6/faux/utils"
 )
 
 // Diffs defines an interface for storing store diffs for the coquery system
@@ -240,7 +240,7 @@ func (diff *DiffStore) Put(record []string) string {
 	diff.Log("DiffStore", "Put", "Started : Adding New Record : %s", fmt.Sprintf("%+v", record))
 	diff.clean()
 
-	key := uuid.New()
+	key := utils.UUID()
 
 	if len(record) < 1 {
 		diff.Error("DiffStore", "Put", fmt.Errorf("Empty Record"), "Completed")

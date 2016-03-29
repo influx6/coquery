@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/influx6/coquery"
-	"github.com/pborman/uuid"
+	"github.com/influx6/faux/utils"
 )
 
 //==============================================================================
@@ -44,7 +44,7 @@ type BaseRequestor struct {
 func NewBaseRequester(query string, server Server) *BaseRequestor {
 	br := BaseRequestor{
 		records: make(map[interface{}]bool),
-		uuid:    uuid.New(),
+		uuid:    utils.UUID(),
 		query:   query,
 		server:  server,
 	}

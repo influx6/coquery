@@ -78,6 +78,11 @@
 			"revisionTime": "2016-03-12T19:54:39+01:00"
 		},
 		{
+			"path": "honnef.co/go/js/dom",
+			"revision": "ef247f60aa88ed944d605c82cb56a9873c2f9b2e",
+			"revisionTime": "2016-01-27T08:58:48+01:00"
+		},
+		{
 			"path": "honnef.co/go/js/util",
 			"revision": "96b8dd9d16214b6cd9d8c8e84b3a375da4688108",
 			"revisionTime": "2015-02-16T23:39:35+01:00"

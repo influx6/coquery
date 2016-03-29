@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/influx6/coquery"
-	"github.com/pborman/uuid"
+	"github.com/influx6/faux/utils"
 )
 
 //==============================================================================
@@ -55,7 +55,7 @@ func NewServo(addr string, wait time.Duration, transport ServeTransport) *Servo 
 	svo := Servo{
 		addr:      addr,
 		wait:      wait,
-		uuid:      uuid.New(),
+		uuid:      utils.UUID(),
 		transport: transport,
 		providers: make(map[string]Requestor),
 	}
