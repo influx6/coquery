@@ -1,5 +1,97 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": []
+	"package": [
+		{
+			"path": "github.com/ardanlabs/kit/cfg",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/db",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/db/mongo",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/log",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/ardanlabs/kit/tests",
+			"revision": "219d5db3d5ae6948631c9489972cb603a31731ad",
+			"revisionTime": "2016-03-12T19:54:39+01:00"
+		},
+		{
+			"path": "github.com/gopherjs/gopherjs/js",
+			"revision": "64858154c27789453689ac91041a736c89abd49d",
+			"revisionTime": "2016-03-28T11:50:26+02:00"
+		},
+		{
+			"path": "github.com/influx6/faux/panics",
+			"revision": "05bf041b119d123be2b3e97cd1863e184d167e4d",
+			"revisionTime": "2016-03-29T12:26:48+01:00"
+		},
+		{
+			"path": "github.com/influx6/faux/sumex",
+			"revision": "05bf041b119d123be2b3e97cd1863e184d167e4d",
+			"revisionTime": "2016-03-29T12:26:48+01:00"
+		},
+		{
+			"path": "github.com/influx6/faux/utils",
+			"revision": "05bf041b119d123be2b3e97cd1863e184d167e4d",
+			"revisionTime": "2016-03-29T12:26:48+01:00"
+		},
+		{
+			"path": "github.com/pborman/uuid",
+			"revision": "c55201b036063326c5b1b89ccfe45a184973d073",
+			"revisionTime": "2016-02-16T08:37:10-08:00"
+		},
+		{
+			"origin": "github.com/influx6/faux/vendor/github.com/satori/go.uuid",
+			"path": "github.com/satori/go.uuid",
+			"revision": "05bf041b119d123be2b3e97cd1863e184d167e4d",
+			"revisionTime": "2016-03-29T12:26:48+01:00"
+		},
+		{
+			"path": "gopkg.in/mgo.v2",
+			"revision": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64",
+			"revisionTime": "2016-01-18T12:58:58-02:00"
+		},
+		{
+			"path": "gopkg.in/mgo.v2/bson",
+			"revision": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64",
+			"revisionTime": "2016-01-18T12:58:58-02:00"
+		},
+		{
+			"path": "gopkg.in/mgo.v2/internal/sasl",
+			"revision": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64",
+			"revisionTime": "2016-01-18T12:58:58-02:00"
+		},
+		{
+			"path": "gopkg.in/mgo.v2/internal/scram",
+			"revision": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64",
+			"revisionTime": "2016-01-18T12:58:58-02:00"
+		},
+		{
+			"path": "honnef.co/go/js/dom",
+			"revision": "ef247f60aa88ed944d605c82cb56a9873c2f9b2e",
+			"revisionTime": "2016-01-27T08:58:48+01:00"
+		},
+		{
+			"path": "honnef.co/go/js/util",
+			"revision": "96b8dd9d16214b6cd9d8c8e84b3a375da4688108",
+			"revisionTime": "2015-02-16T23:39:35+01:00"
+		},
+		{
+			"path": "honnef.co/go/js/xhr",
+			"revision": "00e3346113aed89b501ead4e863c7c3d04fa0c5b",
+			"revisionTime": "2015-03-07T04:10:22+01:00"
+		}
+	]
 }
