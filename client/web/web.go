@@ -10,14 +10,14 @@ import (
 )
 
 // HTTP provides a handle for the http request processor.
-var HTTP httpc
+var HTTP webHTTP
 
-type httpc struct{}
+type webHTTP struct{}
 
 var client = http.Client{Timeout: 30 * time.Second}
 
 // Do issues the requests and collects the response into a pack.
-func (httpc) Do(addr string, body io.Reader) (coquery.ResponsePack, error) {
+func (webHTTP) Do(addr string, body io.Reader) (coquery.ResponsePack, error) {
 	var data coquery.ResponsePack
 
 	// Make a post requests with a application/json body.

@@ -97,8 +97,11 @@ func (s *Servo) serve(query string, client Requestor) error {
 
 	atomic.StoreInt64(&s.watching, 1)
 
+	// Since we need to still make a request at the end of the set time,
+	// we must schedule a go-routine to lunch the sendNow function when the
+	// buffer delay time as passed else if it has already being resolved then ignore.
 	go func() {
-		<-time.After(s.wait)
+		<-time.After(s.wait + 2)
 		if atomic.LoadInt64(&s.watching) == 0 {
 			return
 		}

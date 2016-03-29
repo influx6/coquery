@@ -50,7 +50,6 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 		br.data = append(br.data, Parameter{
 			"Error":   err.Error(),
 			"Message": err.Message(),
-			// "Request": err.RequestID(),
 		})
 	}
 
