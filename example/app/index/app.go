@@ -48,7 +48,6 @@ func main() {
 
 	all.Listen(func(err error, records data.Parameters) {
 
-		fmt.Printf("Received: %s -> %+s\n", err, records)
 		if err != nil {
 			events.Error(context, "Listen", err, "All query Failed")
 			return
