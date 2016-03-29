@@ -33,6 +33,7 @@ type Server interface {
 // Response parameter for each requster.
 type Servo struct {
 	pending      int64
+	watching     int64
 	addr         string
 	uuid         string
 	pendingTime  time.Time
@@ -86,22 +87,31 @@ func (s *Servo) Register(query string) Requestor {
 // specified timing these allows us to batch and send as much request over
 // specific period of times without wasting bandwidth.
 func (s *Servo) serve(query string, client Requestor) error {
-
-	// If we have already sent the data that has been queued, then
-	// reset all details accordinly and prepare to to batch new requests.
-	if s.pendingQuery == nil {
-		s.pendingTime = time.Now().Add(s.wait)
-		s.pendingQuery = make(map[string]int)
+	if s.batch(query, client) {
+		return s.sendNow()
 	}
 
-	// Add the pending query with the right index.
-	index := len(s.pendingQuery)
-	s.pendingQuery[query] = index
-
-	if !time.Now().After(s.pendingTime) {
+	if atomic.LoadInt64(&s.watching) > 0 {
 		return nil
 	}
 
+	atomic.StoreInt64(&s.watching, 1)
+
+	go func() {
+		<-time.After(s.wait)
+		if atomic.LoadInt64(&s.watching) == 0 {
+			return
+		}
+
+		s.sendNow()
+	}()
+
+	return nil
+}
+
+// sendNow initializes and forwards the internal requests to the transport
+// regardless of batching rules and limits.
+func (s *Servo) sendNow() error {
 	// Collect all the queries with their specified index and allocated into
 	// a prelength list, build json request body and send off to transport
 	// for delivery to endpoint.
@@ -130,13 +140,29 @@ func (s *Servo) serve(query string, client Requestor) error {
 	// }
 
 	var buf bytes.Buffer
+	var reply coquery.ResponsePack
 
 	// Attemp to encode the request data as json else return error.
 	if err := json.NewEncoder(&buf).Encode(&data); err != nil {
+		s.pendingQuery = nil
+
+		// Notify all concerned providers of error.
+		atomic.StoreInt64(&s.pending, 1)
+		{
+
+			for qry := range s.pendingQuery {
+				s.providers[qry].Receive(err, reply)
+			}
+
+		}
+		atomic.StoreInt64(&s.pending, 0)
 		return err
 	}
 
-	reply, err := s.transport.Do(s.addr, &buf)
+	var err error
+
+	// Deliver body to the transport layer.
+	reply, err = s.transport.Do(s.addr, &buf)
 	if err != nil {
 		s.pendingQuery = nil
 
@@ -163,8 +189,16 @@ func (s *Servo) serve(query string, client Requestor) error {
 	atomic.StoreInt64(&s.pending, 1)
 	{
 
-		for qry := range s.pendingQuery {
-			s.providers[qry].Receive(nil, reply)
+		for ind, qry := range queries {
+			if !reply.Batched {
+				s.providers[qry].Receive(nil, reply)
+				continue
+			}
+
+			mainReply := (&reply).Results[ind]
+			newReply := reply
+			(&newReply).Results = mainReply["data"].(coquery.Parameters)
+			s.providers[qry].Receive(nil, newReply)
 		}
 
 		// Check if last delta tag is same as the new recieved reply, if it is not
@@ -180,7 +214,7 @@ func (s *Servo) serve(query string, client Requestor) error {
 				}
 
 				if provider.ShouldUpdate(reply.Deltas) {
-					s.serve(query, provider)
+					s.batch(key, provider)
 				}
 			}
 
@@ -189,5 +223,27 @@ func (s *Servo) serve(query string, client Requestor) error {
 	}
 	atomic.StoreInt64(&s.pending, 0)
 
+	atomic.StoreInt64(&s.watching, 0)
 	return nil
+}
+
+// batch adds the given request into the batch lists. It returns true/false
+// if the requests should be immediately served to the transport provider.
+func (s *Servo) batch(query string, client Requestor) bool {
+	// If we have already sent the data that has been queued, then
+	// reset all details accordinly and prepare to to batch new requests.
+	if s.pendingQuery == nil {
+		s.pendingTime = time.Now().Add(s.wait)
+		s.pendingQuery = make(map[string]int)
+	}
+
+	// Add the pending query with the right index.
+	index := len(s.pendingQuery)
+	s.pendingQuery[query] = index
+
+	if len(s.providers) > 1 && !time.Now().After(s.pendingTime) {
+		return false
+	}
+
+	return true
 }

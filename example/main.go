@@ -1,14 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/ardanlabs/kit/log"
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/client"
+	"github.com/influx6/coquery/client/web"
 	"github.com/influx6/coquery/documents/mongodocs"
 	"github.com/influx6/coquery/protocols/cohttp"
 	"github.com/influx6/coquery/storage"
+	"github.com/influx6/coquery/utils"
 )
 
 func init() {
@@ -40,6 +45,9 @@ var context = "example-app"
 
 func main() {
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	diff := coquery.NewExpiringDiffs(events, 1*time.Hour)
 	store := storage.NewExpirable("uid", 1*time.Hour)
 	app := cohttp.New(events, diff, store)
@@ -56,5 +64,26 @@ func main() {
 		QueryDoc: "users",
 	}))
 
-	app.ListenAndServe(context, ":3000")
+	go app.ListenAndServe(context, ":3000")
+
+	clientServo := client.NewServo("http://127.0.0.1:3000", 300*time.Millisecond, web.HTTP)
+
+	all := clientServo.Register("docs.users.findN(-1)")
+
+	all.Listen(func(err error, data coquery.Parameters) {
+		defer wg.Done()
+
+		if err != nil {
+			events.Error(context, "Listen", err, "All query Failed")
+			return
+		}
+
+		fmt.Printf("Received All Response: %s\n", utils.Query.QueryIndent(data))
+	})
+
+	if err := all.Do(); err != nil {
+		events.Error(context, "all.Do", err, "All query Failed")
+	}
+
+	wg.Wait()
 }

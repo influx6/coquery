@@ -1,10 +1,12 @@
 package web
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/influx6/coquery/client/data"
+	"github.com/influx6/coquery"
 )
 
 // HTTP provides a handle for the http request processor.
@@ -15,16 +17,21 @@ type httpc struct{}
 var client = http.Client{Timeout: 30 * time.Second}
 
 // Do issues the requests and collects the response into a pack.
-func (httpc) Do(rid string, queries []string, lastResponse data.Pack) (data.Pack, error) {
-	var dp data.Pack
+func (httpc) Do(addr string, body io.Reader) (coquery.ResponsePack, error) {
+	var data coquery.ResponsePack
 
-  json := map[string]interface{
-    "request_id": rid,
-    "queries": queries,
-    "diff_tag": lastResponse.DeltaID,
-    "diff_watch": lastResponse.Deltas,
-    "diffs": lastResponse.
-  }
+	// Make a post requests with a application/json body.
+	res, err := client.Post(addr, "application/json", body)
+	if err != nil {
+		return data, err
+	}
 
-	return dp, nil
+	defer res.Body.Close()
+
+	// Attempt to decode information into appropriate structure.
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return data, err
+	}
+
+	return data, nil
 }
