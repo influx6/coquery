@@ -36011,8 +36011,8 @@ $packages["main"] = (function() {
 	};
 	eventlog.prototype.Error = function(context$1, name, err, message, data$1) { return this.$val.Error(context$1, name, err, message, data$1); };
 	main = function() {
-		var $ptr, _r, _r$1, _r$2, _r$3, _r$4, all, clientServo, doc, err, window, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; _r$4 = $f._r$4; all = $f.all; clientServo = $f.clientServo; doc = $f.doc; err = $f.err; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		var $ptr, _r, _r$1, _r$2, _r$3, all, clientServo, doc, err, window, x, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; all = $f.all; clientServo = $f.clientServo; doc = $f.doc; err = $f.err; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		doc = [doc];
 		window = dom.GetWindow();
 		_r = window.Document(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
@@ -36047,16 +36047,14 @@ $packages["main"] = (function() {
 			/* } */ $s = 5; continue; case 6:
 			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._r$6 = _r$6; $f._ref = _ref; $f.div = div; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
 		}; })(doc)); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		_r$3 = fmt.Printf("Sending: \n", new sliceType([])); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
-		_r$3;
-		_r$4 = all.Do(); /* */ $s = 6; case 6: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
-		err = _r$4;
-		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 7; continue; }
-		/* */ $s = 8; continue;
-		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 7:
-			$r = events.Error(new $String(context), "all.Do", err, "All query Failed", new sliceType([])); /* */ $s = 9; case 9: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		/* } */ case 8:
-		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f._r$4 = _r$4; $f.all = all; $f.clientServo = clientServo; $f.doc = doc; $f.err = err; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
+		_r$3 = all.Do(); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+		err = _r$3;
+		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 6; continue; }
+		/* */ $s = 7; continue;
+		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 6:
+			$r = events.Error(new $String(context), "all.Do", err, "All query Failed", new sliceType([])); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 7:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f.all = all; $f.clientServo = clientServo; $f.doc = doc; $f.err = err; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	eventlog.methods = [{prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType], [], true)}, {prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType], [], true)}];
 	eventlog.init([]);

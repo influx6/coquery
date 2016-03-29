@@ -61,7 +61,6 @@ func main() {
 		}
 	})
 
-	fmt.Printf("Sending: \n")
 	if err := all.Do(); err != nil {
 		events.Error(context, "all.Do", err, "All query Failed")
 	}
