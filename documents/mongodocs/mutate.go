@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/coquery/utils"
 	"gopkg.in/mgo.v2/bson"
@@ -18,10 +19,10 @@ type Mutate struct {
 
 // Do performs the operations for mutating a record within the internal coqery
 // store and if successfully, send it into the db for storage.
-func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
-	m.Log("mongodocs.Mutate", "Do", "Started : %s", utils.Query.Query(data))
+func (m *Mutate) Do(dataReq interface{}, err error) (interface{}, error) {
+	m.Log("mongodocs.Mutate", "Do", "Started : %s", utils.Query.Query(dataReq))
 
-	req, ok := data.(*coquery.Request)
+	req, ok := dataReq.(*coquery.Request)
 	if !ok {
 		m.Error("mongodocs.Mutate", "Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType

@@ -2,6 +2,7 @@ package mongodocs
 
 import (
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/coquery/utils"
 )
@@ -14,15 +15,15 @@ type All struct {
 }
 
 // Do performs the necessary tasks passed to FindProc
-func (a *All) Do(data interface{}, err error) (interface{}, error) {
-	a.Log("mongodocs.All", "Do", "Started : %s", utils.Query.Query(data))
+func (a *All) Do(dataReq interface{}, err error) (interface{}, error) {
+	a.Log("mongodocs.All", "Do", "Started : %s", utils.Query.Query(dataReq))
 
 	if err != nil {
 		a.Error("mongodocs.All", "Do", err, "Completed")
 		return nil, err
 	}
 
-	req, ok := data.(*coquery.Request)
+	req, ok := dataReq.(*coquery.Request)
 	if !ok {
 		a.Error("mongodocs.All", "Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
@@ -44,16 +45,16 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 	// If we had a previous response, then we are dealing with a concatenated
 	// operation on the last request, so we build our strategy on this.
 	if req.LastResponse != nil {
-		data := req.LastResponse.Data[find.Skip:]
-		total = len(data)
+		datam := req.LastResponse.Data[find.Skip:]
+		total = len(datam)
 
 		if find.Amount < 0 {
 			find.Amount = total
 		}
 
-		data = data[:find.Amount]
+		datam = datam[:find.Amount]
 
-		for _, recs := range data {
+		for _, recs := range datam {
 			res = append(res, data.Parameter(recs))
 		}
 

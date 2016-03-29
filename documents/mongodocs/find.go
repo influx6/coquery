@@ -2,6 +2,7 @@ package mongodocs
 
 import (
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/coquery/utils"
 	"gopkg.in/mgo.v2/bson"
@@ -17,15 +18,15 @@ type Find struct {
 }
 
 // Do performs the necessary tasks passed to FindProc
-func (f *Find) Do(data interface{}, err error) (interface{}, error) {
-	f.Log("mongodocs.Find", "Do", "Started : %s", utils.Query.Query(data))
+func (f *Find) Do(dataReq interface{}, err error) (interface{}, error) {
+	f.Log("mongodocs.Find", "Do", "Started : %s", utils.Query.Query(dataReq))
 
 	if err != nil {
 		f.Error("mongodocs.Find", "Do", err, "Completed")
 		return nil, err
 	}
 
-	req, ok := data.(*coquery.Request)
+	req, ok := dataReq.(*coquery.Request)
 	if !ok {
 		f.Error("mongodocs.Find", "Do", coquery.ErrInvalidRequestType, "Completed")
 		return nil, coquery.ErrInvalidRequestType
