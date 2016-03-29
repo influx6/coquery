@@ -3,17 +3,17 @@ package client
 import (
 	"sync/atomic"
 
-	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/faux/utils"
 )
 
 //==============================================================================
 
 // PerRequestHandler defines a handler type for receving a per data response.
-type PerRequestHandler func(error, coquery.Parameter)
+type PerRequestHandler func(error, data.Parameter)
 
 // RequestHandler defines a handler type for receving a per data response.
-type RequestHandler func(error, coquery.Parameters)
+type RequestHandler func(error, data.Parameters)
 
 // Requestor provides a interface for requesting data from the giving endpoint.
 type Requestor interface {
@@ -21,7 +21,7 @@ type Requestor interface {
 	UUID() string
 	Listen(rx RequestHandler)
 	ListenFor(key interface{}, rx PerRequestHandler)
-	Receive(err error, d coquery.ResponsePack)
+	Receive(err error, d data.ResponsePack)
 	ShouldUpdate(deltas []string) bool
 }
 
@@ -61,11 +61,11 @@ func (b *BaseRequestor) Do() error {
 // ListenFor allows listening for a specific record recieved from the server
 // using the provided key for that record. Because BaseRequestor stores all
 // record keys retrieved from the server using the key attribute received
-// from the server in the coquery.ResponsePack.
+// from the server in the data.ResponsePack.
 func (b *BaseRequestor) ListenFor(key interface{}, rx PerRequestHandler) {
 	atomic.StoreInt64(&b.pending, 1)
 	{
-		b.handles = append(b.handles, func(err error, records coquery.Parameters) {
+		b.handles = append(b.handles, func(err error, records data.Parameters) {
 			if err != nil {
 				rx(err, nil)
 				return
@@ -116,7 +116,7 @@ func (b *BaseRequestor) ShouldUpdate(deltas []string) bool {
 
 // Receive provides the central method for providing record updates to the
 // registered callbacks for this
-func (b *BaseRequestor) Receive(err error, data coquery.ResponsePack) {
+func (b *BaseRequestor) Receive(err error, data data.ResponsePack) {
 	// If error occured, to ensure our callbacks are not left starving, notify
 	// everyone of error and let them react accordingly.
 	if err != nil {

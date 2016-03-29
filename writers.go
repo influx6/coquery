@@ -1,13 +1,16 @@
 package coquery
 
-import "github.com/influx6/coquery/storage"
+import (
+	"github.com/influx6/coquery/data"
+	"github.com/influx6/coquery/storage"
+)
 
 //==============================================================================
 
 // BatchResponseWriter provides a response writer for batch queries.
 type BatchResponseWriter struct {
 	Res       ResponseWriter
-	data      Parameters
+	data      data.Parameters
 	total     int
 	collected int
 }
@@ -45,9 +48,9 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 
 	// Add the data response to the response list.
 	if res != nil {
-		br.data = append(br.data, Parameter{"data": res.Data})
+		br.data = append(br.data, data.Parameter{"data": res.Data})
 	} else {
-		br.data = append(br.data, Parameter{
+		br.data = append(br.data, data.Parameter{
 			"Error":   err.Error(),
 			"Message": err.Message(),
 		})
@@ -65,7 +68,7 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 type JSONResponseWriter struct {
 	res   ResponseWriter
 	store storage.Store
-	ctx   *RequestContext
+	ctx   *data.RequestContext
 	diff  Diffs
 }
 
@@ -80,20 +83,20 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	br.store.ClearTainted()
 
 	// Create the map to hold our json response.
-	data := make(Parameter)
+	mdata := make(data.Parameter)
 
-	data["record_key"] = br.store.Key()
-	data["request_id"] = br.ctx.RequestID
-	data["batch"] = len(br.ctx.Queries) > 1
+	mdata["record_key"] = br.store.Key()
+	mdata["request_id"] = br.ctx.RequestID
+	mdata["batch"] = len(br.ctx.Queries) > 1
 
 	if br.ctx.Diffs && br.ctx.DiffTag != "" {
-		data["last_delta_id"] = br.ctx.DiffTag
+		mdata["last_delta_id"] = br.ctx.DiffTag
 	}
 
 	var req RecordRequest
 
-	data["results"] = res.Data
-	data["total"] = len(res.Data)
+	mdata["results"] = res.Data
+	mdata["total"] = len(res.Data)
 	req = res.Req
 
 	// if req == nil {
@@ -103,7 +106,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 	if !br.ctx.Diffs {
 		return br.res.Write(context, &Response{
 			Req:  req,
-			Data: Parameters{data},
+			Data: []data.Parameter{mdata},
 		}, err)
 	}
 
@@ -113,7 +116,7 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 
 	if last > -1 && last < len(keys) {
 		key = keys[last]
-		data["delta_id"] = keys[last]
+		mdata["delta_id"] = keys[last]
 	}
 
 	// If we have no diffing tag then collect all the diffs and use the
@@ -138,11 +141,11 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 			diff = br.diff.Get(key)
 		}
 
-		data["deltas"] = diff
+		mdata["deltas"] = diff
 
 		return br.res.Write(context, &Response{
 			Req:  res.Req,
-			Data: Parameters{data},
+			Data: []data.Parameter{mdata},
 		}, err)
 	}
 
@@ -162,12 +165,12 @@ func (br *JSONResponseWriter) Write(context interface{}, res *Response, err Resp
 		diff = br.diff.PullFrom(br.ctx.DiffTag)
 	}
 
-	data["delta_id"] = key
-	data["deltas"] = diff
+	mdata["delta_id"] = key
+	mdata["deltas"] = diff
 
 	return br.res.Write(context, &Response{
 		Req:  res.Req,
-		Data: Parameters{data},
+		Data: []data.Parameter{mdata},
 	}, err)
 }
 

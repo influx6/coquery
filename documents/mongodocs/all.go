@@ -34,7 +34,7 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 		return nil, coquery.ErrInvalidRequestType
 	}
 
-	var res coquery.Parameters
+	var res data.Parameters
 	var total int
 
 	if find.Skip < 0 {
@@ -54,7 +54,7 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 		data = data[:find.Amount]
 
 		for _, recs := range data {
-			res = append(res, coquery.Parameter(recs))
+			res = append(res, data.Parameter(recs))
 		}
 
 		a.Log(find.RequestID(), "Do", "Info : Store : Record Found")
@@ -90,7 +90,7 @@ func (a *All) Do(data interface{}, err error) (interface{}, error) {
 		records := a.Store.Select(find.Amount, find.Skip)
 
 		for _, recs := range records {
-			res = append(res, coquery.Parameter(recs))
+			res = append(res, data.Parameter(recs))
 		}
 
 		a.Log(find.RequestID(), "Do", "Info : Store : Record Found")

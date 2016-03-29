@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"honnef.co/go/js/xhr"
+	"github.com/influx6/coquery/data"
 
-	"github.com/influx6/coquery"
+	"honnef.co/go/js/xhr"
 )
 
 // ClientTimeout sets the default timeout for a requests based on the
@@ -28,12 +28,12 @@ type jsHTTP struct{}
 var ErrFailedRequest = errors.New("Request Failed")
 
 // Do issues the requests and collects the response into a pack.
-func (jsHTTP) Do(addr string, body io.Reader) (coquery.ResponsePack, error) {
-	var data coquery.ResponsePack
+func (jsHTTP) Do(addr string, body io.Reader) (data.ResponsePack, error) {
+	var d data.ResponsePack
 
 	jsonBuff, err := ioutil.ReadAll(body)
 	if err != nil {
-		return data, err
+		return d, err
 	}
 
 	req := xhr.NewRequest("POST", addr)
@@ -41,21 +41,21 @@ func (jsHTTP) Do(addr string, body io.Reader) (coquery.ResponsePack, error) {
 	req.ResponseType = xhr.JSON
 
 	if err := req.Send(jsonBuff); err != nil {
-		return data, err
+		return d, err
 	}
 
 	// if req.ReadyState
 	if req.Status < 200 || req.Status >= 300 {
-		return data, ErrFailedRequest
+		return d, ErrFailedRequest
 	}
 
 	var buf bytes.Buffer
 	buf.Write([]byte(req.ResponseText))
 
 	// Attempt to decode information into appropriate structure.
-	if err := json.NewDecoder(&buf).Decode(&data); err != nil {
-		return data, err
+	if err := json.NewDecoder(&buf).Decode(&d); err != nil {
+		return d, err
 	}
 
-	return data, nil
+	return d, nil
 }

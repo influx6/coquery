@@ -10,6 +10,7 @@ import (
 	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/client"
 	"github.com/influx6/coquery/client/web"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/documents/mongodocs"
 	"github.com/influx6/coquery/protocols/cohttp"
 	"github.com/influx6/coquery/storage"
@@ -70,7 +71,7 @@ func main() {
 
 	all := clientServo.Register("docs.users.findN(-1)")
 
-	all.Listen(func(err error, data coquery.Parameters) {
+	all.Listen(func(err error, data data.Parameters) {
 		defer wg.Done()
 
 		if err != nil {

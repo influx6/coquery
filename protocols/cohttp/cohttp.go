@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/storage"
 	"github.com/pborman/uuid"
 )
@@ -172,7 +173,7 @@ func (h *httpCoquery) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	// req.ParseMultipartForm(maxMemory int64)
 
-	var rctx coquery.RequestContext
+	var rctx data.RequestContext
 
 	// contentType := req.Header.Get("Content-Type")
 	defer req.Body.Close()

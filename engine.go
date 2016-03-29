@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/parser"
 	"github.com/influx6/coquery/storage"
 	"github.com/influx6/faux/panics"
@@ -227,7 +228,7 @@ func (d *DocRoute) Serve(context interface{}, requestID string, subPath string, 
 // Engine defines a interface for a coquery service providers.
 type Engine interface {
 	Route(context interface{}, root string) DocumentRouter
-	Serve(context interface{}, ctx *RequestContext, rw ResponseWriter)
+	Serve(context interface{}, ctx *data.RequestContext, rw ResponseWriter)
 }
 
 // New returns a new Engine implementing structure for interfacing with
@@ -258,7 +259,7 @@ type CoEngine struct {
 // Serve processes the query using the coquery parser and runs the internal
 // pieces accordingly sending the parts into the appropriate route else
 // responding with an appropriate error.
-func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw ResponseWriter) {
+func (co *CoEngine) Serve(context interface{}, rctx *data.RequestContext, rw ResponseWriter) {
 	co.Log(context, "Serve", "Started : Request ID[%s] : Queries %s", rctx.RequestID, rctx.Queries)
 
 	if len(rctx.Queries) == 0 {
@@ -278,7 +279,7 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 	// The internal writer for this request.
 	var inRws ResponseWriter
 
-	// If RequestContext.NoJSON is false, then we are allowed to wrap the
+	// If data.RequestContext.NoJSON is false, then we are allowed to wrap the
 	// response writer with our JSONResponseWriter else use the provided response
 	// writer.
 	if !rctx.NoJSON {
@@ -316,7 +317,7 @@ func (co *CoEngine) Serve(context interface{}, rctx *RequestContext, rw Response
 
 // serve processes the individual query strings that are to be processed by
 // the coquery.API, using the appropriate API calls needed.
-func (co *CoEngine) serve(context interface{}, query string, rctx *RequestContext, rw ResponseWriter) {
+func (co *CoEngine) serve(context interface{}, query string, rctx *data.RequestContext, rw ResponseWriter) {
 	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, rctx.Queries)
 
 	queryList := parser.ParseQuery(context, query)

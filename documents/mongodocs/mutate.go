@@ -124,7 +124,7 @@ func (m *Mutate) Do(data interface{}, err error) (interface{}, error) {
 	m.Log(mux.RequestID(), "Do", "Completed")
 	return &coquery.Response{
 		Req:  mux,
-		Data: coquery.Parameters{mux.Parameter},
+		Data: data.Parameters{mux.Parameter},
 	}, nil
 }
 

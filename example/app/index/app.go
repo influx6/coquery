@@ -2,18 +2,16 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/ardanlabs/kit/log"
-	"github.com/influx6/coquery"
 	"github.com/influx6/coquery/client"
 	"github.com/influx6/coquery/client/js"
+	"github.com/influx6/coquery/data"
 	"honnef.co/go/js/dom"
 )
 
 func init() {
-	log.Init(os.Stdout, func() int { return log.DEV }, log.Ldefault)
+	// log.Init(os.Stdout, func() int { return log.DEV }, log.Ldefault)
 }
 
 //==============================================================================
@@ -25,12 +23,12 @@ type eventlog struct{}
 
 // Log logs all standard log reports.
 func (l eventlog) Log(context interface{}, name string, message string, data ...interface{}) {
-	log.Dev(context, name, message, data...)
+	fmt.Printf("Log: %s : %s : %s : %s\n", context, "DEV", name, fmt.Sprintf(message, data...))
 }
 
 // Error logs all error reports.
 func (l eventlog) Error(context interface{}, name string, err error, message string, data ...interface{}) {
-	log.Error(context, name, err, message, data...)
+	fmt.Printf("Error: %s : %s : %s : %s\n", context, "DEV", name, fmt.Sprintf(message, data...))
 }
 
 //==============================================================================
@@ -48,8 +46,9 @@ func main() {
 
 	all := clientServo.Register("docs.users.findN(-1)")
 
-	all.Listen(func(err error, records coquery.Parameters) {
+	all.Listen(func(err error, records data.Parameters) {
 
+		fmt.Printf("Received: %s -> %+s\n", err, records)
 		if err != nil {
 			events.Error(context, "Listen", err, "All query Failed")
 			return
@@ -62,6 +61,7 @@ func main() {
 		}
 	})
 
+	fmt.Printf("Sending: \n")
 	if err := all.Do(); err != nil {
 		events.Error(context, "all.Do", err, "All query Failed")
 	}

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/influx6/coquery"
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/faux/utils"
 )
 
@@ -16,7 +16,7 @@ import (
 // ServeTransport defines an interface for requests transport, which allows us
 // build custom transports based on different low-level systems(HTTP,Websocket).
 type ServeTransport interface {
-	Do(endpoint string, body io.Reader) (coquery.ResponsePack, error)
+	Do(endpoint string, body io.Reader) (data.ResponsePack, error)
 }
 
 // Server provides a central request manager for different query requests and
@@ -41,7 +41,7 @@ type Servo struct {
 	transport    ServeTransport
 	pendingQuery map[string]int
 	providers    map[string]Requestor
-	lastPack     coquery.ResponsePack
+	lastPack     data.ResponsePack
 }
 
 // NewServo creates a new Servo instance. It takes a coquery server address
@@ -132,21 +132,21 @@ func (s *Servo) sendNow() error {
 	}
 	atomic.StoreInt64(&s.pending, 0)
 
-	var data coquery.RequestContext
-	data.RequestID = s.uuid
-	data.Queries = queries
-	data.Diffs = true
+	var mdata data.RequestContext
+	mdata.RequestID = s.uuid
+	mdata.Queries = queries
+	mdata.Diffs = true
 
 	// if s.lastPack != nil {
-	data.DiffTag = prevDiff
+	mdata.DiffTag = prevDiff
 	// data.DiffWatch = s.lastPack.Deltas
 	// }
 
 	var buf bytes.Buffer
-	var reply coquery.ResponsePack
+	var reply data.ResponsePack
 
 	// Attemp to encode the request data as json else return error.
-	if err := json.NewEncoder(&buf).Encode(&data); err != nil {
+	if err := json.NewEncoder(&buf).Encode(&mdata); err != nil {
 		s.pendingQuery = nil
 
 		// Notify all concerned providers of error.
@@ -200,7 +200,7 @@ func (s *Servo) sendNow() error {
 
 			mainReply := (&reply).Results[ind]
 			newReply := reply
-			(&newReply).Results = mainReply["data"].(coquery.Parameters)
+			(&newReply).Results = mainReply["data"].(data.Parameters)
 			s.providers[qry].Receive(nil, newReply)
 		}
 

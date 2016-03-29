@@ -1,4 +1,4 @@
-package coquery
+package data
 
 //==============================================================================
 
@@ -50,36 +50,6 @@ type ResponsePack struct {
 	DeltaID   string     `json:"delta_id"`
 	Deltas    []string   `json:"delta_id"`
 	Results   Parameters `json:"results"`
-}
-
-//==============================================================================
-
-// Identity provides a interface that defines a request ID member method.
-type Identity interface {
-	RequestID() string
-}
-
-//==============================================================================
-
-// Response provides a response struct for replies to coquery requests.
-type Response struct {
-	Req  RecordRequest `json:"-" bson:"-"`
-	Data Parameters    `json:"reply" bson:"reply"`
-}
-
-// RequestID returns the request id for this response.
-func (r *Response) RequestID() string {
-	return r.Req.RequestID()
-}
-
-//==============================================================================
-
-// ResponseError defines an interface for the error response for a coquery
-// request.
-type ResponseError interface {
-	Identity
-	Error() string
-	Message() string
 }
 
 //==============================================================================

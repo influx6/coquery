@@ -43,7 +43,7 @@ func (f *Find) Do(data interface{}, err error) (interface{}, error) {
 		val, _ = utils.ParseInt(find.Value)
 	}
 
-	var res coquery.Parameters
+	var res data.Parameters
 	found := true
 
 	records, err := f.Store.GetByRef(find.Key, val)
@@ -54,7 +54,7 @@ func (f *Find) Do(data interface{}, err error) (interface{}, error) {
 
 	if found {
 		for _, recs := range records {
-			res = append(res, coquery.Parameter(recs))
+			res = append(res, data.Parameter(recs))
 		}
 
 		f.Log(find.RequestID(), "Do", "Info : Store : Record Found")

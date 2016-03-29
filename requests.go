@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/influx6/coquery/data"
 	"github.com/influx6/coquery/parser"
 	"github.com/influx6/coquery/storage"
 )
@@ -133,9 +134,9 @@ func (f *Collects) Example() []string {
 // Mutate provides json data to be saved/augmented into a new version of the
 // current document.
 type Mutate struct {
-	Doc       string    `json:"doc" bson:"doc"`
-	RID       string    `json:"rid" bson:"rid"`
-	Parameter Parameter `json:"params" bson:"params"`
+	Doc       string         `json:"doc" bson:"doc"`
+	RID       string         `json:"rid" bson:"rid"`
+	Parameter data.Parameter `json:"params" bson:"params"`
 }
 
 // RequestID returns the request id for this request object.
@@ -305,7 +306,7 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 				return nil, err
 			}
 
-			pm := make(Parameter)
+			pm := make(data.Parameter)
 
 			if err := json.Unmarshal([]byte(params[0]), &pm); err != nil {
 				err := &CoError{
