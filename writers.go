@@ -46,9 +46,9 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 		br.data = append(br.data, data.Parameter{"data": res.Data})
 	} else {
 		br.data = append(br.data, data.Parameter{
-			"Coquery-Status": 404,
-			"Error":          err.Error(),
-			"Message":        err.Message(),
+			"QueryFailed": true,
+			"Error":       err.Error(),
+			"Message":     err.Message(),
 		})
 	}
 

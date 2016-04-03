@@ -80,6 +80,7 @@ func NewServo(events Events, addr string, wait time.Duration, transport ServeTra
 // provider if the query already exists. This allows a central point of
 // responsibility for how queries are processed and managed.
 func (s *Servo) Register(query string) Requestor {
+	s.Events.Log("Servo", "Register", "Started : Query[%s]", query)
 	var provider Requestor
 	var ok bool
 
@@ -93,6 +94,7 @@ func (s *Servo) Register(query string) Requestor {
 	}
 	atomic.StoreInt64(&s.pending, 0)
 
+	s.Events.Log("Servo", "Register", "Completed")
 	return provider
 }
 
@@ -100,11 +102,15 @@ func (s *Servo) Register(query string) Requestor {
 // specified timing these allows us to batch and send as much request over
 // specific period of times without wasting bandwidth.
 func (s *Servo) serve(query string, client Requestor) error {
+	s.Events.Log("Servo", "serve", "Started")
+
 	if s.batch(query, client) {
+		s.Events.Log("Servo", "serve", "Completed")
 		return s.sendNow()
 	}
 
 	if atomic.LoadInt64(&s.watching) > 0 {
+		s.Events.Log("Servo", "serve", "Completed")
 		return nil
 	}
 
@@ -122,16 +128,19 @@ func (s *Servo) serve(query string, client Requestor) error {
 
 		// fmt.Printf("Calling sendNow() \n")
 		if err := s.sendNow(); err != nil {
-			fmt.Printf("Send Now Error: %+v \n", err)
+			s.Events.Error("Servo", "serve", err, "Completed")
 		}
 	}()
 
+	s.Events.Log("Servo", "serve", "Completed")
 	return nil
 }
 
 // sendNow initializes and forwards the internal requests to the transport
 // regardless of batching rules and limits.
 func (s *Servo) sendNow() error {
+	s.Events.Log("Servo", "sendNow", "Started")
+
 	// Collect all the queries with their specified index and allocated into
 	// a prelength list, build json request body and send off to transport
 	// for delivery to endpoint.
@@ -176,6 +185,8 @@ func (s *Servo) sendNow() error {
 
 		}
 		atomic.StoreInt64(&s.pending, 0)
+
+		s.Events.Error("Servo", "sendNow", err, "Completed")
 		return err
 	}
 
@@ -197,6 +208,7 @@ func (s *Servo) sendNow() error {
 		}
 		atomic.StoreInt64(&s.pending, 0)
 
+		s.Events.Error("Servo", "sendNow", err, "Completed")
 		return err
 	}
 
@@ -206,7 +218,9 @@ func (s *Servo) sendNow() error {
 	s.lastPack = reply
 
 	if len(reply.Results) < len(queries) {
-		return errors.New("Inadequate Response Length")
+		err := errors.New("Inadequate Response Length")
+		s.Events.Error("Servo", "sendNow", err, "Completed")
+		return err
 	}
 
 	atomic.StoreInt64(&s.pending, 1)
@@ -221,7 +235,16 @@ func (s *Servo) sendNow() error {
 			localReply := reply
 			localReply.Results = nil
 
-			mrdos := (reply.Results[ind])["data"]
+			rez := reply.Results[ind]
+
+			if failed, ok := rez["QueryFailed"].(bool); ok && failed {
+				failedErr := fmt.Errorf("%s :: %s", rez["Message"], rez["Error"])
+				s.Events.Error("Servo", "sendNow", failedErr, "Info : Query %s : Failed", qry)
+				s.providers[qry].Receive(failedErr, localReply)
+				continue
+			}
+
+			mrdos := rez["data"]
 
 			if mrdos == nil {
 				s.providers[qry].Receive(nil, localReply)
@@ -230,23 +253,18 @@ func (s *Servo) sendNow() error {
 
 			mrd := mrdos.([]interface{})
 
-			var failedErr error
+			// var failedErr error
 
 			for _, prec := range mrd {
 				pmrec := prec.(map[string]interface{})
 
-				if status, ok := pmrec["Coquery-Status"]; ok && status == 404 {
-					failedErr = fmt.Errorf("%s : %s", pmrec["Error"], pmrec["Message"])
-					break
-				}
-
 				localReply.Results = append(localReply.Results, data.Parameter(pmrec))
 			}
 
-			if failedErr != nil {
-				s.providers[qry].Receive(failedErr, localReply)
-				continue
-			}
+			// if failedErr != nil {
+			// 	s.providers[qry].Receive(failedErr, localReply)
+			// 	continue
+			// }
 
 			s.providers[qry].Receive(nil, localReply)
 		}
@@ -274,12 +292,15 @@ func (s *Servo) sendNow() error {
 	atomic.StoreInt64(&s.pending, 0)
 
 	atomic.StoreInt64(&s.watching, 0)
+	s.Events.Log("Servo", "sendNow", "Completed")
 	return nil
 }
 
 // batch adds the given request into the batch lists. It returns true/false
 // if the requests should be immediately served to the transport provider.
 func (s *Servo) batch(query string, client Requestor) bool {
+	s.Events.Log("Servo", "batch", "Started : Batching Query : %s", query)
+
 	// If we have already sent the data that has been queued, then
 	// reset all details accordinly and prepare to to batch new requests.
 	if s.pendingQuery == nil {
@@ -292,8 +313,10 @@ func (s *Servo) batch(query string, client Requestor) bool {
 	s.pendingQuery[query] = index
 
 	if len(s.providers) > 1 && !time.Now().After(s.pendingTime) {
+		s.Events.Log("Servo", "batch", "Completed")
 		return false
 	}
 
+	s.Events.Log("Servo", "batch", "Completed")
 	return true
 }
