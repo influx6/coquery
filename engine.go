@@ -318,7 +318,7 @@ func (co *CoEngine) Serve(context interface{}, rctx *data.RequestContext, rw Res
 // serve processes the individual query strings that are to be processed by
 // the coquery.API, using the appropriate API calls needed.
 func (co *CoEngine) serve(context interface{}, query string, rctx *data.RequestContext, rw ResponseWriter) {
-	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, rctx.Queries)
+	co.Log(context, "serve", "Started : RequestID[%s] : Query[%s]", rctx.RequestID, query)
 
 	queryList := parser.ParseQuery(context, query)
 

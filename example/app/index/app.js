@@ -30373,9 +30373,11 @@ $packages["github.com/influx6/faux/utils"] = (function() {
 	return $pkg;
 })();
 $packages["github.com/influx6/coquery/client"] = (function() {
-	var $pkg = {}, $init, bytes, json, data, utils, io, atomic, time, PerRequestHandler, RequestHandler, Requestor, BaseRequestor, ServeTransport, Server, Servo, sliceType, ptrType, ptrType$1, sliceType$1, sliceType$2, arrayType, arrayType$1, ptrType$2, mapType, ptrType$3, mapType$1, mapType$2, NewBaseRequester, NewServo;
+	var $pkg = {}, $init, bytes, json, errors, fmt, data, utils, io, atomic, time, PerRequestHandler, RequestHandler, Requestor, BaseRequestor, Events, ServeTransport, Server, Servo, sliceType, ptrType, ptrType$1, sliceType$1, sliceType$2, sliceType$3, arrayType, arrayType$1, mapType, ptrType$2, mapType$1, ptrType$3, mapType$2, mapType$3, NewBaseRequester, NewServo;
 	bytes = $packages["bytes"];
 	json = $packages["encoding/json"];
+	errors = $packages["errors"];
+	fmt = $packages["fmt"];
 	data = $packages["github.com/influx6/coquery/data"];
 	utils = $packages["github.com/influx6/faux/utils"];
 	io = $packages["io"];
@@ -30406,11 +30408,13 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		this.pending = pending_;
 		this.keyUpdate = keyUpdate_;
 	});
+	Events = $pkg.Events = $newType(8, $kindInterface, "client.Events", "Events", "github.com/influx6/coquery/client", null);
 	ServeTransport = $pkg.ServeTransport = $newType(8, $kindInterface, "client.ServeTransport", "ServeTransport", "github.com/influx6/coquery/client", null);
 	Server = $pkg.Server = $newType(8, $kindInterface, "client.Server", "Server", "github.com/influx6/coquery/client", null);
-	Servo = $pkg.Servo = $newType(0, $kindStruct, "client.Servo", "Servo", "github.com/influx6/coquery/client", function(pending_, watching_, addr_, uuid_, pendingTime_, wait_, transport_, pendingQuery_, providers_, lastPack_) {
+	Servo = $pkg.Servo = $newType(0, $kindStruct, "client.Servo", "Servo", "github.com/influx6/coquery/client", function(Events_, pending_, watching_, addr_, uuid_, pendingTime_, wait_, transport_, pendingQuery_, providers_, lastPack_) {
 		this.$val = this;
 		if (arguments.length === 0) {
+			this.Events = $ifaceNil;
 			this.pending = new $Int64(0, 0);
 			this.watching = new $Int64(0, 0);
 			this.addr = "";
@@ -30423,6 +30427,7 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 			this.lastPack = new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil);
 			return;
 		}
+		this.Events = Events_;
 		this.pending = pending_;
 		this.watching = watching_;
 		this.addr = addr_;
@@ -30438,14 +30443,16 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 	ptrType = $ptrType($Int64);
 	ptrType$1 = $ptrType(time.Location);
 	sliceType$1 = $sliceType($String);
-	sliceType$2 = $sliceType($Uint8);
+	sliceType$2 = $sliceType($emptyInterface);
+	sliceType$3 = $sliceType($Uint8);
 	arrayType = $arrayType($Uint8, 4);
 	arrayType$1 = $arrayType($Uint8, 64);
+	mapType = $mapType($String, $emptyInterface);
 	ptrType$2 = $ptrType(BaseRequestor);
-	mapType = $mapType($emptyInterface, $Bool);
+	mapType$1 = $mapType($emptyInterface, $Bool);
 	ptrType$3 = $ptrType(Servo);
-	mapType$1 = $mapType($String, $Int);
-	mapType$2 = $mapType($String, Requestor);
+	mapType$2 = $mapType($String, $Int);
+	mapType$3 = $mapType($String, Requestor);
 	NewBaseRequester = function(query, server) {
 		var $ptr, _r, br, query, server, $s, $r;
 		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; br = $f.br; query = $f.query; server = $f.server; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -30573,17 +30580,17 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		return b.uuid;
 	};
 	BaseRequestor.prototype.UUID = function() { return this.$val.UUID(); };
-	NewServo = function(addr, wait, transport) {
-		var $ptr, _r, addr, svo, transport, wait, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; addr = $f.addr; svo = $f.svo; transport = $f.transport; wait = $f.wait; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+	NewServo = function(events, addr, wait, transport) {
+		var $ptr, _r, addr, events, svo, transport, wait, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; addr = $f.addr; events = $f.events; svo = $f.svo; transport = $f.transport; wait = $f.wait; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		svo = [svo];
 		if ((wait.$high === 0 && wait.$low === 0)) {
 			wait = new time.Duration(0, 500000000);
 		}
 		_r = utils.UUID(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-		svo[0] = new Servo.ptr(new $Int64(0, 0), new $Int64(0, 0), addr, _r, new time.Time.ptr(new $Int64(0, 0), 0, ptrType$1.nil), wait, transport, false, {}, new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil));
+		svo[0] = new Servo.ptr(events, new $Int64(0, 0), new $Int64(0, 0), addr, _r, new time.Time.ptr(new $Int64(0, 0), 0, ptrType$1.nil), wait, transport, false, {}, new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil));
 		return svo[0];
-		/* */ } return; } if ($f === undefined) { $f = { $blk: NewServo }; } $f.$ptr = $ptr; $f._r = _r; $f.addr = addr; $f.svo = svo; $f.transport = transport; $f.wait = wait; $f.$s = $s; $f.$r = $r; return $f;
+		/* */ } return; } if ($f === undefined) { $f = { $blk: NewServo }; } $f.$ptr = $ptr; $f._r = _r; $f.addr = addr; $f.events = events; $f.svo = svo; $f.transport = transport; $f.wait = wait; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	$pkg.NewServo = NewServo;
 	Servo.ptr.prototype.Register = function(query) {
@@ -30625,27 +30632,32 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		}
 		atomic.StoreInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0]))), new $Int64(0, 1));
 		$go((function(s) { return function $b() {
-			var $ptr, _r$1, _r$2, x$1, x$2, $s, $r;
-			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r$1 = $f._r$1; _r$2 = $f._r$2; x$1 = $f.x$1; x$2 = $f.x$2; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+			var $ptr, _r$1, _r$2, _r$3, err, x$1, x$2, $s, $r;
+			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; err = $f.err; x$1 = $f.x$1; x$2 = $f.x$2; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 			_r$1 = $recv(time.After((x$1 = s[0].wait, new time.Duration(x$1.$high + 0, x$1.$low + 2)))); /* */ $s = 1; case 1: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
 			_r$1[0];
 			if ((x$2 = atomic.LoadInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0])))), (x$2.$high === 0 && x$2.$low === 0))) {
 				return;
 			}
 			_r$2 = s[0].sendNow(); /* */ $s = 2; case 2: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
-			_r$2;
-			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._r$1 = _r$1; $f._r$2 = _r$2; $f.x$1 = x$1; $f.x$2 = x$2; $f.$s = $s; $f.$r = $r; return $f;
+			err = _r$2;
+			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 3; continue; }
+			/* */ $s = 4; continue;
+			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 3:
+				_r$3 = fmt.Printf("Send Now Error: %+v \n", new sliceType$2([err])); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+				_r$3;
+			/* } */ case 4:
+			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f.err = err; $f.x$1 = x$1; $f.x$2 = x$2; $f.$s = $s; $f.$r = $r; return $f;
 		}; })(s), []);
 		return $ifaceNil;
 		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.serve }; } $f.$ptr = $ptr; $f._r = _r; $f.client = client; $f.query = query; $f.s = s; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	Servo.prototype.serve = function(query, client) { return this.$val.serve(query, client); };
 	Servo.ptr.prototype.sendNow = function() {
-		var $ptr, _entry, _entry$1, _entry$2, _entry$3, _entry$4, _entry$5, _entry$6, _entry$7, _entry$8, _entry$9, _i, _i$1, _i$2, _i$3, _i$4, _keys, _keys$1, _keys$2, _keys$3, _r, _r$1, _r$2, _ref, _ref$1, _ref$2, _ref$3, _ref$4, _tuple, _tuple$1, buf, err, err$1, ind, index, key, mainReply, mdata, newReply, ok, pending, prevDiff, provider, qry, qry$1, qry$2, qry$3, queries, reply, s, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _entry$1 = $f._entry$1; _entry$2 = $f._entry$2; _entry$3 = $f._entry$3; _entry$4 = $f._entry$4; _entry$5 = $f._entry$5; _entry$6 = $f._entry$6; _entry$7 = $f._entry$7; _entry$8 = $f._entry$8; _entry$9 = $f._entry$9; _i = $f._i; _i$1 = $f._i$1; _i$2 = $f._i$2; _i$3 = $f._i$3; _i$4 = $f._i$4; _keys = $f._keys; _keys$1 = $f._keys$1; _keys$2 = $f._keys$2; _keys$3 = $f._keys$3; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _ref = $f._ref; _ref$1 = $f._ref$1; _ref$2 = $f._ref$2; _ref$3 = $f._ref$3; _ref$4 = $f._ref$4; _tuple = $f._tuple; _tuple$1 = $f._tuple$1; buf = $f.buf; err = $f.err; err$1 = $f.err$1; ind = $f.ind; index = $f.index; key = $f.key; mainReply = $f.mainReply; mdata = $f.mdata; newReply = $f.newReply; ok = $f.ok; pending = $f.pending; prevDiff = $f.prevDiff; provider = $f.provider; qry = $f.qry; qry$1 = $f.qry$1; qry$2 = $f.qry$2; qry$3 = $f.qry$3; queries = $f.queries; reply = $f.reply; s = $f.s; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		var $ptr, _entry, _entry$1, _entry$10, _entry$2, _entry$3, _entry$4, _entry$5, _entry$6, _entry$7, _entry$8, _entry$9, _i, _i$1, _i$2, _i$3, _i$4, _i$5, _keys, _keys$1, _keys$2, _keys$3, _r, _r$1, _r$2, _ref, _ref$1, _ref$2, _ref$3, _ref$4, _ref$5, _tuple, _tuple$1, buf, err, err$1, ind, index, key, localReply, mdata, mrd, mrdos, ok, pending, pmrec, prec, prevDiff, provider, qry, qry$1, qry$2, qry$3, queries, reply, s, x, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _entry$1 = $f._entry$1; _entry$10 = $f._entry$10; _entry$2 = $f._entry$2; _entry$3 = $f._entry$3; _entry$4 = $f._entry$4; _entry$5 = $f._entry$5; _entry$6 = $f._entry$6; _entry$7 = $f._entry$7; _entry$8 = $f._entry$8; _entry$9 = $f._entry$9; _i = $f._i; _i$1 = $f._i$1; _i$2 = $f._i$2; _i$3 = $f._i$3; _i$4 = $f._i$4; _i$5 = $f._i$5; _keys = $f._keys; _keys$1 = $f._keys$1; _keys$2 = $f._keys$2; _keys$3 = $f._keys$3; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _ref = $f._ref; _ref$1 = $f._ref$1; _ref$2 = $f._ref$2; _ref$3 = $f._ref$3; _ref$4 = $f._ref$4; _ref$5 = $f._ref$5; _tuple = $f._tuple; _tuple$1 = $f._tuple$1; buf = $f.buf; err = $f.err; err$1 = $f.err$1; ind = $f.ind; index = $f.index; key = $f.key; localReply = $f.localReply; mdata = $f.mdata; mrd = $f.mrd; mrdos = $f.mrdos; ok = $f.ok; pending = $f.pending; pmrec = $f.pmrec; prec = $f.prec; prevDiff = $f.prevDiff; provider = $f.provider; qry = $f.qry; qry$1 = $f.qry$1; qry$2 = $f.qry$2; qry$3 = $f.qry$3; queries = $f.queries; reply = $f.reply; s = $f.s; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		buf = [buf];
 		mdata = [mdata];
-		reply = [reply];
 		s = this;
 		queries = $makeSlice(sliceType$1, $keys(s.pendingQuery).length);
 		_ref = s.pendingQuery;
@@ -30672,8 +30684,8 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		mdata[0].Queries = queries;
 		mdata[0].Diffs = true;
 		mdata[0].DiffTag = prevDiff;
-		buf[0] = new bytes.Buffer.ptr(sliceType$2.nil, 0, arrayType.zero(), arrayType$1.zero(), 0);
-		reply[0] = new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil);
+		buf[0] = new bytes.Buffer.ptr(sliceType$3.nil, 0, arrayType.zero(), arrayType$1.zero(), 0);
+		reply = new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil);
 		_r = json.NewEncoder(buf[0]).Encode(mdata[0]); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
 		err = _r;
 		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 2; continue; }
@@ -30692,7 +30704,7 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 					/* continue; */ $s = 4; continue;
 				}
 				qry$1 = _entry$1.k;
-				$r = (_entry$2 = s.providers[$String.keyFor(qry$1)], _entry$2 !== undefined ? _entry$2.v : $ifaceNil).Receive(err, reply[0]); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				$r = (_entry$2 = s.providers[$String.keyFor(qry$1)], _entry$2 !== undefined ? _entry$2.v : $ifaceNil).Receive(err, reply); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$1++;
 			/* } */ $s = 4; continue; case 5:
 			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
@@ -30701,7 +30713,7 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		err$1 = $ifaceNil;
 		_r$1 = s.transport.Do(s.addr, buf[0]); /* */ $s = 7; case 7: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
 		_tuple = _r$1;
-		data.ResponsePack.copy(reply[0], _tuple[0]);
+		data.ResponsePack.copy(reply, _tuple[0]);
 		err$1 = _tuple[1];
 		/* */ if (!($interfaceIsEqual(err$1, $ifaceNil))) { $s = 8; continue; }
 		/* */ $s = 9; continue;
@@ -30719,7 +30731,7 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 					/* continue; */ $s = 10; continue;
 				}
 				qry$2 = _entry$3.k;
-				$r = (_entry$4 = s.providers[$String.keyFor(qry$2)], _entry$4 !== undefined ? _entry$4.v : $ifaceNil).Receive(err$1, reply[0]); /* */ $s = 12; case 12: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				$r = (_entry$4 = s.providers[$String.keyFor(qry$2)], _entry$4 !== undefined ? _entry$4.v : $ifaceNil).Receive(err$1, reply); /* */ $s = 12; case 12: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$2++;
 			/* } */ $s = 10; continue; case 11:
 			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
@@ -30727,64 +30739,83 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		/* } */ case 9:
 		pending = s.pendingQuery;
 		s.pendingQuery = false;
-		data.ResponsePack.copy(s.lastPack, reply[0]);
+		data.ResponsePack.copy(s.lastPack, reply);
+		if (reply.Results.$length < queries.$length) {
+			return errors.New("Inadequate Response Length");
+		}
 		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
 		_ref$3 = queries;
 		_i$3 = 0;
 		/* while (true) { */ case 13:
 			/* if (!(_i$3 < _ref$3.$length)) { break; } */ if(!(_i$3 < _ref$3.$length)) { $s = 14; continue; }
-			newReply = [newReply];
 			ind = _i$3;
 			qry$3 = ((_i$3 < 0 || _i$3 >= _ref$3.$length) ? $throwRuntimeError("index out of range") : _ref$3.$array[_ref$3.$offset + _i$3]);
-			/* */ if (!reply[0].Batched) { $s = 15; continue; }
+			/* */ if (!reply.Batched) { $s = 15; continue; }
 			/* */ $s = 16; continue;
-			/* if (!reply[0].Batched) { */ case 15:
-				$r = (_entry$5 = s.providers[$String.keyFor(qry$3)], _entry$5 !== undefined ? _entry$5.v : $ifaceNil).Receive($ifaceNil, reply[0]); /* */ $s = 17; case 17: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* if (!reply.Batched) { */ case 15:
+				$r = (_entry$5 = s.providers[$String.keyFor(qry$3)], _entry$5 !== undefined ? _entry$5.v : $ifaceNil).Receive($ifaceNil, reply); /* */ $s = 17; case 17: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$3++;
 				/* continue; */ $s = 13; continue;
 			/* } */ case 16:
-			mainReply = (x = (reply[0]).Results, ((ind < 0 || ind >= x.$length) ? $throwRuntimeError("index out of range") : x.$array[x.$offset + ind]));
-			newReply[0] = $clone(reply[0], data.ResponsePack);
-			newReply[0].Results = $assertType((_entry$6 = mainReply[$String.keyFor("data")], _entry$6 !== undefined ? _entry$6.v : $ifaceNil), data.Parameters);
-			$r = (_entry$7 = s.providers[$String.keyFor(qry$3)], _entry$7 !== undefined ? _entry$7.v : $ifaceNil).Receive($ifaceNil, newReply[0]); /* */ $s = 18; case 18: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			localReply = $clone(reply, data.ResponsePack);
+			localReply.Results = data.Parameters.nil;
+			mrdos = (_entry$6 = ((x = reply.Results, ((ind < 0 || ind >= x.$length) ? $throwRuntimeError("index out of range") : x.$array[x.$offset + ind])))[$String.keyFor("data")], _entry$6 !== undefined ? _entry$6.v : $ifaceNil);
+			/* */ if ($interfaceIsEqual(mrdos, $ifaceNil)) { $s = 18; continue; }
+			/* */ $s = 19; continue;
+			/* if ($interfaceIsEqual(mrdos, $ifaceNil)) { */ case 18:
+				$r = (_entry$7 = s.providers[$String.keyFor(qry$3)], _entry$7 !== undefined ? _entry$7.v : $ifaceNil).Receive($ifaceNil, localReply); /* */ $s = 20; case 20: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_i$3++;
+				/* continue; */ $s = 13; continue;
+			/* } */ case 19:
+			mrd = $assertType(mrdos, sliceType$2);
+			_ref$4 = mrd;
+			_i$4 = 0;
+			while (true) {
+				if (!(_i$4 < _ref$4.$length)) { break; }
+				prec = ((_i$4 < 0 || _i$4 >= _ref$4.$length) ? $throwRuntimeError("index out of range") : _ref$4.$array[_ref$4.$offset + _i$4]);
+				pmrec = $assertType(prec, mapType);
+				localReply.Results = $append(localReply.Results, pmrec);
+				_i$4++;
+			}
+			$r = (_entry$8 = s.providers[$String.keyFor(qry$3)], _entry$8 !== undefined ? _entry$8.v : $ifaceNil).Receive($ifaceNil, localReply); /* */ $s = 21; case 21: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 			_i$3++;
 		/* } */ $s = 13; continue; case 14:
-		/* */ if (!(reply[0].DeltaID === prevDiff) && reply[0].Deltas.$length > 0) { $s = 19; continue; }
-		/* */ $s = 20; continue;
-		/* if (!(reply[0].DeltaID === prevDiff) && reply[0].Deltas.$length > 0) { */ case 19:
-			_ref$4 = s.providers;
-			_i$4 = 0;
-			_keys$3 = $keys(_ref$4);
-			/* while (true) { */ case 21:
-				/* if (!(_i$4 < _keys$3.length)) { break; } */ if(!(_i$4 < _keys$3.length)) { $s = 22; continue; }
-				_entry$8 = _ref$4[_keys$3[_i$4]];
-				if (_entry$8 === undefined) {
-					_i$4++;
-					/* continue; */ $s = 21; continue;
+		/* */ if (!(reply.DeltaID === prevDiff) && reply.Deltas.$length > 0) { $s = 22; continue; }
+		/* */ $s = 23; continue;
+		/* if (!(reply.DeltaID === prevDiff) && reply.Deltas.$length > 0) { */ case 22:
+			_ref$5 = s.providers;
+			_i$5 = 0;
+			_keys$3 = $keys(_ref$5);
+			/* while (true) { */ case 24:
+				/* if (!(_i$5 < _keys$3.length)) { break; } */ if(!(_i$5 < _keys$3.length)) { $s = 25; continue; }
+				_entry$9 = _ref$5[_keys$3[_i$5]];
+				if (_entry$9 === undefined) {
+					_i$5++;
+					/* continue; */ $s = 24; continue;
 				}
-				key = _entry$8.k;
-				provider = _entry$8.v;
-				_tuple$1 = (_entry$9 = pending[$String.keyFor(key)], _entry$9 !== undefined ? [_entry$9.v, true] : [0, false]);
+				key = _entry$9.k;
+				provider = _entry$9.v;
+				_tuple$1 = (_entry$10 = pending[$String.keyFor(key)], _entry$10 !== undefined ? [_entry$10.v, true] : [0, false]);
 				ok = _tuple$1[1];
-				/* */ if (ok) { $s = 23; continue; }
-				/* */ $s = 24; continue;
-				/* if (ok) { */ case 23:
-					_i$4++;
-					/* continue; */ $s = 21; continue;
-				/* } */ case 24:
-				_r$2 = provider.ShouldUpdate(reply[0].Deltas); /* */ $s = 27; case 27: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
-				/* */ if (_r$2) { $s = 25; continue; }
-				/* */ $s = 26; continue;
-				/* if (_r$2) { */ case 25:
+				/* */ if (ok) { $s = 26; continue; }
+				/* */ $s = 27; continue;
+				/* if (ok) { */ case 26:
+					_i$5++;
+					/* continue; */ $s = 24; continue;
+				/* } */ case 27:
+				_r$2 = provider.ShouldUpdate(reply.Deltas); /* */ $s = 30; case 30: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
+				/* */ if (_r$2) { $s = 28; continue; }
+				/* */ $s = 29; continue;
+				/* if (_r$2) { */ case 28:
 					s.batch(key, provider);
-				/* } */ case 26:
-				_i$4++;
-			/* } */ $s = 21; continue; case 22:
-		/* } */ case 20:
+				/* } */ case 29:
+				_i$5++;
+			/* } */ $s = 24; continue; case 25:
+		/* } */ case 23:
 		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
 		atomic.StoreInt64((s.$ptr_watching || (s.$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s))), new $Int64(0, 0));
 		return $ifaceNil;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.sendNow }; } $f.$ptr = $ptr; $f._entry = _entry; $f._entry$1 = _entry$1; $f._entry$2 = _entry$2; $f._entry$3 = _entry$3; $f._entry$4 = _entry$4; $f._entry$5 = _entry$5; $f._entry$6 = _entry$6; $f._entry$7 = _entry$7; $f._entry$8 = _entry$8; $f._entry$9 = _entry$9; $f._i = _i; $f._i$1 = _i$1; $f._i$2 = _i$2; $f._i$3 = _i$3; $f._i$4 = _i$4; $f._keys = _keys; $f._keys$1 = _keys$1; $f._keys$2 = _keys$2; $f._keys$3 = _keys$3; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._ref = _ref; $f._ref$1 = _ref$1; $f._ref$2 = _ref$2; $f._ref$3 = _ref$3; $f._ref$4 = _ref$4; $f._tuple = _tuple; $f._tuple$1 = _tuple$1; $f.buf = buf; $f.err = err; $f.err$1 = err$1; $f.ind = ind; $f.index = index; $f.key = key; $f.mainReply = mainReply; $f.mdata = mdata; $f.newReply = newReply; $f.ok = ok; $f.pending = pending; $f.prevDiff = prevDiff; $f.provider = provider; $f.qry = qry; $f.qry$1 = qry$1; $f.qry$2 = qry$2; $f.qry$3 = qry$3; $f.queries = queries; $f.reply = reply; $f.s = s; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
+		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.sendNow }; } $f.$ptr = $ptr; $f._entry = _entry; $f._entry$1 = _entry$1; $f._entry$10 = _entry$10; $f._entry$2 = _entry$2; $f._entry$3 = _entry$3; $f._entry$4 = _entry$4; $f._entry$5 = _entry$5; $f._entry$6 = _entry$6; $f._entry$7 = _entry$7; $f._entry$8 = _entry$8; $f._entry$9 = _entry$9; $f._i = _i; $f._i$1 = _i$1; $f._i$2 = _i$2; $f._i$3 = _i$3; $f._i$4 = _i$4; $f._i$5 = _i$5; $f._keys = _keys; $f._keys$1 = _keys$1; $f._keys$2 = _keys$2; $f._keys$3 = _keys$3; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._ref = _ref; $f._ref$1 = _ref$1; $f._ref$2 = _ref$2; $f._ref$3 = _ref$3; $f._ref$4 = _ref$4; $f._ref$5 = _ref$5; $f._tuple = _tuple; $f._tuple$1 = _tuple$1; $f.buf = buf; $f.err = err; $f.err$1 = err$1; $f.ind = ind; $f.index = index; $f.key = key; $f.localReply = localReply; $f.mdata = mdata; $f.mrd = mrd; $f.mrdos = mrdos; $f.ok = ok; $f.pending = pending; $f.pmrec = pmrec; $f.prec = prec; $f.prevDiff = prevDiff; $f.provider = provider; $f.qry = qry; $f.qry$1 = qry$1; $f.qry$2 = qry$2; $f.qry$3 = qry$3; $f.queries = queries; $f.reply = reply; $f.s = s; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	Servo.prototype.sendNow = function() { return this.$val.sendNow(); };
 	Servo.ptr.prototype.batch = function(query, client) {
@@ -30807,20 +30838,23 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 	PerRequestHandler.init([$error, data.Parameter], [], false);
 	RequestHandler.init([$error, data.Parameters], [], false);
 	Requestor.init([{prop: "Do", name: "Do", pkg: "", typ: $funcType([], [$error], false)}, {prop: "Listen", name: "Listen", pkg: "", typ: $funcType([RequestHandler], [], false)}, {prop: "ListenFor", name: "ListenFor", pkg: "", typ: $funcType([$emptyInterface, PerRequestHandler], [], false)}, {prop: "Receive", name: "Receive", pkg: "", typ: $funcType([$error, data.ResponsePack], [], false)}, {prop: "ShouldUpdate", name: "ShouldUpdate", pkg: "", typ: $funcType([sliceType$1], [$Bool], false)}, {prop: "UUID", name: "UUID", pkg: "", typ: $funcType([], [$String], false)}]);
-	BaseRequestor.init([{prop: "records", name: "records", pkg: "github.com/influx6/coquery/client", typ: mapType, tag: ""}, {prop: "handles", name: "handles", pkg: "github.com/influx6/coquery/client", typ: sliceType, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "query", name: "query", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "key", name: "key", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "server", name: "server", pkg: "github.com/influx6/coquery/client", typ: Server, tag: ""}, {prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "keyUpdate", name: "keyUpdate", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}]);
+	BaseRequestor.init([{prop: "records", name: "records", pkg: "github.com/influx6/coquery/client", typ: mapType$1, tag: ""}, {prop: "handles", name: "handles", pkg: "github.com/influx6/coquery/client", typ: sliceType, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "query", name: "query", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "key", name: "key", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "server", name: "server", pkg: "github.com/influx6/coquery/client", typ: Server, tag: ""}, {prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "keyUpdate", name: "keyUpdate", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}]);
+	Events.init([{prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType$2], [], true)}, {prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType$2], [], true)}]);
 	ServeTransport.init([{prop: "Do", name: "Do", pkg: "", typ: $funcType([$String, io.Reader], [data.ResponsePack, $error], false)}]);
 	Server.init([{prop: "Register", name: "Register", pkg: "", typ: $funcType([$String], [Requestor], false)}, {prop: "serve", name: "serve", pkg: "github.com/influx6/coquery/client", typ: $funcType([$String, Requestor], [$error], false)}]);
-	Servo.init([{prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "watching", name: "watching", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "addr", name: "addr", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "pendingTime", name: "pendingTime", pkg: "github.com/influx6/coquery/client", typ: time.Time, tag: ""}, {prop: "wait", name: "wait", pkg: "github.com/influx6/coquery/client", typ: time.Duration, tag: ""}, {prop: "transport", name: "transport", pkg: "github.com/influx6/coquery/client", typ: ServeTransport, tag: ""}, {prop: "pendingQuery", name: "pendingQuery", pkg: "github.com/influx6/coquery/client", typ: mapType$1, tag: ""}, {prop: "providers", name: "providers", pkg: "github.com/influx6/coquery/client", typ: mapType$2, tag: ""}, {prop: "lastPack", name: "lastPack", pkg: "github.com/influx6/coquery/client", typ: data.ResponsePack, tag: ""}]);
+	Servo.init([{prop: "Events", name: "", pkg: "", typ: Events, tag: ""}, {prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "watching", name: "watching", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "addr", name: "addr", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "pendingTime", name: "pendingTime", pkg: "github.com/influx6/coquery/client", typ: time.Time, tag: ""}, {prop: "wait", name: "wait", pkg: "github.com/influx6/coquery/client", typ: time.Duration, tag: ""}, {prop: "transport", name: "transport", pkg: "github.com/influx6/coquery/client", typ: ServeTransport, tag: ""}, {prop: "pendingQuery", name: "pendingQuery", pkg: "github.com/influx6/coquery/client", typ: mapType$2, tag: ""}, {prop: "providers", name: "providers", pkg: "github.com/influx6/coquery/client", typ: mapType$3, tag: ""}, {prop: "lastPack", name: "lastPack", pkg: "github.com/influx6/coquery/client", typ: data.ResponsePack, tag: ""}]);
 	$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $f, $c = false, $s = 0, $r; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		$r = bytes.$init(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		$r = json.$init(); /* */ $s = 2; case 2: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = data.$init(); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = utils.$init(); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = io.$init(); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = atomic.$init(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = time.$init(); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = errors.$init(); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = fmt.$init(); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = data.$init(); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = utils.$init(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = io.$init(); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = atomic.$init(); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = time.$init(); /* */ $s = 9; case 9: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		/* */ } return; } if ($f === undefined) { $f = { $blk: $init }; } $f.$s = $s; $f.$r = $r; return $f;
 	};
 	$pkg.$init = $init;
@@ -31208,12 +31242,12 @@ $packages["github.com/influx6/coquery/client/js"] = (function() {
 	$pkg.$init = $init;
 	return $pkg;
 })();
-$packages["honnef.co/go/js/dom"] = (function() {
+$packages["github.com/influx6/coquery/vendor/honnef.co/go/js/dom"] = (function() {
 	var $pkg = {}, $init, js, strings, time, TokenList, Document, DocumentFragment, documentFragment, document, htmlDocument, URLUtils, Location, HTMLElement, Window, window, Selection, Screen, Navigator, Geolocation, PositionError, PositionOptions, Position, Coordinates, History, Console, DocumentType, DOMImplementation, StyleSheet, Node, BasicNode, Element, ClientRect, BasicHTMLElement, BasicElement, HTMLAnchorElement, HTMLAppletElement, HTMLAreaElement, HTMLAudioElement, HTMLBRElement, HTMLBaseElement, HTMLBodyElement, ValidityState, HTMLButtonElement, HTMLCanvasElement, CanvasRenderingContext2D, HTMLDListElement, HTMLDataElement, HTMLDataListElement, HTMLDirectoryElement, HTMLDivElement, HTMLEmbedElement, HTMLFieldSetElement, HTMLFontElement, HTMLFormElement, HTMLFrameElement, HTMLFrameSetElement, HTMLHRElement, HTMLHeadElement, HTMLHeadingElement, HTMLHtmlElement, HTMLIFrameElement, HTMLImageElement, HTMLInputElement, File, HTMLKeygenElement, HTMLLIElement, HTMLLabelElement, HTMLLegendElement, HTMLLinkElement, HTMLMapElement, HTMLMediaElement, HTMLMenuElement, HTMLMetaElement, HTMLMeterElement, HTMLModElement, HTMLOListElement, HTMLObjectElement, HTMLOptGroupElement, HTMLOptionElement, HTMLOutputElement, HTMLParagraphElement, HTMLParamElement, HTMLPreElement, HTMLProgressElement, HTMLQuoteElement, HTMLScriptElement, HTMLSelectElement, HTMLSourceElement, HTMLSpanElement, HTMLStyleElement, HTMLTableCaptionElement, HTMLTableCellElement, HTMLTableColElement, HTMLTableDataCellElement, HTMLTableElement, HTMLTableHeaderCellElement, HTMLTableRowElement, HTMLTableSectionElement, HTMLTextAreaElement, HTMLTimeElement, HTMLTitleElement, TextTrack, HTMLTrackElement, HTMLUListElement, HTMLUnknownElement, HTMLVideoElement, CSSStyleDeclaration, Text, Event, BasicEvent, AnimationEvent, AudioProcessingEvent, BeforeInputEvent, BeforeUnloadEvent, BlobEvent, ClipboardEvent, CloseEvent, CompositionEvent, CSSFontFaceLoadEvent, CustomEvent, DeviceLightEvent, DeviceMotionEvent, DeviceOrientationEvent, DeviceProximityEvent, DOMTransactionEvent, DragEvent, EditingBeforeInputEvent, ErrorEvent, FocusEvent, GamepadEvent, HashChangeEvent, IDBVersionChangeEvent, KeyboardEvent, MediaStreamEvent, MessageEvent, MouseEvent, MutationEvent, OfflineAudioCompletionEvent, PageTransitionEvent, PointerEvent, PopStateEvent, ProgressEvent, RelatedEvent, RTCPeerConnectionIceEvent, SensorEvent, StorageEvent, SVGEvent, SVGZoomEvent, TimeEvent, TouchEvent, TrackEvent, TransitionEvent, UIEvent, UserProximityEvent, WheelEvent, sliceType, ptrType, sliceType$1, sliceType$2, sliceType$3, sliceType$4, ptrType$1, ptrType$2, ptrType$3, ptrType$4, ptrType$5, ptrType$6, sliceType$5, ptrType$7, sliceType$6, sliceType$7, sliceType$8, ptrType$8, ptrType$9, sliceType$9, ptrType$10, sliceType$10, ptrType$11, sliceType$11, ptrType$12, funcType, funcType$1, ptrType$13, sliceType$12, ptrType$14, ptrType$15, sliceType$13, ptrType$16, sliceType$14, ptrType$17, sliceType$15, ptrType$18, ptrType$19, ptrType$20, funcType$2, sliceType$16, ptrType$21, ptrType$22, ptrType$23, ptrType$24, mapType, ptrType$25, ptrType$26, funcType$3, ptrType$27, ptrType$28, funcType$4, funcType$5, ptrType$29, ptrType$30, ptrType$31, ptrType$32, ptrType$33, ptrType$34, ptrType$35, ptrType$36, ptrType$37, ptrType$38, ptrType$39, ptrType$40, ptrType$41, ptrType$42, ptrType$43, ptrType$44, ptrType$45, ptrType$46, ptrType$47, ptrType$48, ptrType$49, ptrType$50, ptrType$51, ptrType$52, ptrType$53, ptrType$54, toString, callRecover, elementConstructor, arrayToObjects, nodeListToObjects, nodeListToNodes, nodeListToElements, nodeListToHTMLElements, wrapDocument, wrapDocumentFragment, wrapNode, wrapElement, wrapHTMLElement, getForm, getLabels, getOptions, GetWindow, wrapDOMHighResTimeStamp, wrapEvent;
 	js = $packages["github.com/gopherjs/gopherjs/js"];
 	strings = $packages["strings"];
 	time = $packages["time"];
-	TokenList = $pkg.TokenList = $newType(0, $kindStruct, "dom.TokenList", "TokenList", "honnef.co/go/js/dom", function(dtl_, o_, sa_, Length_) {
+	TokenList = $pkg.TokenList = $newType(0, $kindStruct, "dom.TokenList", "TokenList", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(dtl_, o_, sa_, Length_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.dtl = null;
@@ -31227,9 +31261,9 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.sa = sa_;
 		this.Length = Length_;
 	});
-	Document = $pkg.Document = $newType(8, $kindInterface, "dom.Document", "Document", "honnef.co/go/js/dom", null);
-	DocumentFragment = $pkg.DocumentFragment = $newType(8, $kindInterface, "dom.DocumentFragment", "DocumentFragment", "honnef.co/go/js/dom", null);
-	documentFragment = $pkg.documentFragment = $newType(0, $kindStruct, "dom.documentFragment", "documentFragment", "honnef.co/go/js/dom", function(BasicNode_) {
+	Document = $pkg.Document = $newType(8, $kindInterface, "dom.Document", "Document", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	DocumentFragment = $pkg.DocumentFragment = $newType(8, $kindInterface, "dom.DocumentFragment", "DocumentFragment", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	documentFragment = $pkg.documentFragment = $newType(0, $kindStruct, "dom.documentFragment", "documentFragment", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicNode_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicNode = ptrType$22.nil;
@@ -31237,7 +31271,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicNode = BasicNode_;
 	});
-	document = $pkg.document = $newType(0, $kindStruct, "dom.document", "document", "honnef.co/go/js/dom", function(BasicNode_) {
+	document = $pkg.document = $newType(0, $kindStruct, "dom.document", "document", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicNode_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicNode = ptrType$22.nil;
@@ -31245,7 +31279,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicNode = BasicNode_;
 	});
-	htmlDocument = $pkg.htmlDocument = $newType(0, $kindStruct, "dom.htmlDocument", "htmlDocument", "honnef.co/go/js/dom", function(document_) {
+	htmlDocument = $pkg.htmlDocument = $newType(0, $kindStruct, "dom.htmlDocument", "htmlDocument", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(document_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.document = ptrType$23.nil;
@@ -31253,7 +31287,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.document = document_;
 	});
-	URLUtils = $pkg.URLUtils = $newType(0, $kindStruct, "dom.URLUtils", "URLUtils", "honnef.co/go/js/dom", function(Object_, Href_, Protocol_, Host_, Hostname_, Port_, Pathname_, Search_, Hash_, Username_, Password_, Origin_) {
+	URLUtils = $pkg.URLUtils = $newType(0, $kindStruct, "dom.URLUtils", "URLUtils", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, Href_, Protocol_, Host_, Hostname_, Port_, Pathname_, Search_, Hash_, Username_, Password_, Origin_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31283,7 +31317,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Password = Password_;
 		this.Origin = Origin_;
 	});
-	Location = $pkg.Location = $newType(0, $kindStruct, "dom.Location", "Location", "honnef.co/go/js/dom", function(Object_, URLUtils_) {
+	Location = $pkg.Location = $newType(0, $kindStruct, "dom.Location", "Location", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, URLUtils_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31293,9 +31327,9 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Object = Object_;
 		this.URLUtils = URLUtils_;
 	});
-	HTMLElement = $pkg.HTMLElement = $newType(8, $kindInterface, "dom.HTMLElement", "HTMLElement", "honnef.co/go/js/dom", null);
-	Window = $pkg.Window = $newType(8, $kindInterface, "dom.Window", "Window", "honnef.co/go/js/dom", null);
-	window = $pkg.window = $newType(0, $kindStruct, "dom.window", "window", "honnef.co/go/js/dom", function(Object_) {
+	HTMLElement = $pkg.HTMLElement = $newType(8, $kindInterface, "dom.HTMLElement", "HTMLElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	Window = $pkg.Window = $newType(8, $kindInterface, "dom.Window", "Window", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	window = $pkg.window = $newType(0, $kindStruct, "dom.window", "window", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31303,8 +31337,8 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	Selection = $pkg.Selection = $newType(8, $kindInterface, "dom.Selection", "Selection", "honnef.co/go/js/dom", null);
-	Screen = $pkg.Screen = $newType(0, $kindStruct, "dom.Screen", "Screen", "honnef.co/go/js/dom", function(Object_, AvailTop_, AvailLeft_, AvailHeight_, AvailWidth_, ColorDepth_, Height_, Left_, PixelDepth_, Top_, Width_) {
+	Selection = $pkg.Selection = $newType(8, $kindInterface, "dom.Selection", "Selection", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	Screen = $pkg.Screen = $newType(0, $kindStruct, "dom.Screen", "Screen", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, AvailTop_, AvailLeft_, AvailHeight_, AvailWidth_, ColorDepth_, Height_, Left_, PixelDepth_, Top_, Width_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31332,9 +31366,9 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Top = Top_;
 		this.Width = Width_;
 	});
-	Navigator = $pkg.Navigator = $newType(8, $kindInterface, "dom.Navigator", "Navigator", "honnef.co/go/js/dom", null);
-	Geolocation = $pkg.Geolocation = $newType(8, $kindInterface, "dom.Geolocation", "Geolocation", "honnef.co/go/js/dom", null);
-	PositionError = $pkg.PositionError = $newType(0, $kindStruct, "dom.PositionError", "PositionError", "honnef.co/go/js/dom", function(Object_, Code_) {
+	Navigator = $pkg.Navigator = $newType(8, $kindInterface, "dom.Navigator", "Navigator", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	Geolocation = $pkg.Geolocation = $newType(8, $kindInterface, "dom.Geolocation", "Geolocation", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	PositionError = $pkg.PositionError = $newType(0, $kindStruct, "dom.PositionError", "PositionError", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, Code_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31344,7 +31378,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Object = Object_;
 		this.Code = Code_;
 	});
-	PositionOptions = $pkg.PositionOptions = $newType(0, $kindStruct, "dom.PositionOptions", "PositionOptions", "honnef.co/go/js/dom", function(EnableHighAccuracy_, Timeout_, MaximumAge_) {
+	PositionOptions = $pkg.PositionOptions = $newType(0, $kindStruct, "dom.PositionOptions", "PositionOptions", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(EnableHighAccuracy_, Timeout_, MaximumAge_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.EnableHighAccuracy = false;
@@ -31356,7 +31390,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Timeout = Timeout_;
 		this.MaximumAge = MaximumAge_;
 	});
-	Position = $pkg.Position = $newType(0, $kindStruct, "dom.Position", "Position", "honnef.co/go/js/dom", function(Coords_, Timestamp_) {
+	Position = $pkg.Position = $newType(0, $kindStruct, "dom.Position", "Position", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Coords_, Timestamp_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Coords = ptrType$30.nil;
@@ -31366,7 +31400,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Coords = Coords_;
 		this.Timestamp = Timestamp_;
 	});
-	Coordinates = $pkg.Coordinates = $newType(0, $kindStruct, "dom.Coordinates", "Coordinates", "honnef.co/go/js/dom", function(Object_, Latitude_, Longitude_, Altitude_, Accuracy_, AltitudeAccuracy_, Heading_, Speed_) {
+	Coordinates = $pkg.Coordinates = $newType(0, $kindStruct, "dom.Coordinates", "Coordinates", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, Latitude_, Longitude_, Altitude_, Accuracy_, AltitudeAccuracy_, Heading_, Speed_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31388,8 +31422,8 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Heading = Heading_;
 		this.Speed = Speed_;
 	});
-	History = $pkg.History = $newType(8, $kindInterface, "dom.History", "History", "honnef.co/go/js/dom", null);
-	Console = $pkg.Console = $newType(0, $kindStruct, "dom.Console", "Console", "honnef.co/go/js/dom", function(Object_) {
+	History = $pkg.History = $newType(8, $kindInterface, "dom.History", "History", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	Console = $pkg.Console = $newType(0, $kindStruct, "dom.Console", "Console", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31397,11 +31431,11 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	DocumentType = $pkg.DocumentType = $newType(8, $kindInterface, "dom.DocumentType", "DocumentType", "honnef.co/go/js/dom", null);
-	DOMImplementation = $pkg.DOMImplementation = $newType(8, $kindInterface, "dom.DOMImplementation", "DOMImplementation", "honnef.co/go/js/dom", null);
-	StyleSheet = $pkg.StyleSheet = $newType(8, $kindInterface, "dom.StyleSheet", "StyleSheet", "honnef.co/go/js/dom", null);
-	Node = $pkg.Node = $newType(8, $kindInterface, "dom.Node", "Node", "honnef.co/go/js/dom", null);
-	BasicNode = $pkg.BasicNode = $newType(0, $kindStruct, "dom.BasicNode", "BasicNode", "honnef.co/go/js/dom", function(Object_) {
+	DocumentType = $pkg.DocumentType = $newType(8, $kindInterface, "dom.DocumentType", "DocumentType", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	DOMImplementation = $pkg.DOMImplementation = $newType(8, $kindInterface, "dom.DOMImplementation", "DOMImplementation", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	StyleSheet = $pkg.StyleSheet = $newType(8, $kindInterface, "dom.StyleSheet", "StyleSheet", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	Node = $pkg.Node = $newType(8, $kindInterface, "dom.Node", "Node", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	BasicNode = $pkg.BasicNode = $newType(0, $kindStruct, "dom.BasicNode", "BasicNode", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31409,8 +31443,8 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	Element = $pkg.Element = $newType(8, $kindInterface, "dom.Element", "Element", "honnef.co/go/js/dom", null);
-	ClientRect = $pkg.ClientRect = $newType(0, $kindStruct, "dom.ClientRect", "ClientRect", "honnef.co/go/js/dom", function(Object_, Height_, Width_, Left_, Right_, Top_, Bottom_) {
+	Element = $pkg.Element = $newType(8, $kindInterface, "dom.Element", "Element", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	ClientRect = $pkg.ClientRect = $newType(0, $kindStruct, "dom.ClientRect", "ClientRect", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, Height_, Width_, Left_, Right_, Top_, Bottom_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31430,7 +31464,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Top = Top_;
 		this.Bottom = Bottom_;
 	});
-	BasicHTMLElement = $pkg.BasicHTMLElement = $newType(0, $kindStruct, "dom.BasicHTMLElement", "BasicHTMLElement", "honnef.co/go/js/dom", function(BasicElement_) {
+	BasicHTMLElement = $pkg.BasicHTMLElement = $newType(0, $kindStruct, "dom.BasicHTMLElement", "BasicHTMLElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicElement = ptrType$31.nil;
@@ -31438,7 +31472,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicElement = BasicElement_;
 	});
-	BasicElement = $pkg.BasicElement = $newType(0, $kindStruct, "dom.BasicElement", "BasicElement", "honnef.co/go/js/dom", function(BasicNode_) {
+	BasicElement = $pkg.BasicElement = $newType(0, $kindStruct, "dom.BasicElement", "BasicElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicNode_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicNode = ptrType$22.nil;
@@ -31446,7 +31480,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicNode = BasicNode_;
 	});
-	HTMLAnchorElement = $pkg.HTMLAnchorElement = $newType(0, $kindStruct, "dom.HTMLAnchorElement", "HTMLAnchorElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, URLUtils_, HrefLang_, Media_, TabIndex_, Target_, Text_, Type_) {
+	HTMLAnchorElement = $pkg.HTMLAnchorElement = $newType(0, $kindStruct, "dom.HTMLAnchorElement", "HTMLAnchorElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, URLUtils_, HrefLang_, Media_, TabIndex_, Target_, Text_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31468,7 +31502,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Text = Text_;
 		this.Type = Type_;
 	});
-	HTMLAppletElement = $pkg.HTMLAppletElement = $newType(0, $kindStruct, "dom.HTMLAppletElement", "HTMLAppletElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Alt_, Coords_, HrefLang_, Media_, Search_, Shape_, TabIndex_, Target_, Type_) {
+	HTMLAppletElement = $pkg.HTMLAppletElement = $newType(0, $kindStruct, "dom.HTMLAppletElement", "HTMLAppletElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Alt_, Coords_, HrefLang_, Media_, Search_, Shape_, TabIndex_, Target_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31494,7 +31528,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Target = Target_;
 		this.Type = Type_;
 	});
-	HTMLAreaElement = $pkg.HTMLAreaElement = $newType(0, $kindStruct, "dom.HTMLAreaElement", "HTMLAreaElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, URLUtils_, Alt_, Coords_, HrefLang_, Media_, Search_, Shape_, TabIndex_, Target_, Type_) {
+	HTMLAreaElement = $pkg.HTMLAreaElement = $newType(0, $kindStruct, "dom.HTMLAreaElement", "HTMLAreaElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, URLUtils_, Alt_, Coords_, HrefLang_, Media_, Search_, Shape_, TabIndex_, Target_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31522,7 +31556,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Target = Target_;
 		this.Type = Type_;
 	});
-	HTMLAudioElement = $pkg.HTMLAudioElement = $newType(0, $kindStruct, "dom.HTMLAudioElement", "HTMLAudioElement", "honnef.co/go/js/dom", function(HTMLMediaElement_) {
+	HTMLAudioElement = $pkg.HTMLAudioElement = $newType(0, $kindStruct, "dom.HTMLAudioElement", "HTMLAudioElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(HTMLMediaElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.HTMLMediaElement = ptrType$3.nil;
@@ -31530,7 +31564,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.HTMLMediaElement = HTMLMediaElement_;
 	});
-	HTMLBRElement = $pkg.HTMLBRElement = $newType(0, $kindStruct, "dom.HTMLBRElement", "HTMLBRElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLBRElement = $pkg.HTMLBRElement = $newType(0, $kindStruct, "dom.HTMLBRElement", "HTMLBRElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31538,7 +31572,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLBaseElement = $pkg.HTMLBaseElement = $newType(0, $kindStruct, "dom.HTMLBaseElement", "HTMLBaseElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLBaseElement = $pkg.HTMLBaseElement = $newType(0, $kindStruct, "dom.HTMLBaseElement", "HTMLBaseElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31546,7 +31580,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLBodyElement = $pkg.HTMLBodyElement = $newType(0, $kindStruct, "dom.HTMLBodyElement", "HTMLBodyElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLBodyElement = $pkg.HTMLBodyElement = $newType(0, $kindStruct, "dom.HTMLBodyElement", "HTMLBodyElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31554,7 +31588,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	ValidityState = $pkg.ValidityState = $newType(0, $kindStruct, "dom.ValidityState", "ValidityState", "honnef.co/go/js/dom", function(Object_, CustomError_, PatternMismatch_, RangeOverflow_, RangeUnderflow_, StepMismatch_, TooLong_, TypeMismatch_, Valid_, ValueMissing_) {
+	ValidityState = $pkg.ValidityState = $newType(0, $kindStruct, "dom.ValidityState", "ValidityState", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, CustomError_, PatternMismatch_, RangeOverflow_, RangeUnderflow_, StepMismatch_, TooLong_, TypeMismatch_, Valid_, ValueMissing_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31580,7 +31614,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Valid = Valid_;
 		this.ValueMissing = ValueMissing_;
 	});
-	HTMLButtonElement = $pkg.HTMLButtonElement = $newType(0, $kindStruct, "dom.HTMLButtonElement", "HTMLButtonElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, AutoFocus_, Disabled_, FormAction_, FormEncType_, FormMethod_, FormNoValidate_, FormTarget_, Name_, TabIndex_, Type_, ValidationMessage_, Value_, WillValidate_) {
+	HTMLButtonElement = $pkg.HTMLButtonElement = $newType(0, $kindStruct, "dom.HTMLButtonElement", "HTMLButtonElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, AutoFocus_, Disabled_, FormAction_, FormEncType_, FormMethod_, FormNoValidate_, FormTarget_, Name_, TabIndex_, Type_, ValidationMessage_, Value_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31614,7 +31648,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Value = Value_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLCanvasElement = $pkg.HTMLCanvasElement = $newType(0, $kindStruct, "dom.HTMLCanvasElement", "HTMLCanvasElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Height_, Width_) {
+	HTMLCanvasElement = $pkg.HTMLCanvasElement = $newType(0, $kindStruct, "dom.HTMLCanvasElement", "HTMLCanvasElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Height_, Width_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31626,7 +31660,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Height = Height_;
 		this.Width = Width_;
 	});
-	CanvasRenderingContext2D = $pkg.CanvasRenderingContext2D = $newType(0, $kindStruct, "dom.CanvasRenderingContext2D", "CanvasRenderingContext2D", "honnef.co/go/js/dom", function(Object_, FillStyle_, StrokeStyle_, ShadowColor_, ShadowBlur_, ShadowOffsetX_, ShadowOffsetY_, LineCap_, LineJoin_, LineWidth_, MiterLimit_, Font_, TextAlign_, TextBaseline_, GlobalAlpha_, GlobalCompositeOperation_) {
+	CanvasRenderingContext2D = $pkg.CanvasRenderingContext2D = $newType(0, $kindStruct, "dom.CanvasRenderingContext2D", "CanvasRenderingContext2D", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_, FillStyle_, StrokeStyle_, ShadowColor_, ShadowBlur_, ShadowOffsetX_, ShadowOffsetY_, LineCap_, LineJoin_, LineWidth_, MiterLimit_, Font_, TextAlign_, TextBaseline_, GlobalAlpha_, GlobalCompositeOperation_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31664,7 +31698,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.GlobalAlpha = GlobalAlpha_;
 		this.GlobalCompositeOperation = GlobalCompositeOperation_;
 	});
-	HTMLDListElement = $pkg.HTMLDListElement = $newType(0, $kindStruct, "dom.HTMLDListElement", "HTMLDListElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLDListElement = $pkg.HTMLDListElement = $newType(0, $kindStruct, "dom.HTMLDListElement", "HTMLDListElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31672,7 +31706,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLDataElement = $pkg.HTMLDataElement = $newType(0, $kindStruct, "dom.HTMLDataElement", "HTMLDataElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Value_) {
+	HTMLDataElement = $pkg.HTMLDataElement = $newType(0, $kindStruct, "dom.HTMLDataElement", "HTMLDataElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Value_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31682,7 +31716,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Value = Value_;
 	});
-	HTMLDataListElement = $pkg.HTMLDataListElement = $newType(0, $kindStruct, "dom.HTMLDataListElement", "HTMLDataListElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLDataListElement = $pkg.HTMLDataListElement = $newType(0, $kindStruct, "dom.HTMLDataListElement", "HTMLDataListElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31690,7 +31724,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLDirectoryElement = $pkg.HTMLDirectoryElement = $newType(0, $kindStruct, "dom.HTMLDirectoryElement", "HTMLDirectoryElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLDirectoryElement = $pkg.HTMLDirectoryElement = $newType(0, $kindStruct, "dom.HTMLDirectoryElement", "HTMLDirectoryElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31698,7 +31732,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLDivElement = $pkg.HTMLDivElement = $newType(0, $kindStruct, "dom.HTMLDivElement", "HTMLDivElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLDivElement = $pkg.HTMLDivElement = $newType(0, $kindStruct, "dom.HTMLDivElement", "HTMLDivElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31706,7 +31740,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLEmbedElement = $pkg.HTMLEmbedElement = $newType(0, $kindStruct, "dom.HTMLEmbedElement", "HTMLEmbedElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Src_, Type_, Width_) {
+	HTMLEmbedElement = $pkg.HTMLEmbedElement = $newType(0, $kindStruct, "dom.HTMLEmbedElement", "HTMLEmbedElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Src_, Type_, Width_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31720,7 +31754,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Type = Type_;
 		this.Width = Width_;
 	});
-	HTMLFieldSetElement = $pkg.HTMLFieldSetElement = $newType(0, $kindStruct, "dom.HTMLFieldSetElement", "HTMLFieldSetElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Name_, Type_, ValidationMessage_, WillValidate_) {
+	HTMLFieldSetElement = $pkg.HTMLFieldSetElement = $newType(0, $kindStruct, "dom.HTMLFieldSetElement", "HTMLFieldSetElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Name_, Type_, ValidationMessage_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31738,7 +31772,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.ValidationMessage = ValidationMessage_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLFontElement = $pkg.HTMLFontElement = $newType(0, $kindStruct, "dom.HTMLFontElement", "HTMLFontElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLFontElement = $pkg.HTMLFontElement = $newType(0, $kindStruct, "dom.HTMLFontElement", "HTMLFontElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31746,7 +31780,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLFormElement = $pkg.HTMLFormElement = $newType(0, $kindStruct, "dom.HTMLFormElement", "HTMLFormElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, AcceptCharset_, Action_, Autocomplete_, Encoding_, Enctype_, Length_, Method_, Name_, NoValidate_, Target_) {
+	HTMLFormElement = $pkg.HTMLFormElement = $newType(0, $kindStruct, "dom.HTMLFormElement", "HTMLFormElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, AcceptCharset_, Action_, Autocomplete_, Encoding_, Enctype_, Length_, Method_, Name_, NoValidate_, Target_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31774,7 +31808,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.NoValidate = NoValidate_;
 		this.Target = Target_;
 	});
-	HTMLFrameElement = $pkg.HTMLFrameElement = $newType(0, $kindStruct, "dom.HTMLFrameElement", "HTMLFrameElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLFrameElement = $pkg.HTMLFrameElement = $newType(0, $kindStruct, "dom.HTMLFrameElement", "HTMLFrameElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31782,7 +31816,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLFrameSetElement = $pkg.HTMLFrameSetElement = $newType(0, $kindStruct, "dom.HTMLFrameSetElement", "HTMLFrameSetElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLFrameSetElement = $pkg.HTMLFrameSetElement = $newType(0, $kindStruct, "dom.HTMLFrameSetElement", "HTMLFrameSetElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31790,7 +31824,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLHRElement = $pkg.HTMLHRElement = $newType(0, $kindStruct, "dom.HTMLHRElement", "HTMLHRElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLHRElement = $pkg.HTMLHRElement = $newType(0, $kindStruct, "dom.HTMLHRElement", "HTMLHRElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31798,7 +31832,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLHeadElement = $pkg.HTMLHeadElement = $newType(0, $kindStruct, "dom.HTMLHeadElement", "HTMLHeadElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLHeadElement = $pkg.HTMLHeadElement = $newType(0, $kindStruct, "dom.HTMLHeadElement", "HTMLHeadElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31806,7 +31840,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLHeadingElement = $pkg.HTMLHeadingElement = $newType(0, $kindStruct, "dom.HTMLHeadingElement", "HTMLHeadingElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLHeadingElement = $pkg.HTMLHeadingElement = $newType(0, $kindStruct, "dom.HTMLHeadingElement", "HTMLHeadingElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31814,7 +31848,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLHtmlElement = $pkg.HTMLHtmlElement = $newType(0, $kindStruct, "dom.HTMLHtmlElement", "HTMLHtmlElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLHtmlElement = $pkg.HTMLHtmlElement = $newType(0, $kindStruct, "dom.HTMLHtmlElement", "HTMLHtmlElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31822,7 +31856,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLIFrameElement = $pkg.HTMLIFrameElement = $newType(0, $kindStruct, "dom.HTMLIFrameElement", "HTMLIFrameElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Width_, Height_, Name_, Src_, SrcDoc_, Seamless_) {
+	HTMLIFrameElement = $pkg.HTMLIFrameElement = $newType(0, $kindStruct, "dom.HTMLIFrameElement", "HTMLIFrameElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Width_, Height_, Name_, Src_, SrcDoc_, Seamless_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31842,7 +31876,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.SrcDoc = SrcDoc_;
 		this.Seamless = Seamless_;
 	});
-	HTMLImageElement = $pkg.HTMLImageElement = $newType(0, $kindStruct, "dom.HTMLImageElement", "HTMLImageElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Complete_, CrossOrigin_, Height_, IsMap_, NaturalHeight_, NaturalWidth_, Src_, UseMap_, Width_) {
+	HTMLImageElement = $pkg.HTMLImageElement = $newType(0, $kindStruct, "dom.HTMLImageElement", "HTMLImageElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Complete_, CrossOrigin_, Height_, IsMap_, NaturalHeight_, NaturalWidth_, Src_, UseMap_, Width_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31868,7 +31902,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.UseMap = UseMap_;
 		this.Width = Width_;
 	});
-	HTMLInputElement = $pkg.HTMLInputElement = $newType(0, $kindStruct, "dom.HTMLInputElement", "HTMLInputElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Accept_, Alt_, Autocomplete_, Autofocus_, Checked_, DefaultChecked_, DefaultValue_, DirName_, Disabled_, FormAction_, FormEncType_, FormMethod_, FormNoValidate_, FormTarget_, Height_, Indeterminate_, Max_, MaxLength_, Min_, Multiple_, Name_, Pattern_, Placeholder_, ReadOnly_, Required_, SelectionDirection_, SelectionEnd_, SelectionStart_, Size_, Src_, Step_, TabIndex_, Type_, ValidationMessage_, Value_, ValueAsDate_, ValueAsNumber_, Width_, WillValidate_) {
+	HTMLInputElement = $pkg.HTMLInputElement = $newType(0, $kindStruct, "dom.HTMLInputElement", "HTMLInputElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Accept_, Alt_, Autocomplete_, Autofocus_, Checked_, DefaultChecked_, DefaultValue_, DirName_, Disabled_, FormAction_, FormEncType_, FormMethod_, FormNoValidate_, FormTarget_, Height_, Indeterminate_, Max_, MaxLength_, Min_, Multiple_, Name_, Pattern_, Placeholder_, ReadOnly_, Required_, SelectionDirection_, SelectionEnd_, SelectionStart_, Size_, Src_, Step_, TabIndex_, Type_, ValidationMessage_, Value_, ValueAsDate_, ValueAsNumber_, Width_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31954,7 +31988,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Width = Width_;
 		this.WillValidate = WillValidate_;
 	});
-	File = $pkg.File = $newType(0, $kindStruct, "dom.File", "File", "honnef.co/go/js/dom", function(Object_) {
+	File = $pkg.File = $newType(0, $kindStruct, "dom.File", "File", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -31962,7 +31996,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	HTMLKeygenElement = $pkg.HTMLKeygenElement = $newType(0, $kindStruct, "dom.HTMLKeygenElement", "HTMLKeygenElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Autofocus_, Challenge_, Disabled_, Keytype_, Name_, Type_, ValidationMessage_, WillValidate_) {
+	HTMLKeygenElement = $pkg.HTMLKeygenElement = $newType(0, $kindStruct, "dom.HTMLKeygenElement", "HTMLKeygenElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Autofocus_, Challenge_, Disabled_, Keytype_, Name_, Type_, ValidationMessage_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31986,7 +32020,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.ValidationMessage = ValidationMessage_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLLIElement = $pkg.HTMLLIElement = $newType(0, $kindStruct, "dom.HTMLLIElement", "HTMLLIElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Value_) {
+	HTMLLIElement = $pkg.HTMLLIElement = $newType(0, $kindStruct, "dom.HTMLLIElement", "HTMLLIElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Value_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -31996,7 +32030,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Value = Value_;
 	});
-	HTMLLabelElement = $pkg.HTMLLabelElement = $newType(0, $kindStruct, "dom.HTMLLabelElement", "HTMLLabelElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, For_) {
+	HTMLLabelElement = $pkg.HTMLLabelElement = $newType(0, $kindStruct, "dom.HTMLLabelElement", "HTMLLabelElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, For_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32006,7 +32040,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.For = For_;
 	});
-	HTMLLegendElement = $pkg.HTMLLegendElement = $newType(0, $kindStruct, "dom.HTMLLegendElement", "HTMLLegendElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLLegendElement = $pkg.HTMLLegendElement = $newType(0, $kindStruct, "dom.HTMLLegendElement", "HTMLLegendElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32014,7 +32048,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLLinkElement = $pkg.HTMLLinkElement = $newType(0, $kindStruct, "dom.HTMLLinkElement", "HTMLLinkElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Href_, HrefLang_, Media_, Type_) {
+	HTMLLinkElement = $pkg.HTMLLinkElement = $newType(0, $kindStruct, "dom.HTMLLinkElement", "HTMLLinkElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Href_, HrefLang_, Media_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32032,7 +32066,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Media = Media_;
 		this.Type = Type_;
 	});
-	HTMLMapElement = $pkg.HTMLMapElement = $newType(0, $kindStruct, "dom.HTMLMapElement", "HTMLMapElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Name_) {
+	HTMLMapElement = $pkg.HTMLMapElement = $newType(0, $kindStruct, "dom.HTMLMapElement", "HTMLMapElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Name_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32042,7 +32076,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Name = Name_;
 	});
-	HTMLMediaElement = $pkg.HTMLMediaElement = $newType(0, $kindStruct, "dom.HTMLMediaElement", "HTMLMediaElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Paused_) {
+	HTMLMediaElement = $pkg.HTMLMediaElement = $newType(0, $kindStruct, "dom.HTMLMediaElement", "HTMLMediaElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Paused_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32052,7 +32086,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Paused = Paused_;
 	});
-	HTMLMenuElement = $pkg.HTMLMenuElement = $newType(0, $kindStruct, "dom.HTMLMenuElement", "HTMLMenuElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLMenuElement = $pkg.HTMLMenuElement = $newType(0, $kindStruct, "dom.HTMLMenuElement", "HTMLMenuElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32060,7 +32094,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLMetaElement = $pkg.HTMLMetaElement = $newType(0, $kindStruct, "dom.HTMLMetaElement", "HTMLMetaElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Content_, HTTPEquiv_, Name_) {
+	HTMLMetaElement = $pkg.HTMLMetaElement = $newType(0, $kindStruct, "dom.HTMLMetaElement", "HTMLMetaElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Content_, HTTPEquiv_, Name_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32074,7 +32108,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.HTTPEquiv = HTTPEquiv_;
 		this.Name = Name_;
 	});
-	HTMLMeterElement = $pkg.HTMLMeterElement = $newType(0, $kindStruct, "dom.HTMLMeterElement", "HTMLMeterElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, High_, Low_, Max_, Min_, Optimum_) {
+	HTMLMeterElement = $pkg.HTMLMeterElement = $newType(0, $kindStruct, "dom.HTMLMeterElement", "HTMLMeterElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, High_, Low_, Max_, Min_, Optimum_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32092,7 +32126,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Min = Min_;
 		this.Optimum = Optimum_;
 	});
-	HTMLModElement = $pkg.HTMLModElement = $newType(0, $kindStruct, "dom.HTMLModElement", "HTMLModElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Cite_, DateTime_) {
+	HTMLModElement = $pkg.HTMLModElement = $newType(0, $kindStruct, "dom.HTMLModElement", "HTMLModElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Cite_, DateTime_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32104,7 +32138,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Cite = Cite_;
 		this.DateTime = DateTime_;
 	});
-	HTMLOListElement = $pkg.HTMLOListElement = $newType(0, $kindStruct, "dom.HTMLOListElement", "HTMLOListElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Reversed_, Start_, Type_) {
+	HTMLOListElement = $pkg.HTMLOListElement = $newType(0, $kindStruct, "dom.HTMLOListElement", "HTMLOListElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Reversed_, Start_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32118,7 +32152,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Start = Start_;
 		this.Type = Type_;
 	});
-	HTMLObjectElement = $pkg.HTMLObjectElement = $newType(0, $kindStruct, "dom.HTMLObjectElement", "HTMLObjectElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Data_, Height_, Name_, TabIndex_, Type_, TypeMustMatch_, UseMap_, ValidationMessage_, With_, WillValidate_) {
+	HTMLObjectElement = $pkg.HTMLObjectElement = $newType(0, $kindStruct, "dom.HTMLObjectElement", "HTMLObjectElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Data_, Height_, Name_, TabIndex_, Type_, TypeMustMatch_, UseMap_, ValidationMessage_, With_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32146,7 +32180,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.With = With_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLOptGroupElement = $pkg.HTMLOptGroupElement = $newType(0, $kindStruct, "dom.HTMLOptGroupElement", "HTMLOptGroupElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Label_) {
+	HTMLOptGroupElement = $pkg.HTMLOptGroupElement = $newType(0, $kindStruct, "dom.HTMLOptGroupElement", "HTMLOptGroupElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Disabled_, Label_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32158,7 +32192,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Disabled = Disabled_;
 		this.Label = Label_;
 	});
-	HTMLOptionElement = $pkg.HTMLOptionElement = $newType(0, $kindStruct, "dom.HTMLOptionElement", "HTMLOptionElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, DefaultSelected_, Disabled_, Index_, Label_, Selected_, Text_, Value_) {
+	HTMLOptionElement = $pkg.HTMLOptionElement = $newType(0, $kindStruct, "dom.HTMLOptionElement", "HTMLOptionElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, DefaultSelected_, Disabled_, Index_, Label_, Selected_, Text_, Value_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32180,7 +32214,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Text = Text_;
 		this.Value = Value_;
 	});
-	HTMLOutputElement = $pkg.HTMLOutputElement = $newType(0, $kindStruct, "dom.HTMLOutputElement", "HTMLOutputElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, DefaultValue_, Name_, Type_, ValidationMessage_, Value_, WillValidate_) {
+	HTMLOutputElement = $pkg.HTMLOutputElement = $newType(0, $kindStruct, "dom.HTMLOutputElement", "HTMLOutputElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, DefaultValue_, Name_, Type_, ValidationMessage_, Value_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32200,7 +32234,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Value = Value_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLParagraphElement = $pkg.HTMLParagraphElement = $newType(0, $kindStruct, "dom.HTMLParagraphElement", "HTMLParagraphElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLParagraphElement = $pkg.HTMLParagraphElement = $newType(0, $kindStruct, "dom.HTMLParagraphElement", "HTMLParagraphElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32208,7 +32242,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLParamElement = $pkg.HTMLParamElement = $newType(0, $kindStruct, "dom.HTMLParamElement", "HTMLParamElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Name_, Value_) {
+	HTMLParamElement = $pkg.HTMLParamElement = $newType(0, $kindStruct, "dom.HTMLParamElement", "HTMLParamElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Name_, Value_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32220,7 +32254,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Name = Name_;
 		this.Value = Value_;
 	});
-	HTMLPreElement = $pkg.HTMLPreElement = $newType(0, $kindStruct, "dom.HTMLPreElement", "HTMLPreElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLPreElement = $pkg.HTMLPreElement = $newType(0, $kindStruct, "dom.HTMLPreElement", "HTMLPreElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32228,7 +32262,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLProgressElement = $pkg.HTMLProgressElement = $newType(0, $kindStruct, "dom.HTMLProgressElement", "HTMLProgressElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Max_, Position_, Value_) {
+	HTMLProgressElement = $pkg.HTMLProgressElement = $newType(0, $kindStruct, "dom.HTMLProgressElement", "HTMLProgressElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Max_, Position_, Value_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32242,7 +32276,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Position = Position_;
 		this.Value = Value_;
 	});
-	HTMLQuoteElement = $pkg.HTMLQuoteElement = $newType(0, $kindStruct, "dom.HTMLQuoteElement", "HTMLQuoteElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Cite_) {
+	HTMLQuoteElement = $pkg.HTMLQuoteElement = $newType(0, $kindStruct, "dom.HTMLQuoteElement", "HTMLQuoteElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Cite_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32252,7 +32286,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Cite = Cite_;
 	});
-	HTMLScriptElement = $pkg.HTMLScriptElement = $newType(0, $kindStruct, "dom.HTMLScriptElement", "HTMLScriptElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Type_, Src_, Charset_, Async_, Defer_, Text_) {
+	HTMLScriptElement = $pkg.HTMLScriptElement = $newType(0, $kindStruct, "dom.HTMLScriptElement", "HTMLScriptElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Type_, Src_, Charset_, Async_, Defer_, Text_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32272,7 +32306,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Defer = Defer_;
 		this.Text = Text_;
 	});
-	HTMLSelectElement = $pkg.HTMLSelectElement = $newType(0, $kindStruct, "dom.HTMLSelectElement", "HTMLSelectElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Autofocus_, Disabled_, Length_, Multiple_, Name_, Required_, SelectedIndex_, Size_, Type_, ValidationMessage_, Value_, WillValidate_) {
+	HTMLSelectElement = $pkg.HTMLSelectElement = $newType(0, $kindStruct, "dom.HTMLSelectElement", "HTMLSelectElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Autofocus_, Disabled_, Length_, Multiple_, Name_, Required_, SelectedIndex_, Size_, Type_, ValidationMessage_, Value_, WillValidate_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32304,7 +32338,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Value = Value_;
 		this.WillValidate = WillValidate_;
 	});
-	HTMLSourceElement = $pkg.HTMLSourceElement = $newType(0, $kindStruct, "dom.HTMLSourceElement", "HTMLSourceElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Media_, Src_, Type_) {
+	HTMLSourceElement = $pkg.HTMLSourceElement = $newType(0, $kindStruct, "dom.HTMLSourceElement", "HTMLSourceElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Media_, Src_, Type_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32318,7 +32352,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Src = Src_;
 		this.Type = Type_;
 	});
-	HTMLSpanElement = $pkg.HTMLSpanElement = $newType(0, $kindStruct, "dom.HTMLSpanElement", "HTMLSpanElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLSpanElement = $pkg.HTMLSpanElement = $newType(0, $kindStruct, "dom.HTMLSpanElement", "HTMLSpanElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32326,7 +32360,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLStyleElement = $pkg.HTMLStyleElement = $newType(0, $kindStruct, "dom.HTMLStyleElement", "HTMLStyleElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLStyleElement = $pkg.HTMLStyleElement = $newType(0, $kindStruct, "dom.HTMLStyleElement", "HTMLStyleElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32334,7 +32368,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLTableCaptionElement = $pkg.HTMLTableCaptionElement = $newType(0, $kindStruct, "dom.HTMLTableCaptionElement", "HTMLTableCaptionElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLTableCaptionElement = $pkg.HTMLTableCaptionElement = $newType(0, $kindStruct, "dom.HTMLTableCaptionElement", "HTMLTableCaptionElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32342,7 +32376,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLTableCellElement = $pkg.HTMLTableCellElement = $newType(0, $kindStruct, "dom.HTMLTableCellElement", "HTMLTableCellElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, ColSpan_, RowSpan_, CellIndex_) {
+	HTMLTableCellElement = $pkg.HTMLTableCellElement = $newType(0, $kindStruct, "dom.HTMLTableCellElement", "HTMLTableCellElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, ColSpan_, RowSpan_, CellIndex_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32356,7 +32390,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.RowSpan = RowSpan_;
 		this.CellIndex = CellIndex_;
 	});
-	HTMLTableColElement = $pkg.HTMLTableColElement = $newType(0, $kindStruct, "dom.HTMLTableColElement", "HTMLTableColElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Span_) {
+	HTMLTableColElement = $pkg.HTMLTableColElement = $newType(0, $kindStruct, "dom.HTMLTableColElement", "HTMLTableColElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Span_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32366,7 +32400,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Span = Span_;
 	});
-	HTMLTableDataCellElement = $pkg.HTMLTableDataCellElement = $newType(0, $kindStruct, "dom.HTMLTableDataCellElement", "HTMLTableDataCellElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLTableDataCellElement = $pkg.HTMLTableDataCellElement = $newType(0, $kindStruct, "dom.HTMLTableDataCellElement", "HTMLTableDataCellElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32374,7 +32408,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLTableElement = $pkg.HTMLTableElement = $newType(0, $kindStruct, "dom.HTMLTableElement", "HTMLTableElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLTableElement = $pkg.HTMLTableElement = $newType(0, $kindStruct, "dom.HTMLTableElement", "HTMLTableElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32382,7 +32416,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLTableHeaderCellElement = $pkg.HTMLTableHeaderCellElement = $newType(0, $kindStruct, "dom.HTMLTableHeaderCellElement", "HTMLTableHeaderCellElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Abbr_, Scope_) {
+	HTMLTableHeaderCellElement = $pkg.HTMLTableHeaderCellElement = $newType(0, $kindStruct, "dom.HTMLTableHeaderCellElement", "HTMLTableHeaderCellElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Abbr_, Scope_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32394,7 +32428,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Abbr = Abbr_;
 		this.Scope = Scope_;
 	});
-	HTMLTableRowElement = $pkg.HTMLTableRowElement = $newType(0, $kindStruct, "dom.HTMLTableRowElement", "HTMLTableRowElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, RowIndex_, SectionRowIndex_) {
+	HTMLTableRowElement = $pkg.HTMLTableRowElement = $newType(0, $kindStruct, "dom.HTMLTableRowElement", "HTMLTableRowElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, RowIndex_, SectionRowIndex_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32406,7 +32440,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.RowIndex = RowIndex_;
 		this.SectionRowIndex = SectionRowIndex_;
 	});
-	HTMLTableSectionElement = $pkg.HTMLTableSectionElement = $newType(0, $kindStruct, "dom.HTMLTableSectionElement", "HTMLTableSectionElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLTableSectionElement = $pkg.HTMLTableSectionElement = $newType(0, $kindStruct, "dom.HTMLTableSectionElement", "HTMLTableSectionElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32414,7 +32448,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLTextAreaElement = $pkg.HTMLTextAreaElement = $newType(0, $kindStruct, "dom.HTMLTextAreaElement", "HTMLTextAreaElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Autocomplete_, Autofocus_, Cols_, DefaultValue_, DirName_, Disabled_, MaxLength_, Name_, Placeholder_, ReadOnly_, Required_, Rows_, SelectionDirection_, SelectionStart_, SelectionEnd_, TabIndex_, TextLength_, Type_, ValidationMessage_, Value_, WillValidate_, Wrap_) {
+	HTMLTextAreaElement = $pkg.HTMLTextAreaElement = $newType(0, $kindStruct, "dom.HTMLTextAreaElement", "HTMLTextAreaElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Autocomplete_, Autofocus_, Cols_, DefaultValue_, DirName_, Disabled_, MaxLength_, Name_, Placeholder_, ReadOnly_, Required_, Rows_, SelectionDirection_, SelectionStart_, SelectionEnd_, TabIndex_, TextLength_, Type_, ValidationMessage_, Value_, WillValidate_, Wrap_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32466,7 +32500,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.WillValidate = WillValidate_;
 		this.Wrap = Wrap_;
 	});
-	HTMLTimeElement = $pkg.HTMLTimeElement = $newType(0, $kindStruct, "dom.HTMLTimeElement", "HTMLTimeElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, DateTime_) {
+	HTMLTimeElement = $pkg.HTMLTimeElement = $newType(0, $kindStruct, "dom.HTMLTimeElement", "HTMLTimeElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, DateTime_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32476,7 +32510,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.DateTime = DateTime_;
 	});
-	HTMLTitleElement = $pkg.HTMLTitleElement = $newType(0, $kindStruct, "dom.HTMLTitleElement", "HTMLTitleElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Text_) {
+	HTMLTitleElement = $pkg.HTMLTitleElement = $newType(0, $kindStruct, "dom.HTMLTitleElement", "HTMLTitleElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Text_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32486,7 +32520,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicHTMLElement = BasicHTMLElement_;
 		this.Text = Text_;
 	});
-	TextTrack = $pkg.TextTrack = $newType(0, $kindStruct, "dom.TextTrack", "TextTrack", "honnef.co/go/js/dom", function(Object_) {
+	TextTrack = $pkg.TextTrack = $newType(0, $kindStruct, "dom.TextTrack", "TextTrack", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -32494,7 +32528,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	HTMLTrackElement = $pkg.HTMLTrackElement = $newType(0, $kindStruct, "dom.HTMLTrackElement", "HTMLTrackElement", "honnef.co/go/js/dom", function(BasicHTMLElement_, Kind_, Src_, Srclang_, Label_, Default_, ReadyState_) {
+	HTMLTrackElement = $pkg.HTMLTrackElement = $newType(0, $kindStruct, "dom.HTMLTrackElement", "HTMLTrackElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_, Kind_, Src_, Srclang_, Label_, Default_, ReadyState_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32514,7 +32548,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Default = Default_;
 		this.ReadyState = ReadyState_;
 	});
-	HTMLUListElement = $pkg.HTMLUListElement = $newType(0, $kindStruct, "dom.HTMLUListElement", "HTMLUListElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLUListElement = $pkg.HTMLUListElement = $newType(0, $kindStruct, "dom.HTMLUListElement", "HTMLUListElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32522,7 +32556,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLUnknownElement = $pkg.HTMLUnknownElement = $newType(0, $kindStruct, "dom.HTMLUnknownElement", "HTMLUnknownElement", "honnef.co/go/js/dom", function(BasicHTMLElement_) {
+	HTMLUnknownElement = $pkg.HTMLUnknownElement = $newType(0, $kindStruct, "dom.HTMLUnknownElement", "HTMLUnknownElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicHTMLElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicHTMLElement = ptrType$1.nil;
@@ -32530,7 +32564,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicHTMLElement = BasicHTMLElement_;
 	});
-	HTMLVideoElement = $pkg.HTMLVideoElement = $newType(0, $kindStruct, "dom.HTMLVideoElement", "HTMLVideoElement", "honnef.co/go/js/dom", function(HTMLMediaElement_) {
+	HTMLVideoElement = $pkg.HTMLVideoElement = $newType(0, $kindStruct, "dom.HTMLVideoElement", "HTMLVideoElement", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(HTMLMediaElement_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.HTMLMediaElement = ptrType$3.nil;
@@ -32538,7 +32572,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.HTMLMediaElement = HTMLMediaElement_;
 	});
-	CSSStyleDeclaration = $pkg.CSSStyleDeclaration = $newType(0, $kindStruct, "dom.CSSStyleDeclaration", "CSSStyleDeclaration", "honnef.co/go/js/dom", function(Object_) {
+	CSSStyleDeclaration = $pkg.CSSStyleDeclaration = $newType(0, $kindStruct, "dom.CSSStyleDeclaration", "CSSStyleDeclaration", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -32546,7 +32580,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	Text = $pkg.Text = $newType(0, $kindStruct, "dom.Text", "Text", "honnef.co/go/js/dom", function(BasicNode_) {
+	Text = $pkg.Text = $newType(0, $kindStruct, "dom.Text", "Text", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicNode_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicNode = ptrType$22.nil;
@@ -32554,8 +32588,8 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicNode = BasicNode_;
 	});
-	Event = $pkg.Event = $newType(8, $kindInterface, "dom.Event", "Event", "honnef.co/go/js/dom", null);
-	BasicEvent = $pkg.BasicEvent = $newType(0, $kindStruct, "dom.BasicEvent", "BasicEvent", "honnef.co/go/js/dom", function(Object_) {
+	Event = $pkg.Event = $newType(8, $kindInterface, "dom.Event", "Event", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", null);
+	BasicEvent = $pkg.BasicEvent = $newType(0, $kindStruct, "dom.BasicEvent", "BasicEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(Object_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Object = null;
@@ -32563,7 +32597,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.Object = Object_;
 	});
-	AnimationEvent = $pkg.AnimationEvent = $newType(0, $kindStruct, "dom.AnimationEvent", "AnimationEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	AnimationEvent = $pkg.AnimationEvent = $newType(0, $kindStruct, "dom.AnimationEvent", "AnimationEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32571,7 +32605,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	AudioProcessingEvent = $pkg.AudioProcessingEvent = $newType(0, $kindStruct, "dom.AudioProcessingEvent", "AudioProcessingEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	AudioProcessingEvent = $pkg.AudioProcessingEvent = $newType(0, $kindStruct, "dom.AudioProcessingEvent", "AudioProcessingEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32579,7 +32613,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	BeforeInputEvent = $pkg.BeforeInputEvent = $newType(0, $kindStruct, "dom.BeforeInputEvent", "BeforeInputEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	BeforeInputEvent = $pkg.BeforeInputEvent = $newType(0, $kindStruct, "dom.BeforeInputEvent", "BeforeInputEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32587,7 +32621,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	BeforeUnloadEvent = $pkg.BeforeUnloadEvent = $newType(0, $kindStruct, "dom.BeforeUnloadEvent", "BeforeUnloadEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	BeforeUnloadEvent = $pkg.BeforeUnloadEvent = $newType(0, $kindStruct, "dom.BeforeUnloadEvent", "BeforeUnloadEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32595,7 +32629,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	BlobEvent = $pkg.BlobEvent = $newType(0, $kindStruct, "dom.BlobEvent", "BlobEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	BlobEvent = $pkg.BlobEvent = $newType(0, $kindStruct, "dom.BlobEvent", "BlobEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32603,7 +32637,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	ClipboardEvent = $pkg.ClipboardEvent = $newType(0, $kindStruct, "dom.ClipboardEvent", "ClipboardEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	ClipboardEvent = $pkg.ClipboardEvent = $newType(0, $kindStruct, "dom.ClipboardEvent", "ClipboardEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32611,7 +32645,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	CloseEvent = $pkg.CloseEvent = $newType(0, $kindStruct, "dom.CloseEvent", "CloseEvent", "honnef.co/go/js/dom", function(BasicEvent_, Code_, Reason_, WasClean_) {
+	CloseEvent = $pkg.CloseEvent = $newType(0, $kindStruct, "dom.CloseEvent", "CloseEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_, Code_, Reason_, WasClean_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32625,7 +32659,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Reason = Reason_;
 		this.WasClean = WasClean_;
 	});
-	CompositionEvent = $pkg.CompositionEvent = $newType(0, $kindStruct, "dom.CompositionEvent", "CompositionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	CompositionEvent = $pkg.CompositionEvent = $newType(0, $kindStruct, "dom.CompositionEvent", "CompositionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32633,7 +32667,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	CSSFontFaceLoadEvent = $pkg.CSSFontFaceLoadEvent = $newType(0, $kindStruct, "dom.CSSFontFaceLoadEvent", "CSSFontFaceLoadEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	CSSFontFaceLoadEvent = $pkg.CSSFontFaceLoadEvent = $newType(0, $kindStruct, "dom.CSSFontFaceLoadEvent", "CSSFontFaceLoadEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32641,7 +32675,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	CustomEvent = $pkg.CustomEvent = $newType(0, $kindStruct, "dom.CustomEvent", "CustomEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	CustomEvent = $pkg.CustomEvent = $newType(0, $kindStruct, "dom.CustomEvent", "CustomEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32649,7 +32683,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DeviceLightEvent = $pkg.DeviceLightEvent = $newType(0, $kindStruct, "dom.DeviceLightEvent", "DeviceLightEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DeviceLightEvent = $pkg.DeviceLightEvent = $newType(0, $kindStruct, "dom.DeviceLightEvent", "DeviceLightEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32657,7 +32691,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DeviceMotionEvent = $pkg.DeviceMotionEvent = $newType(0, $kindStruct, "dom.DeviceMotionEvent", "DeviceMotionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DeviceMotionEvent = $pkg.DeviceMotionEvent = $newType(0, $kindStruct, "dom.DeviceMotionEvent", "DeviceMotionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32665,7 +32699,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DeviceOrientationEvent = $pkg.DeviceOrientationEvent = $newType(0, $kindStruct, "dom.DeviceOrientationEvent", "DeviceOrientationEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DeviceOrientationEvent = $pkg.DeviceOrientationEvent = $newType(0, $kindStruct, "dom.DeviceOrientationEvent", "DeviceOrientationEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32673,7 +32707,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DeviceProximityEvent = $pkg.DeviceProximityEvent = $newType(0, $kindStruct, "dom.DeviceProximityEvent", "DeviceProximityEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DeviceProximityEvent = $pkg.DeviceProximityEvent = $newType(0, $kindStruct, "dom.DeviceProximityEvent", "DeviceProximityEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32681,7 +32715,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DOMTransactionEvent = $pkg.DOMTransactionEvent = $newType(0, $kindStruct, "dom.DOMTransactionEvent", "DOMTransactionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DOMTransactionEvent = $pkg.DOMTransactionEvent = $newType(0, $kindStruct, "dom.DOMTransactionEvent", "DOMTransactionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32689,7 +32723,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	DragEvent = $pkg.DragEvent = $newType(0, $kindStruct, "dom.DragEvent", "DragEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	DragEvent = $pkg.DragEvent = $newType(0, $kindStruct, "dom.DragEvent", "DragEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32697,7 +32731,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	EditingBeforeInputEvent = $pkg.EditingBeforeInputEvent = $newType(0, $kindStruct, "dom.EditingBeforeInputEvent", "EditingBeforeInputEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	EditingBeforeInputEvent = $pkg.EditingBeforeInputEvent = $newType(0, $kindStruct, "dom.EditingBeforeInputEvent", "EditingBeforeInputEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32705,7 +32739,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	ErrorEvent = $pkg.ErrorEvent = $newType(0, $kindStruct, "dom.ErrorEvent", "ErrorEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	ErrorEvent = $pkg.ErrorEvent = $newType(0, $kindStruct, "dom.ErrorEvent", "ErrorEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32713,7 +32747,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	FocusEvent = $pkg.FocusEvent = $newType(0, $kindStruct, "dom.FocusEvent", "FocusEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	FocusEvent = $pkg.FocusEvent = $newType(0, $kindStruct, "dom.FocusEvent", "FocusEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32721,7 +32755,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	GamepadEvent = $pkg.GamepadEvent = $newType(0, $kindStruct, "dom.GamepadEvent", "GamepadEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	GamepadEvent = $pkg.GamepadEvent = $newType(0, $kindStruct, "dom.GamepadEvent", "GamepadEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32729,7 +32763,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	HashChangeEvent = $pkg.HashChangeEvent = $newType(0, $kindStruct, "dom.HashChangeEvent", "HashChangeEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	HashChangeEvent = $pkg.HashChangeEvent = $newType(0, $kindStruct, "dom.HashChangeEvent", "HashChangeEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32737,7 +32771,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	IDBVersionChangeEvent = $pkg.IDBVersionChangeEvent = $newType(0, $kindStruct, "dom.IDBVersionChangeEvent", "IDBVersionChangeEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	IDBVersionChangeEvent = $pkg.IDBVersionChangeEvent = $newType(0, $kindStruct, "dom.IDBVersionChangeEvent", "IDBVersionChangeEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32745,7 +32779,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	KeyboardEvent = $pkg.KeyboardEvent = $newType(0, $kindStruct, "dom.KeyboardEvent", "KeyboardEvent", "honnef.co/go/js/dom", function(BasicEvent_, AltKey_, CharCode_, CtrlKey_, Key_, KeyIdentifier_, KeyCode_, Locale_, Location_, KeyLocation_, MetaKey_, Repeat_, ShiftKey_) {
+	KeyboardEvent = $pkg.KeyboardEvent = $newType(0, $kindStruct, "dom.KeyboardEvent", "KeyboardEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_, AltKey_, CharCode_, CtrlKey_, Key_, KeyIdentifier_, KeyCode_, Locale_, Location_, KeyLocation_, MetaKey_, Repeat_, ShiftKey_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32777,7 +32811,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.Repeat = Repeat_;
 		this.ShiftKey = ShiftKey_;
 	});
-	MediaStreamEvent = $pkg.MediaStreamEvent = $newType(0, $kindStruct, "dom.MediaStreamEvent", "MediaStreamEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	MediaStreamEvent = $pkg.MediaStreamEvent = $newType(0, $kindStruct, "dom.MediaStreamEvent", "MediaStreamEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32785,7 +32819,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	MessageEvent = $pkg.MessageEvent = $newType(0, $kindStruct, "dom.MessageEvent", "MessageEvent", "honnef.co/go/js/dom", function(BasicEvent_, Data_) {
+	MessageEvent = $pkg.MessageEvent = $newType(0, $kindStruct, "dom.MessageEvent", "MessageEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_, Data_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32795,7 +32829,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.BasicEvent = BasicEvent_;
 		this.Data = Data_;
 	});
-	MouseEvent = $pkg.MouseEvent = $newType(0, $kindStruct, "dom.MouseEvent", "MouseEvent", "honnef.co/go/js/dom", function(UIEvent_, AltKey_, Button_, ClientX_, ClientY_, CtrlKey_, MetaKey_, MovementX_, MovementY_, ScreenX_, ScreenY_, ShiftKey_) {
+	MouseEvent = $pkg.MouseEvent = $newType(0, $kindStruct, "dom.MouseEvent", "MouseEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(UIEvent_, AltKey_, Button_, ClientX_, ClientY_, CtrlKey_, MetaKey_, MovementX_, MovementY_, ScreenX_, ScreenY_, ShiftKey_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.UIEvent = ptrType$19.nil;
@@ -32825,7 +32859,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		this.ScreenY = ScreenY_;
 		this.ShiftKey = ShiftKey_;
 	});
-	MutationEvent = $pkg.MutationEvent = $newType(0, $kindStruct, "dom.MutationEvent", "MutationEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	MutationEvent = $pkg.MutationEvent = $newType(0, $kindStruct, "dom.MutationEvent", "MutationEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32833,7 +32867,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	OfflineAudioCompletionEvent = $pkg.OfflineAudioCompletionEvent = $newType(0, $kindStruct, "dom.OfflineAudioCompletionEvent", "OfflineAudioCompletionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	OfflineAudioCompletionEvent = $pkg.OfflineAudioCompletionEvent = $newType(0, $kindStruct, "dom.OfflineAudioCompletionEvent", "OfflineAudioCompletionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32841,7 +32875,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	PageTransitionEvent = $pkg.PageTransitionEvent = $newType(0, $kindStruct, "dom.PageTransitionEvent", "PageTransitionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	PageTransitionEvent = $pkg.PageTransitionEvent = $newType(0, $kindStruct, "dom.PageTransitionEvent", "PageTransitionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32849,7 +32883,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	PointerEvent = $pkg.PointerEvent = $newType(0, $kindStruct, "dom.PointerEvent", "PointerEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	PointerEvent = $pkg.PointerEvent = $newType(0, $kindStruct, "dom.PointerEvent", "PointerEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32857,7 +32891,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	PopStateEvent = $pkg.PopStateEvent = $newType(0, $kindStruct, "dom.PopStateEvent", "PopStateEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	PopStateEvent = $pkg.PopStateEvent = $newType(0, $kindStruct, "dom.PopStateEvent", "PopStateEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32865,7 +32899,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	ProgressEvent = $pkg.ProgressEvent = $newType(0, $kindStruct, "dom.ProgressEvent", "ProgressEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	ProgressEvent = $pkg.ProgressEvent = $newType(0, $kindStruct, "dom.ProgressEvent", "ProgressEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32873,7 +32907,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	RelatedEvent = $pkg.RelatedEvent = $newType(0, $kindStruct, "dom.RelatedEvent", "RelatedEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	RelatedEvent = $pkg.RelatedEvent = $newType(0, $kindStruct, "dom.RelatedEvent", "RelatedEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32881,7 +32915,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	RTCPeerConnectionIceEvent = $pkg.RTCPeerConnectionIceEvent = $newType(0, $kindStruct, "dom.RTCPeerConnectionIceEvent", "RTCPeerConnectionIceEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	RTCPeerConnectionIceEvent = $pkg.RTCPeerConnectionIceEvent = $newType(0, $kindStruct, "dom.RTCPeerConnectionIceEvent", "RTCPeerConnectionIceEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32889,7 +32923,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	SensorEvent = $pkg.SensorEvent = $newType(0, $kindStruct, "dom.SensorEvent", "SensorEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	SensorEvent = $pkg.SensorEvent = $newType(0, $kindStruct, "dom.SensorEvent", "SensorEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32897,7 +32931,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	StorageEvent = $pkg.StorageEvent = $newType(0, $kindStruct, "dom.StorageEvent", "StorageEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	StorageEvent = $pkg.StorageEvent = $newType(0, $kindStruct, "dom.StorageEvent", "StorageEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32905,7 +32939,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	SVGEvent = $pkg.SVGEvent = $newType(0, $kindStruct, "dom.SVGEvent", "SVGEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	SVGEvent = $pkg.SVGEvent = $newType(0, $kindStruct, "dom.SVGEvent", "SVGEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32913,7 +32947,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	SVGZoomEvent = $pkg.SVGZoomEvent = $newType(0, $kindStruct, "dom.SVGZoomEvent", "SVGZoomEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	SVGZoomEvent = $pkg.SVGZoomEvent = $newType(0, $kindStruct, "dom.SVGZoomEvent", "SVGZoomEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32921,7 +32955,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	TimeEvent = $pkg.TimeEvent = $newType(0, $kindStruct, "dom.TimeEvent", "TimeEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	TimeEvent = $pkg.TimeEvent = $newType(0, $kindStruct, "dom.TimeEvent", "TimeEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32929,7 +32963,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	TouchEvent = $pkg.TouchEvent = $newType(0, $kindStruct, "dom.TouchEvent", "TouchEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	TouchEvent = $pkg.TouchEvent = $newType(0, $kindStruct, "dom.TouchEvent", "TouchEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32937,7 +32971,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	TrackEvent = $pkg.TrackEvent = $newType(0, $kindStruct, "dom.TrackEvent", "TrackEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	TrackEvent = $pkg.TrackEvent = $newType(0, $kindStruct, "dom.TrackEvent", "TrackEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32945,7 +32979,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	TransitionEvent = $pkg.TransitionEvent = $newType(0, $kindStruct, "dom.TransitionEvent", "TransitionEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	TransitionEvent = $pkg.TransitionEvent = $newType(0, $kindStruct, "dom.TransitionEvent", "TransitionEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32953,7 +32987,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	UIEvent = $pkg.UIEvent = $newType(0, $kindStruct, "dom.UIEvent", "UIEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	UIEvent = $pkg.UIEvent = $newType(0, $kindStruct, "dom.UIEvent", "UIEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32961,7 +32995,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	UserProximityEvent = $pkg.UserProximityEvent = $newType(0, $kindStruct, "dom.UserProximityEvent", "UserProximityEvent", "honnef.co/go/js/dom", function(BasicEvent_) {
+	UserProximityEvent = $pkg.UserProximityEvent = $newType(0, $kindStruct, "dom.UserProximityEvent", "UserProximityEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -32969,7 +33003,7 @@ $packages["honnef.co/go/js/dom"] = (function() {
 		}
 		this.BasicEvent = BasicEvent_;
 	});
-	WheelEvent = $pkg.WheelEvent = $newType(0, $kindStruct, "dom.WheelEvent", "WheelEvent", "honnef.co/go/js/dom", function(BasicEvent_, DeltaX_, DeltaY_, DeltaZ_, DeltaMode_) {
+	WheelEvent = $pkg.WheelEvent = $newType(0, $kindStruct, "dom.WheelEvent", "WheelEvent", "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", function(BasicEvent_, DeltaX_, DeltaY_, DeltaZ_, DeltaMode_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.BasicEvent = ptrType$18.nil;
@@ -35803,12 +35837,12 @@ $packages["honnef.co/go/js/dom"] = (function() {
 	ptrType$18.methods = [{prop: "Bubbles", name: "Bubbles", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "Cancelable", name: "Cancelable", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "CurrentTarget", name: "CurrentTarget", pkg: "", typ: $funcType([], [Element], false)}, {prop: "DefaultPrevented", name: "DefaultPrevented", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "EventPhase", name: "EventPhase", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Target", name: "Target", pkg: "", typ: $funcType([], [Element], false)}, {prop: "Timestamp", name: "Timestamp", pkg: "", typ: $funcType([], [time.Time], false)}, {prop: "Type", name: "Type", pkg: "", typ: $funcType([], [$String], false)}, {prop: "PreventDefault", name: "PreventDefault", pkg: "", typ: $funcType([], [], false)}, {prop: "StopImmediatePropagation", name: "StopImmediatePropagation", pkg: "", typ: $funcType([], [], false)}, {prop: "StopPropagation", name: "StopPropagation", pkg: "", typ: $funcType([], [], false)}];
 	ptrType$53.methods = [{prop: "ModifierState", name: "ModifierState", pkg: "", typ: $funcType([$String], [$Bool], false)}];
 	ptrType$54.methods = [{prop: "RelatedTarget", name: "RelatedTarget", pkg: "", typ: $funcType([], [Element], false)}, {prop: "ModifierState", name: "ModifierState", pkg: "", typ: $funcType([$String], [$Bool], false)}];
-	TokenList.init([{prop: "dtl", name: "dtl", pkg: "honnef.co/go/js/dom", typ: ptrType, tag: ""}, {prop: "o", name: "o", pkg: "honnef.co/go/js/dom", typ: ptrType, tag: ""}, {prop: "sa", name: "sa", pkg: "honnef.co/go/js/dom", typ: $String, tag: ""}, {prop: "Length", name: "Length", pkg: "", typ: $Int, tag: "js:\"length\""}]);
+	TokenList.init([{prop: "dtl", name: "dtl", pkg: "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", typ: ptrType, tag: ""}, {prop: "o", name: "o", pkg: "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", typ: ptrType, tag: ""}, {prop: "sa", name: "sa", pkg: "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", typ: $String, tag: ""}, {prop: "Length", name: "Length", pkg: "", typ: $Int, tag: "js:\"length\""}]);
 	Document.init([{prop: "AddEventListener", name: "AddEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$2], [funcType$1], false)}, {prop: "AdoptNode", name: "AdoptNode", pkg: "", typ: $funcType([Node], [Node], false)}, {prop: "AppendChild", name: "AppendChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "Async", name: "Async", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "BaseURI", name: "BaseURI", pkg: "", typ: $funcType([], [$String], false)}, {prop: "ChildNodes", name: "ChildNodes", pkg: "", typ: $funcType([], [sliceType$2], false)}, {prop: "CloneNode", name: "CloneNode", pkg: "", typ: $funcType([$Bool], [Node], false)}, {prop: "CompareDocumentPosition", name: "CompareDocumentPosition", pkg: "", typ: $funcType([Node], [$Int], false)}, {prop: "Contains", name: "Contains", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "CreateDocumentFragment", name: "CreateDocumentFragment", pkg: "", typ: $funcType([], [DocumentFragment], false)}, {prop: "CreateElement", name: "CreateElement", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "CreateElementNS", name: "CreateElementNS", pkg: "", typ: $funcType([$String, $String], [Element], false)}, {prop: "CreateTextNode", name: "CreateTextNode", pkg: "", typ: $funcType([$String], [ptrType$12], false)}, {prop: "Doctype", name: "Doctype", pkg: "", typ: $funcType([], [DocumentType], false)}, {prop: "DocumentElement", name: "DocumentElement", pkg: "", typ: $funcType([], [Element], false)}, {prop: "DocumentURI", name: "DocumentURI", pkg: "", typ: $funcType([], [$String], false)}, {prop: "ElementFromPoint", name: "ElementFromPoint", pkg: "", typ: $funcType([$Int, $Int], [Element], false)}, {prop: "EnableStyleSheetsForSet", name: "EnableStyleSheetsForSet", pkg: "", typ: $funcType([$String], [], false)}, {prop: "FirstChild", name: "FirstChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "GetElementByID", name: "GetElementByID", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "GetElementsByClassName", name: "GetElementsByClassName", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "GetElementsByTagName", name: "GetElementsByTagName", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "GetElementsByTagNameNS", name: "GetElementsByTagNameNS", pkg: "", typ: $funcType([$String, $String], [sliceType$3], false)}, {prop: "HasChildNodes", name: "HasChildNodes", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "Implementation", name: "Implementation", pkg: "", typ: $funcType([], [DOMImplementation], false)}, {prop: "ImportNode", name: "ImportNode", pkg: "", typ: $funcType([Node, $Bool], [Node], false)}, {prop: "InsertBefore", name: "InsertBefore", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "IsDefaultNamespace", name: "IsDefaultNamespace", pkg: "", typ: $funcType([$String], [$Bool], false)}, {prop: "IsEqualNode", name: "IsEqualNode", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "LastChild", name: "LastChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "LastStyleSheetSet", name: "LastStyleSheetSet", pkg: "", typ: $funcType([], [$String], false)}, {prop: "LookupNamespaceURI", name: "LookupNamespaceURI", pkg: "", typ: $funcType([$String], [$String], false)}, {prop: "LookupPrefix", name: "LookupPrefix", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NextSibling", name: "NextSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "NodeName", name: "NodeName", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NodeType", name: "NodeType", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "NodeValue", name: "NodeValue", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Normalize", name: "Normalize", pkg: "", typ: $funcType([], [], false)}, {prop: "OwnerDocument", name: "OwnerDocument", pkg: "", typ: $funcType([], [Document], false)}, {prop: "ParentElement", name: "ParentElement", pkg: "", typ: $funcType([], [Element], false)}, {prop: "ParentNode", name: "ParentNode", pkg: "", typ: $funcType([], [Node], false)}, {prop: "PreferredStyleSheetSet", name: "PreferredStyleSheetSet", pkg: "", typ: $funcType([], [$String], false)}, {prop: "PreviousSibling", name: "PreviousSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "QuerySelector", name: "QuerySelector", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "QuerySelectorAll", name: "QuerySelectorAll", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "RemoveChild", name: "RemoveChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "RemoveEventListener", name: "RemoveEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$1], [], false)}, {prop: "ReplaceChild", name: "ReplaceChild", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "SelectedStyleSheetSet", name: "SelectedStyleSheetSet", pkg: "", typ: $funcType([], [$String], false)}, {prop: "SetAsync", name: "SetAsync", pkg: "", typ: $funcType([$Bool], [], false)}, {prop: "SetNodeValue", name: "SetNodeValue", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetTextContent", name: "SetTextContent", pkg: "", typ: $funcType([$String], [], false)}, {prop: "StyleSheetSets", name: "StyleSheetSets", pkg: "", typ: $funcType([], [sliceType$16], false)}, {prop: "StyleSheets", name: "StyleSheets", pkg: "", typ: $funcType([], [sliceType$16], false)}, {prop: "TextContent", name: "TextContent", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Underlying", name: "Underlying", pkg: "", typ: $funcType([], [ptrType], false)}]);
 	DocumentFragment.init([{prop: "AddEventListener", name: "AddEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$2], [funcType$1], false)}, {prop: "AppendChild", name: "AppendChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "BaseURI", name: "BaseURI", pkg: "", typ: $funcType([], [$String], false)}, {prop: "ChildNodes", name: "ChildNodes", pkg: "", typ: $funcType([], [sliceType$2], false)}, {prop: "CloneNode", name: "CloneNode", pkg: "", typ: $funcType([$Bool], [Node], false)}, {prop: "CompareDocumentPosition", name: "CompareDocumentPosition", pkg: "", typ: $funcType([Node], [$Int], false)}, {prop: "Contains", name: "Contains", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "FirstChild", name: "FirstChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "GetElementByID", name: "GetElementByID", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "HasChildNodes", name: "HasChildNodes", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "InsertBefore", name: "InsertBefore", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "IsDefaultNamespace", name: "IsDefaultNamespace", pkg: "", typ: $funcType([$String], [$Bool], false)}, {prop: "IsEqualNode", name: "IsEqualNode", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "LastChild", name: "LastChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "LookupNamespaceURI", name: "LookupNamespaceURI", pkg: "", typ: $funcType([$String], [$String], false)}, {prop: "LookupPrefix", name: "LookupPrefix", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NextSibling", name: "NextSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "NodeName", name: "NodeName", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NodeType", name: "NodeType", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "NodeValue", name: "NodeValue", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Normalize", name: "Normalize", pkg: "", typ: $funcType([], [], false)}, {prop: "OwnerDocument", name: "OwnerDocument", pkg: "", typ: $funcType([], [Document], false)}, {prop: "ParentElement", name: "ParentElement", pkg: "", typ: $funcType([], [Element], false)}, {prop: "ParentNode", name: "ParentNode", pkg: "", typ: $funcType([], [Node], false)}, {prop: "PreviousSibling", name: "PreviousSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "QuerySelector", name: "QuerySelector", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "QuerySelectorAll", name: "QuerySelectorAll", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "RemoveChild", name: "RemoveChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "RemoveEventListener", name: "RemoveEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$1], [], false)}, {prop: "ReplaceChild", name: "ReplaceChild", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "SetNodeValue", name: "SetNodeValue", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetTextContent", name: "SetTextContent", pkg: "", typ: $funcType([$String], [], false)}, {prop: "TextContent", name: "TextContent", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Underlying", name: "Underlying", pkg: "", typ: $funcType([], [ptrType], false)}]);
 	documentFragment.init([{prop: "BasicNode", name: "", pkg: "", typ: ptrType$22, tag: ""}]);
 	document.init([{prop: "BasicNode", name: "", pkg: "", typ: ptrType$22, tag: ""}]);
-	htmlDocument.init([{prop: "document", name: "", pkg: "honnef.co/go/js/dom", typ: ptrType$23, tag: ""}]);
+	htmlDocument.init([{prop: "document", name: "", pkg: "github.com/influx6/coquery/vendor/honnef.co/go/js/dom", typ: ptrType$23, tag: ""}]);
 	URLUtils.init([{prop: "Object", name: "", pkg: "", typ: ptrType, tag: ""}, {prop: "Href", name: "Href", pkg: "", typ: $String, tag: "js:\"href\""}, {prop: "Protocol", name: "Protocol", pkg: "", typ: $String, tag: "js:\"protocol\""}, {prop: "Host", name: "Host", pkg: "", typ: $String, tag: "js:\"host\""}, {prop: "Hostname", name: "Hostname", pkg: "", typ: $String, tag: "js:\"hostname\""}, {prop: "Port", name: "Port", pkg: "", typ: $String, tag: "js:\"port\""}, {prop: "Pathname", name: "Pathname", pkg: "", typ: $String, tag: "js:\"pathname\""}, {prop: "Search", name: "Search", pkg: "", typ: $String, tag: "js:\"search\""}, {prop: "Hash", name: "Hash", pkg: "", typ: $String, tag: "js:\"hash\""}, {prop: "Username", name: "Username", pkg: "", typ: $String, tag: "js:\"username\""}, {prop: "Password", name: "Password", pkg: "", typ: $String, tag: "js:\"password\""}, {prop: "Origin", name: "Origin", pkg: "", typ: $String, tag: "js:\"origin\""}]);
 	Location.init([{prop: "Object", name: "", pkg: "", typ: ptrType, tag: ""}, {prop: "URLUtils", name: "", pkg: "", typ: ptrType$2, tag: ""}]);
 	HTMLElement.init([{prop: "AccessKey", name: "AccessKey", pkg: "", typ: $funcType([], [$String], false)}, {prop: "AccessKeyLabel", name: "AccessKeyLabel", pkg: "", typ: $funcType([], [$String], false)}, {prop: "AddEventListener", name: "AddEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$2], [funcType$1], false)}, {prop: "AppendChild", name: "AppendChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "Attributes", name: "Attributes", pkg: "", typ: $funcType([], [mapType], false)}, {prop: "BaseURI", name: "BaseURI", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Blur", name: "Blur", pkg: "", typ: $funcType([], [], false)}, {prop: "ChildNodes", name: "ChildNodes", pkg: "", typ: $funcType([], [sliceType$2], false)}, {prop: "Class", name: "Class", pkg: "", typ: $funcType([], [ptrType$20], false)}, {prop: "Click", name: "Click", pkg: "", typ: $funcType([], [], false)}, {prop: "CloneNode", name: "CloneNode", pkg: "", typ: $funcType([$Bool], [Node], false)}, {prop: "CompareDocumentPosition", name: "CompareDocumentPosition", pkg: "", typ: $funcType([Node], [$Int], false)}, {prop: "Contains", name: "Contains", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "ContentEditable", name: "ContentEditable", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Dataset", name: "Dataset", pkg: "", typ: $funcType([], [mapType], false)}, {prop: "Dir", name: "Dir", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Draggable", name: "Draggable", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "FirstChild", name: "FirstChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "Focus", name: "Focus", pkg: "", typ: $funcType([], [], false)}, {prop: "GetAttribute", name: "GetAttribute", pkg: "", typ: $funcType([$String], [$String], false)}, {prop: "GetAttributeNS", name: "GetAttributeNS", pkg: "", typ: $funcType([$String, $String], [$String], false)}, {prop: "GetBoundingClientRect", name: "GetBoundingClientRect", pkg: "", typ: $funcType([], [ClientRect], false)}, {prop: "GetElementsByClassName", name: "GetElementsByClassName", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "GetElementsByTagName", name: "GetElementsByTagName", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "GetElementsByTagNameNS", name: "GetElementsByTagNameNS", pkg: "", typ: $funcType([$String, $String], [sliceType$3], false)}, {prop: "HasAttribute", name: "HasAttribute", pkg: "", typ: $funcType([$String], [$Bool], false)}, {prop: "HasAttributeNS", name: "HasAttributeNS", pkg: "", typ: $funcType([$String, $String], [$Bool], false)}, {prop: "HasChildNodes", name: "HasChildNodes", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "ID", name: "ID", pkg: "", typ: $funcType([], [$String], false)}, {prop: "InnerHTML", name: "InnerHTML", pkg: "", typ: $funcType([], [$String], false)}, {prop: "InsertBefore", name: "InsertBefore", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "IsContentEditable", name: "IsContentEditable", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "IsDefaultNamespace", name: "IsDefaultNamespace", pkg: "", typ: $funcType([$String], [$Bool], false)}, {prop: "IsEqualNode", name: "IsEqualNode", pkg: "", typ: $funcType([Node], [$Bool], false)}, {prop: "Lang", name: "Lang", pkg: "", typ: $funcType([], [$String], false)}, {prop: "LastChild", name: "LastChild", pkg: "", typ: $funcType([], [Node], false)}, {prop: "LookupNamespaceURI", name: "LookupNamespaceURI", pkg: "", typ: $funcType([$String], [$String], false)}, {prop: "LookupPrefix", name: "LookupPrefix", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NextElementSibling", name: "NextElementSibling", pkg: "", typ: $funcType([], [Element], false)}, {prop: "NextSibling", name: "NextSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "NodeName", name: "NodeName", pkg: "", typ: $funcType([], [$String], false)}, {prop: "NodeType", name: "NodeType", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "NodeValue", name: "NodeValue", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Normalize", name: "Normalize", pkg: "", typ: $funcType([], [], false)}, {prop: "OffsetHeight", name: "OffsetHeight", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "OffsetLeft", name: "OffsetLeft", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "OffsetParent", name: "OffsetParent", pkg: "", typ: $funcType([], [HTMLElement], false)}, {prop: "OffsetTop", name: "OffsetTop", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "OffsetWidth", name: "OffsetWidth", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "OuterHTML", name: "OuterHTML", pkg: "", typ: $funcType([], [$String], false)}, {prop: "OwnerDocument", name: "OwnerDocument", pkg: "", typ: $funcType([], [Document], false)}, {prop: "ParentElement", name: "ParentElement", pkg: "", typ: $funcType([], [Element], false)}, {prop: "ParentNode", name: "ParentNode", pkg: "", typ: $funcType([], [Node], false)}, {prop: "PreviousElementSibling", name: "PreviousElementSibling", pkg: "", typ: $funcType([], [Element], false)}, {prop: "PreviousSibling", name: "PreviousSibling", pkg: "", typ: $funcType([], [Node], false)}, {prop: "QuerySelector", name: "QuerySelector", pkg: "", typ: $funcType([$String], [Element], false)}, {prop: "QuerySelectorAll", name: "QuerySelectorAll", pkg: "", typ: $funcType([$String], [sliceType$3], false)}, {prop: "RemoveAttribute", name: "RemoveAttribute", pkg: "", typ: $funcType([$String], [], false)}, {prop: "RemoveAttributeNS", name: "RemoveAttributeNS", pkg: "", typ: $funcType([$String, $String], [], false)}, {prop: "RemoveChild", name: "RemoveChild", pkg: "", typ: $funcType([Node], [], false)}, {prop: "RemoveEventListener", name: "RemoveEventListener", pkg: "", typ: $funcType([$String, $Bool, funcType$1], [], false)}, {prop: "ReplaceChild", name: "ReplaceChild", pkg: "", typ: $funcType([Node, Node], [], false)}, {prop: "SetAccessKey", name: "SetAccessKey", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetAccessKeyLabel", name: "SetAccessKeyLabel", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetAttribute", name: "SetAttribute", pkg: "", typ: $funcType([$String, $String], [], false)}, {prop: "SetAttributeNS", name: "SetAttributeNS", pkg: "", typ: $funcType([$String, $String, $String], [], false)}, {prop: "SetContentEditable", name: "SetContentEditable", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetDir", name: "SetDir", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetDraggable", name: "SetDraggable", pkg: "", typ: $funcType([$Bool], [], false)}, {prop: "SetID", name: "SetID", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetInnerHTML", name: "SetInnerHTML", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetLang", name: "SetLang", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetNodeValue", name: "SetNodeValue", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetOuterHTML", name: "SetOuterHTML", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetTextContent", name: "SetTextContent", pkg: "", typ: $funcType([$String], [], false)}, {prop: "SetTitle", name: "SetTitle", pkg: "", typ: $funcType([$String], [], false)}, {prop: "Style", name: "Style", pkg: "", typ: $funcType([], [ptrType$25], false)}, {prop: "TagName", name: "TagName", pkg: "", typ: $funcType([], [$String], false)}, {prop: "TextContent", name: "TextContent", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Title", name: "Title", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Underlying", name: "Underlying", pkg: "", typ: $funcType([], [ptrType], false)}]);
@@ -35971,7 +36005,7 @@ $packages["main"] = (function() {
 	client = $packages["github.com/influx6/coquery/client"];
 	js = $packages["github.com/influx6/coquery/client/js"];
 	data = $packages["github.com/influx6/coquery/data"];
-	dom = $packages["honnef.co/go/js/dom"];
+	dom = $packages["github.com/influx6/coquery/vendor/honnef.co/go/js/dom"];
 	time = $packages["time"];
 	eventlog = $pkg.eventlog = $newType(0, $kindStruct, "main.eventlog", "eventlog", "main", function() {
 		this.$val = this;
@@ -36011,13 +36045,13 @@ $packages["main"] = (function() {
 	};
 	eventlog.prototype.Error = function(context$1, name, err, message, data$1) { return this.$val.Error(context$1, name, err, message, data$1); };
 	main = function() {
-		var $ptr, _r, _r$1, _r$2, _r$3, all, clientServo, doc, err, window, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; all = $f.all; clientServo = $f.clientServo; doc = $f.doc; err = $f.err; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		var $ptr, _r, _r$1, _r$2, _r$3, _r$4, _r$5, all, clientServo, doc, err, err$1, get, window, x, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; _r$4 = $f._r$4; _r$5 = $f._r$5; all = $f.all; clientServo = $f.clientServo; doc = $f.doc; err = $f.err; err$1 = $f.err$1; get = $f.get; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		doc = [doc];
 		window = dom.GetWindow();
 		_r = window.Document(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
 		doc[0] = _r;
-		_r$1 = client.NewServo("http://127.0.0.1:3000", new time.Duration(0, 300000000), (x = js.HTTP, new x.constructor.elem(x))); /* */ $s = 2; case 2: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
+		_r$1 = client.NewServo(new events.constructor.elem(events), "http://127.0.0.1:3000", new time.Duration(0, 300000000), (x = js.HTTP, new x.constructor.elem(x))); /* */ $s = 2; case 2: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
 		clientServo = _r$1;
 		_r$2 = clientServo.Register("docs.users.findN(-1).collects(name,nationality)"); /* */ $s = 3; case 3: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
 		all = _r$2;
@@ -36037,7 +36071,7 @@ $packages["main"] = (function() {
 				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
 				_r$3 = doc[0].CreateElement("div"); /* */ $s = 6; case 6: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
 				div = _r$3;
-				_r$4 = fmt.Sprintf("%+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
+				_r$4 = fmt.Sprintf("All: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
 				$r = div.SetInnerHTML(_r$4); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_r$5 = doc[0].QuerySelector("body"); /* */ $s = 9; case 9: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
 				$r = _r$5.AppendChild(div); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
@@ -36045,14 +36079,47 @@ $packages["main"] = (function() {
 			/* } */ $s = 4; continue; case 5:
 			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._ref = _ref; $f.div = div; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
 		}; })(doc)); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		_r$3 = all.Do(); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
-		err = _r$3;
-		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 6; continue; }
-		/* */ $s = 7; continue;
-		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 6:
-			$r = events.Error(new $String(context), "all.Do", err, "All query Failed", new sliceType([])); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		/* } */ case 7:
-		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f.all = all; $f.clientServo = clientServo; $f.doc = doc; $f.err = err; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
+		_r$3 = clientServo.Register("docs.users.findN(1).mutate({name: Alex Chun})"); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+		get = _r$3;
+		$r = get.Listen((function(doc) { return function $b(err, records) {
+			var $ptr, _i, _r$4, _r$5, _r$6, _ref, div, err, record, records, $s, $r;
+			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r$4 = $f._r$4; _r$5 = $f._r$5; _r$6 = $f._r$6; _ref = $f._ref; div = $f.div; err = $f.err; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 1; continue; }
+			/* */ $s = 2; continue;
+			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 1:
+				$r = events.Error(new $String(context), "Listen", err, "All query Failed", new sliceType([])); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				return;
+			/* } */ case 2:
+			_ref = records;
+			_i = 0;
+			/* while (true) { */ case 4:
+				/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 5; continue; }
+				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
+				_r$4 = doc[0].CreateElement("div"); /* */ $s = 6; case 6: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
+				div = _r$4;
+				_r$5 = fmt.Sprintf("Get: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
+				$r = div.SetInnerHTML(_r$5); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_r$6 = doc[0].QuerySelector("body"); /* */ $s = 9; case 9: if($c) { $c = false; _r$6 = _r$6.$blk(); } if (_r$6 && _r$6.$blk !== undefined) { break s; }
+				$r = _r$6.AppendChild(div); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_i++;
+			/* } */ $s = 4; continue; case 5:
+			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._r$6 = _r$6; $f._ref = _ref; $f.div = div; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
+		}; })(doc)); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		_r$4 = all.Do(); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
+		err = _r$4;
+		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 8; continue; }
+		/* */ $s = 9; continue;
+		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 8:
+			$r = events.Error(new $String(context), "all.Do", err, "All query Failed", new sliceType([])); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 9:
+		_r$5 = get.Do(); /* */ $s = 11; case 11: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
+		err$1 = _r$5;
+		/* */ if (!($interfaceIsEqual(err$1, $ifaceNil))) { $s = 12; continue; }
+		/* */ $s = 13; continue;
+		/* if (!($interfaceIsEqual(err$1, $ifaceNil))) { */ case 12:
+			$r = events.Error(new $String(context), "get.Do", err$1, "Get query Failed", new sliceType([])); /* */ $s = 14; case 14: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 13:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f.all = all; $f.clientServo = clientServo; $f.doc = doc; $f.err = err; $f.err$1 = err$1; $f.get = get; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	eventlog.methods = [{prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType], [], true)}, {prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType], [], true)}];
 	eventlog.init([]);

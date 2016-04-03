@@ -2,7 +2,6 @@ package streams
 
 import (
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -252,7 +251,7 @@ func (s *StreamOS) Handle(context interface{}, rqs coquery.RecordRequests, rw co
 			return
 		}
 
-		fmt.Printf("Providing index: %d\n", index)
+		// fmt.Printf("Providing index: %d\n", index)
 
 		// If we passed, send out the response to anyone who cares.
 		// Are we at the last request, if so, write it to the ResponseWriter, else

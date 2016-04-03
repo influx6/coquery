@@ -42,7 +42,7 @@ func main() {
 	window := dom.GetWindow()
 	doc := window.Document()
 
-	clientServo := client.NewServo("http://127.0.0.1:3000", 300*time.Millisecond, js.HTTP)
+	clientServo := client.NewServo(events, "http://127.0.0.1:3000", 300*time.Millisecond, js.HTTP)
 
 	all := clientServo.Register("docs.users.findN(-1).collects(name,nationality)")
 
@@ -55,13 +55,33 @@ func main() {
 
 		for _, record := range records {
 			div := doc.CreateElement("div")
-			div.SetInnerHTML(fmt.Sprintf("%+v", record))
+			div.SetInnerHTML(fmt.Sprintf("All: %+v", record))
+			doc.QuerySelector("body").AppendChild(div)
+		}
+	})
+
+	get := clientServo.Register("docs.users.findN(1).mutate({name: Alex Chun})")
+
+	get.Listen(func(err error, records data.Parameters) {
+
+		if err != nil {
+			events.Error(context, "Listen", err, "All query Failed")
+			return
+		}
+
+		for _, record := range records {
+			div := doc.CreateElement("div")
+			div.SetInnerHTML(fmt.Sprintf("Get: %+v", record))
 			doc.QuerySelector("body").AppendChild(div)
 		}
 	})
 
 	if err := all.Do(); err != nil {
 		events.Error(context, "all.Do", err, "All query Failed")
+	}
+
+	if err := get.Do(); err != nil {
+		events.Error(context, "get.Do", err, "Get query Failed")
 	}
 
 }

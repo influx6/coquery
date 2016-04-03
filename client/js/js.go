@@ -49,7 +49,7 @@ func (jsHTTP) Do(addr string, body io.Reader) (data.ResponsePack, error) {
 		return d, ErrFailedRequest
 	}
 
-	// fmt.Printf("%+s\n", req.Response.())
+	// fmt.Printf("Text:%+s\n", req.ResponseText)
 
 	var buf bytes.Buffer
 	buf.Write([]byte(req.ResponseText))

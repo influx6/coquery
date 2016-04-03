@@ -3,6 +3,8 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"sync/atomic"
 	"time"
@@ -10,6 +12,15 @@ import (
 	"github.com/influx6/coquery/data"
 	"github.com/influx6/faux/utils"
 )
+
+//==============================================================================
+
+// Events defines event logger that allows us to record events for a specific
+// action that occured.
+type Events interface {
+	Log(context interface{}, name string, message string, data ...interface{})
+	Error(context interface{}, name string, err error, message string, data ...interface{})
+}
 
 //==============================================================================
 
@@ -32,6 +43,7 @@ type Server interface {
 // It handles scheduling query requests and providing the appropriate
 // Response parameter for each requster.
 type Servo struct {
+	Events
 	pending      int64
 	watching     int64
 	addr         string
@@ -47,12 +59,13 @@ type Servo struct {
 // NewServo creates a new Servo instance. It takes a coquery server address
 // and the maximum time to wait to allow requests batching and the underline
 // transport to be used to make such requests with.
-func NewServo(addr string, wait time.Duration, transport ServeTransport) *Servo {
+func NewServo(events Events, addr string, wait time.Duration, transport ServeTransport) *Servo {
 	if wait == 0 {
 		wait = 500 * time.Millisecond
 	}
 
 	svo := Servo{
+		Events:    events,
 		addr:      addr,
 		wait:      wait,
 		uuid:      utils.UUID(),
@@ -101,12 +114,16 @@ func (s *Servo) serve(query string, client Requestor) error {
 	// we must schedule a go-routine to lunch the sendNow function when the
 	// buffer delay time as passed else if it has already being resolved then ignore.
 	go func() {
+		// fmt.Printf("Initing sendNow() \n")
 		<-time.After(s.wait + 2)
 		if atomic.LoadInt64(&s.watching) == 0 {
 			return
 		}
 
-		s.sendNow()
+		// fmt.Printf("Calling sendNow() \n")
+		if err := s.sendNow(); err != nil {
+			fmt.Printf("Send Now Error: %+v \n", err)
+		}
 	}()
 
 	return nil
@@ -188,7 +205,10 @@ func (s *Servo) sendNow() error {
 	s.pendingQuery = nil
 	s.lastPack = reply
 
-	// Notify all concerned providers of response.
+	if len(reply.Results) < len(queries) {
+		return errors.New("Inadequate Response Length")
+	}
+
 	atomic.StoreInt64(&s.pending, 1)
 	{
 
@@ -198,10 +218,37 @@ func (s *Servo) sendNow() error {
 				continue
 			}
 
-			mainReply := (&reply).Results[ind]
-			newReply := reply
-			(&newReply).Results = mainReply["data"].(data.Parameters)
-			s.providers[qry].Receive(nil, newReply)
+			localReply := reply
+			localReply.Results = nil
+
+			mrdos := (reply.Results[ind])["data"]
+
+			if mrdos == nil {
+				s.providers[qry].Receive(nil, localReply)
+				continue
+			}
+
+			mrd := mrdos.([]interface{})
+
+			var failedErr error
+
+			for _, prec := range mrd {
+				pmrec := prec.(map[string]interface{})
+
+				if status, ok := pmrec["Coquery-Status"]; ok && status == 404 {
+					failedErr = fmt.Errorf("%s : %s", pmrec["Error"], pmrec["Message"])
+					break
+				}
+
+				localReply.Results = append(localReply.Results, data.Parameter(pmrec))
+			}
+
+			if failedErr != nil {
+				s.providers[qry].Receive(failedErr, localReply)
+				continue
+			}
+
+			s.providers[qry].Receive(nil, localReply)
 		}
 
 		// Check if last delta tag is same as the new recieved reply, if it is not

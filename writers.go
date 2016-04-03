@@ -39,24 +39,27 @@ func (br *BatchResponseWriter) Write(context interface{}, res *Response, err Res
 		r = &dupReq{err}
 	}
 
-	if br.collected >= br.total {
-		return br.Res.Write(context, &Response{
-			Req:  r,
-			Data: br.data,
-		}, nil)
-	}
+	// fmt.Printf("Collected %d Total: %d -> %+s\n", br.collected, br.total, br.data)
 
 	// Add the data response to the response list.
 	if res != nil {
 		br.data = append(br.data, data.Parameter{"data": res.Data})
 	} else {
 		br.data = append(br.data, data.Parameter{
-			"Error":   err.Error(),
-			"Message": err.Message(),
+			"Coquery-Status": 404,
+			"Error":          err.Error(),
+			"Message":        err.Message(),
 		})
 	}
 
 	br.collected++
+
+	if br.collected >= br.total {
+		return br.Res.Write(context, &Response{
+			Req:  r,
+			Data: br.data,
+		}, nil)
+	}
 
 	return nil
 }
