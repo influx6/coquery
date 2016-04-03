@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -61,17 +60,9 @@ func main() {
 		}
 	})
 
-	newRecord, err := json.Marshal([]byte(`{name:"Von Bruz"}`))
-	if err != nil {
-		events.Error(context, "Listen", err, "Marshal Failed")
-		return
-	}
-
-	get := clientServo.Register(fmt.Sprintf("docs.users.findN(1).mutate(%s)", newRecord))
+	get := clientServo.Register(`docs.users.findN(1).mutate({ "name": "Von Bruz" })`)
 
 	get.Listen(func(err error, records data.Parameters) {
-		fmt.Printf("Error: %s data: %s\n", err, records)
-
 		if err != nil {
 			events.Error(context, "Listen", err, "All query Failed")
 			return

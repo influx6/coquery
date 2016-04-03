@@ -80,7 +80,7 @@ func NewServo(events Events, addr string, wait time.Duration, transport ServeTra
 // provider if the query already exists. This allows a central point of
 // responsibility for how queries are processed and managed.
 func (s *Servo) Register(query string) Requestor {
-	s.Events.Log("Servo", "Register", "Started : Query[%s]", query)
+	s.Events.Log("Servo", "Register", "Started : Registering Query[%s]", query)
 	var provider Requestor
 	var ok bool
 
@@ -238,8 +238,8 @@ func (s *Servo) sendNow() error {
 			rez := reply.Results[ind]
 
 			if failed, ok := rez["QueryFailed"].(bool); ok && failed {
-				failedErr := fmt.Errorf("%s :: %s", rez["Message"], rez["Error"])
-				s.Events.Error("Servo", "sendNow", failedErr, "Info : Query %s : Failed", qry)
+				failedErr := fmt.Errorf("Message{%s} - Error{%s}", rez["Message"], rez["Error"])
+				s.Events.Error("Servo", "sendNow", failedErr, "Info : Query [%s] : Failed", qry)
 				s.providers[qry].Receive(failedErr, localReply)
 				continue
 			}

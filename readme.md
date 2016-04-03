@@ -153,10 +153,6 @@ as follows:
     > go run main.go
   ```
 
-  ```js
-    http://localhost:3000/?coquery=docs.users.find(uid,4432)
-  ```
-
 ```go
 package main
 

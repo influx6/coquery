@@ -311,7 +311,7 @@ func (b *BasicQueries) Generate(context interface{}, reqid string, doc string, q
 			if err := json.Unmarshal([]byte(params[0]), &pm); err != nil {
 				err := &CoError{
 					Rid:    reqid,
-					Msg:    fmt.Sprintf("Invalid JSON"),
+					Msg:    fmt.Sprintf("Invalid JSON : %s", params[0]),
 					IError: err,
 				}
 
