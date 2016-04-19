@@ -67,11 +67,9 @@ func main() {
 
 	go app.ListenAndServe(context, ":3000")
 
-	clientServo := client.NewServo("http://127.0.0.1:3000", 300*time.Millisecond, web.HTTP)
+	client := client.NewServo(events, "http://127.0.0.1:3000", 300*time.Millisecond, web.HTTP)
 
-	all := clientServo.Register("docs.users.findN(-1)")
-
-	all.Listen(func(err error, data data.Parameters) {
+	client.Request("docs.users.findN(-1)", func(err error, meta data.ResponseMeta, data data.Parameters) {
 		defer wg.Done()
 
 		if err != nil {
@@ -81,10 +79,6 @@ func main() {
 
 		fmt.Printf("Received All Response: %s\n", utils.Query.QueryIndent(data))
 	})
-
-	if err := all.Do(); err != nil {
-		events.Error(context, "all.Do", err, "All query Failed")
-	}
 
 	wg.Wait()
 }

@@ -6,12 +6,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/influx6/coquery/data"
 	"github.com/influx6/faux/utils"
 )
+
+//==============================================================================
+
+// ServeTransport defines an interface for requests transport, which allows us
+// build custom transports based on different low-level systems(HTTP,Websocket).
+type ServeTransport interface {
+	Do(endpoint string, body io.Reader) (data.ResponsePack, error)
+}
 
 //==============================================================================
 
@@ -24,17 +33,83 @@ type Events interface {
 
 //==============================================================================
 
-// ServeTransport defines an interface for requests transport, which allows us
-// build custom transports based on different low-level systems(HTTP,Websocket).
-type ServeTransport interface {
-	Do(endpoint string, body io.Reader) (data.ResponsePack, error)
+// Handler defines a handler type for receving a per data response.
+type Handler func(error, data.ResponseMeta, data.Parameters)
+
+// Handlers defines a lists of Handler functions attributed to a query.
+type Handlers struct {
+	Qry string
+	hl  []Handler
 }
+
+// Emit applies its arguments to its giving handlers.
+func (h Handlers) Emit(err error, m data.ResponseMeta, d data.Parameters) {
+	for _, hl := range h.hl {
+		hl(err, m, d)
+	}
+}
+
+//==============================================================================
+
+// UpdateTrigger provides a struct that allows registering for updates for
+// specific records related to a specific query, when this records keys
+// come through as deltas reports, this trigger function is called for the client
+// to acct accordinly.
+type UpdateTrigger struct {
+	qry     string
+	hl      sync.RWMutex
+	keys    map[interface{}]bool
+	touched map[interface{}]bool
+	trigger func()
+}
+
+// Update checks the giving deltas against its internal keys and triggers the
+// internal callback if any of its keys match.
+func (h *UpdateTrigger) Update(deltas []string) {
+	tlen := len(h.touched)
+	klen := len(h.keys)
+
+	if tlen == klen {
+		return
+	}
+
+	defer func() {
+		h.touched = make(map[interface{}]bool)
+	}()
+
+	h.hl.RLock()
+	defer h.hl.RUnlock()
+
+	for _, key := range deltas {
+		if h.keys[key] {
+			h.trigger()
+			return
+		}
+	}
+}
+
+// UpdateKeys updates the keys within the update trigger that matches.
+func (h *UpdateTrigger) UpdateKeys(meta data.ResponseMeta, da data.ResponsePack) {
+	h.hl.Lock()
+	defer h.hl.Unlock()
+
+	// Collect all record keys and store them for so we can review the delta
+	// lists incase we need to make requests for updates
+	for _, record := range da.Results {
+		key := record[meta.RecordKey]
+		h.keys[key] = true
+		h.keys[key] = true
+	}
+}
+
+//==============================================================================
 
 // Server provides a central request manager for different query requests and
 // subscriptions.
 type Server interface {
-	Register(query string) Requestor
-	serve(query string, client Requestor) error
+	Request(query string, hl Handler)
+	Updates(query string, hl func())
+	Serve() error
 }
 
 //==============================================================================
@@ -44,16 +119,17 @@ type Server interface {
 // Response parameter for each requster.
 type Servo struct {
 	Events
-	pending      int64
-	watching     int64
-	addr         string
-	uuid         string
-	pendingTime  time.Time
-	wait         time.Duration
-	transport    ServeTransport
-	pendingQuery map[string]int
-	providers    map[string]Requestor
-	lastPack     data.ResponsePack
+	addr        string
+	uuid        string
+	pendingTime time.Time
+	wait        time.Duration
+	transport   ServeTransport
+	rl          sync.RWMutex
+	requests    []Handlers
+	ul          sync.RWMutex
+	updates     []*UpdateTrigger
+	lastPack    data.ResponsePack
+	locked      int64
 }
 
 // NewServo creates a new Servo instance. It takes a coquery server address
@@ -65,128 +141,123 @@ func NewServo(events Events, addr string, wait time.Duration, transport ServeTra
 	}
 
 	svo := Servo{
-		Events:    events,
-		addr:      addr,
-		wait:      wait,
-		uuid:      utils.UUID(),
-		transport: transport,
-		providers: make(map[string]Requestor),
+		locked:      1,
+		addr:        addr,
+		wait:        wait,
+		Events:      events,
+		pendingTime: time.Now().Add(wait),
+		transport:   transport,
+		uuid:        utils.UUID(),
+		requests:    make([]Handlers, 0),
+		updates:     make([]*UpdateTrigger, 0),
 	}
 
 	return &svo
 }
 
-// Register adds a query provider into the service lists else returns the
-// provider if the query already exists. This allows a central point of
-// responsibility for how queries are processed and managed.
-func (s *Servo) Register(query string) Requestor {
-	s.Events.Log("Servo", "Register", "Started : Registering Query[%s]", query)
-	var provider Requestor
-	var ok bool
+// Updates stacks a query requests to the api and calls the given
+// handler with the response for that query when returned.
+func (s *Servo) Updates(query string, hl func()) error {
+	s.Events.Log("Servo", "Request", "Updates : Query[%s]", query)
 
-	atomic.StoreInt64(&s.pending, 1)
-	{
-		provider, ok = s.providers[query]
-		if !ok {
-			provider = NewBaseRequester(query, s)
-			s.providers[query] = provider
-		}
-	}
-	atomic.StoreInt64(&s.pending, 0)
+	s.ul.RLock()
+	defer s.ul.RUnlock()
 
-	s.Events.Log("Servo", "Register", "Completed")
-	return provider
+	s.updates = append(s.updates, &UpdateTrigger{
+		qry:     query,
+		trigger: hl,
+		keys:    make(map[interface{}]bool),
+	})
+
+	s.Events.Log("Servo", "Updates", "Completed")
+	return nil
 }
 
-// serve process the requests queries which will be batched and sent within a
-// specified timing these allows us to batch and send as much request over
-// specific period of times without wasting bandwidth.
-func (s *Servo) serve(query string, client Requestor) error {
-	s.Events.Log("Servo", "serve", "Started")
+// Request stacks a query requests to the api and calls the given
+// handler with the response for that query when returned.
+func (s *Servo) Request(query string, hl Handler) error {
+	s.Events.Log("Servo", "Request", "Started : Query[%s]", query)
 
-	if s.batch(query, client) {
-		s.Events.Log("Servo", "serve", "Completed")
-		return s.sendNow()
+	if atomic.LoadInt64(&s.locked) < 1 {
+		atomic.StoreInt64(&s.locked, 1)
 	}
 
-	if atomic.LoadInt64(&s.watching) > 0 {
+	s.rl.RLock()
+	defer s.rl.RUnlock()
+
+	new := true
+
+	for _, hls := range s.requests {
+		if hls.Qry == query {
+			hls.hl = append(hls.hl, hl)
+			new = false
+			break
+		}
+	}
+
+	if new {
+		s.requests = append(s.requests, Handlers{
+			Qry: query,
+			hl:  []Handler{hl},
+		})
+	}
+
+	go func() {
+		<-time.After(s.wait)
+		if atomic.LoadInt64(&s.locked) > 0 {
+			s.Serve()
+		}
+	}()
+
+	s.Events.Log("Servo", "Request", "Completed")
+	return s.Serve()
+}
+
+// Serve process the requests queries which will be batched and sent within a
+// specified timing these allows us to batch and send as much request over
+// specific period of times without wasting bandwidth.
+func (s *Servo) Serve() error {
+	s.Events.Log("Servo", "serve", "Started")
+
+	if time.Now().Before(s.pendingTime) {
 		s.Events.Log("Servo", "serve", "Completed")
 		return nil
 	}
 
-	atomic.StoreInt64(&s.watching, 1)
+	atomic.StoreInt64(&s.locked, 0)
 
-	// Since we need to still make a request at the end of the set time,
-	// we must schedule a go-routine to lunch the sendNow function when the
-	// buffer delay time as passed else if it has already being resolved then ignore.
-	go func() {
-		// fmt.Printf("Initing sendNow() \n")
-		<-time.After(s.wait + 2)
-		if atomic.LoadInt64(&s.watching) == 0 {
-			return
-		}
+	// Collect the pending requests and reset the pendingTime.
+	s.rl.Lock()
+	pendings := s.requests
+	s.requests = nil
+	s.rl.Unlock()
 
-		// fmt.Printf("Calling sendNow() \n")
-		if err := s.sendNow(); err != nil {
-			s.Events.Error("Servo", "serve", err, "Completed")
-		}
+	defer func() {
+		s.pendingTime = time.Now().Add(s.wait)
 	}()
 
-	s.Events.Log("Servo", "serve", "Completed")
-	return nil
-}
-
-// sendNow initializes and forwards the internal requests to the transport
-// regardless of batching rules and limits.
-func (s *Servo) sendNow() error {
-	s.Events.Log("Servo", "sendNow", "Started")
-
-	// Collect all the queries with their specified index and allocated into
-	// a prelength list, build json request body and send off to transport
-	// for delivery to endpoint.
-	queries := make([]string, len(s.pendingQuery))
-
-	for qry, index := range s.pendingQuery {
-		queries[index] = qry
-	}
-
-	var prevDiff string
-
-	atomic.StoreInt64(&s.pending, 1)
-	{
-		prevDiff = s.lastPack.DeltaID
-	}
-	atomic.StoreInt64(&s.pending, 0)
+	diff := s.lastPack.DeltaID
 
 	var mdata data.RequestContext
 	mdata.RequestID = s.uuid
-	mdata.Queries = queries
 	mdata.Diffs = true
+	mdata.DiffTag = diff
 
-	// if s.lastPack != nil {
-	mdata.DiffTag = prevDiff
-	// data.DiffWatch = s.lastPack.Deltas
-	// }
+	for _, hl := range pendings {
+		mdata.Queries = append(mdata.Queries, hl.Qry)
+	}
 
 	var buf bytes.Buffer
+	var meta data.ResponseMeta
 	var reply data.ResponsePack
 
 	// Attemp to encode the request data as json else return error.
 	if err := json.NewEncoder(&buf).Encode(&mdata); err != nil {
-		s.pendingQuery = nil
-
-		// Notify all concerned providers of error.
-		atomic.StoreInt64(&s.pending, 1)
-		{
-
-			for qry := range s.pendingQuery {
-				s.providers[qry].Receive(err, reply)
-			}
-
+		for _, hl := range pendings {
+			hl.Emit(err, meta, reply.Results)
 		}
-		atomic.StoreInt64(&s.pending, 0)
 
-		s.Events.Error("Servo", "sendNow", err, "Completed")
+		s.Events.Error("Servo", "serve", err, "Completed")
 		return err
 	}
 
@@ -195,128 +266,91 @@ func (s *Servo) sendNow() error {
 	// Deliver body to the transport layer.
 	reply, err = s.transport.Do(s.addr, &buf)
 	if err != nil {
-		s.pendingQuery = nil
-
-		// Notify all concerned providers of error.
-		atomic.StoreInt64(&s.pending, 1)
-		{
-
-			for qry := range s.pendingQuery {
-				s.providers[qry].Receive(err, reply)
-			}
-
+		for _, hl := range pendings {
+			hl.Emit(err, meta, reply.Results)
 		}
-		atomic.StoreInt64(&s.pending, 0)
-
-		s.Events.Error("Servo", "sendNow", err, "Completed")
+		s.Events.Error("Servo", "serve", err, "Completed")
 		return err
 	}
 
-	var pending = s.pendingQuery
+	meta.DeltaID = reply.DeltaID
+	meta.RecordKey = reply.RecordKey
+	meta.RequestID = reply.RequestID
 
-	s.pendingQuery = nil
 	s.lastPack = reply
 
-	if len(reply.Results) < len(queries) {
+	if len(reply.Results) < len(pendings) {
 		err := errors.New("Inadequate Response Length")
 		s.Events.Error("Servo", "sendNow", err, "Completed")
 		return err
 	}
 
-	atomic.StoreInt64(&s.pending, 1)
-	{
+	for ind, qry := range pendings {
+		pending := pendings[ind]
 
-		for ind, qry := range queries {
-			if !reply.Batched {
-				s.providers[qry].Receive(nil, reply)
-				continue
-			}
+		if !reply.Batched {
+			pending.Emit(nil, meta, reply.Results)
 
-			localReply := reply
-			localReply.Results = nil
-
-			rez := reply.Results[ind]
-
-			if failed, ok := rez["QueryFailed"].(bool); ok && failed {
-				failedErr := fmt.Errorf("Message{%s} - Error{%s}", rez["Message"], rez["Error"])
-				s.Events.Error("Servo", "sendNow", failedErr, "Info : Query [%s] : Failed", qry)
-				s.providers[qry].Receive(failedErr, localReply)
-				continue
-			}
-
-			mrdos := rez["data"]
-
-			if mrdos == nil {
-				s.providers[qry].Receive(nil, localReply)
-				continue
-			}
-
-			mrd := mrdos.([]interface{})
-
-			// var failedErr error
-
-			for _, prec := range mrd {
-				pmrec := prec.(map[string]interface{})
-
-				localReply.Results = append(localReply.Results, data.Parameter(pmrec))
-			}
-
-			// if failedErr != nil {
-			// 	s.providers[qry].Receive(failedErr, localReply)
-			// 	continue
-			// }
-
-			s.providers[qry].Receive(nil, localReply)
-		}
-
-		// Check if last delta tag is same as the new recieved reply, if it is not
-		// then proceed update check cycle.
-		if reply.DeltaID != prevDiff && len(reply.Deltas) > 0 {
-
-			// Check the providers who were not queue if they need to be updated and
-			// schedule updates accordingly.
-
-			for key, provider := range s.providers {
-				if _, ok := pending[key]; ok {
+			for _, upd := range s.updates {
+				if upd.qry != pending.Qry {
 					continue
 				}
-
-				if provider.ShouldUpdate(reply.Deltas) {
-					s.batch(key, provider)
-				}
+				upd.UpdateKeys(meta, reply)
 			}
 
+			continue
 		}
 
-	}
-	atomic.StoreInt64(&s.pending, 0)
+		localReply := reply
+		localReply.Results = nil
 
-	atomic.StoreInt64(&s.watching, 0)
-	s.Events.Log("Servo", "sendNow", "Completed")
+		rez := reply.Results[ind]
+
+		if failed, ok := rez["QueryFailed"].(bool); ok && failed {
+			failedErr := fmt.Errorf("Message{%s} - Error{%s}", rez["Message"], rez["Error"])
+			s.Events.Error("Servo", "sendNow", failedErr, "Info : Query [%s] : Failed", qry)
+			pending.Emit(failedErr, meta, localReply.Results)
+			continue
+		}
+
+		mrdos := rez["data"]
+
+		if mrdos == nil {
+			pending.Emit(nil, meta, localReply.Results)
+			continue
+		}
+
+		mrd := mrdos.([]interface{})
+
+		for _, prec := range mrd {
+			pmrec := prec.(map[string]interface{})
+			localReply.Results = append(localReply.Results, data.Parameter(pmrec))
+		}
+
+		pending.Emit(nil, meta, localReply.Results)
+
+		for _, upd := range s.updates {
+			if upd.qry != pending.Qry {
+				continue
+			}
+			upd.UpdateKeys(meta, localReply)
+		}
+	}
+
+	// Check if last delta tag is same as the new recieved reply, if it is not
+	// then proceed update check cycle.
+	if reply.DeltaID != diff && len(reply.Deltas) > 0 {
+		// Check the providers who were not queue if they need to be updated and
+		// schedule updates accordingly.
+		s.ul.RLock()
+
+		for _, upd := range s.updates {
+			upd.Update(reply.Deltas)
+		}
+
+		s.ul.RUnlock()
+	}
+
+	s.Events.Log("Servo", "serve", "Completed")
 	return nil
-}
-
-// batch adds the given request into the batch lists. It returns true/false
-// if the requests should be immediately served to the transport provider.
-func (s *Servo) batch(query string, client Requestor) bool {
-	s.Events.Log("Servo", "batch", "Started : Batching Query : %s", query)
-
-	// If we have already sent the data that has been queued, then
-	// reset all details accordinly and prepare to to batch new requests.
-	if s.pendingQuery == nil {
-		s.pendingTime = time.Now().Add(s.wait)
-		s.pendingQuery = make(map[string]int)
-	}
-
-	// Add the pending query with the right index.
-	index := len(s.pendingQuery)
-	s.pendingQuery[query] = index
-
-	if len(s.providers) > 1 && !time.Now().After(s.pendingTime) {
-		s.Events.Log("Servo", "batch", "Completed")
-		return false
-	}
-
-	s.Events.Log("Servo", "batch", "Completed")
-	return true
 }

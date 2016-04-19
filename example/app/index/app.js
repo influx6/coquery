@@ -2380,7 +2380,11 @@ $packages["errors"] = (function() {
 	return $pkg;
 })();
 $packages["internal/race"] = (function() {
-	var $pkg = {}, $init;
+	var $pkg = {}, $init, Enable;
+	Enable = function() {
+		var $ptr;
+	};
+	$pkg.Enable = Enable;
 	$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $f, $c = false, $s = 0, $r; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -2428,7 +2432,7 @@ $packages["sync/atomic"] = (function() {
 	return $pkg;
 })();
 $packages["sync"] = (function() {
-	var $pkg = {}, $init, race, runtime, atomic, Pool, Mutex, poolLocal, syncSema, ptrType, sliceType, ptrType$1, chanType, sliceType$1, ptrType$4, ptrType$6, sliceType$3, funcType, ptrType$12, arrayType$1, semWaiters, allPools, runtime_Syncsemcheck, runtime_registerPoolCleanup, runtime_Semacquire, runtime_Semrelease, runtime_canSpin, poolCleanup, init, indexLocal, init$1, runtime_doSpin;
+	var $pkg = {}, $init, race, runtime, atomic, Pool, Mutex, Locker, poolLocal, syncSema, RWMutex, rlocker, ptrType, sliceType, ptrType$1, chanType, sliceType$1, ptrType$4, ptrType$6, sliceType$3, ptrType$7, ptrType$8, funcType, ptrType$12, arrayType$1, semWaiters, allPools, runtime_Syncsemcheck, runtime_registerPoolCleanup, runtime_Semacquire, runtime_Semrelease, runtime_canSpin, poolCleanup, init, indexLocal, init$1, runtime_doSpin;
 	race = $packages["internal/race"];
 	runtime = $packages["runtime"];
 	atomic = $packages["sync/atomic"];
@@ -2456,6 +2460,7 @@ $packages["sync"] = (function() {
 		this.state = state_;
 		this.sema = sema_;
 	});
+	Locker = $pkg.Locker = $newType(8, $kindInterface, "sync.Locker", "Locker", "sync", null);
 	poolLocal = $pkg.poolLocal = $newType(0, $kindStruct, "sync.poolLocal", "poolLocal", "sync", function(private$0_, shared_, Mutex_, pad_) {
 		this.$val = this;
 		if (arguments.length === 0) {
@@ -2482,6 +2487,38 @@ $packages["sync"] = (function() {
 		this.head = head_;
 		this.tail = tail_;
 	});
+	RWMutex = $pkg.RWMutex = $newType(0, $kindStruct, "sync.RWMutex", "RWMutex", "sync", function(w_, writerSem_, readerSem_, readerCount_, readerWait_) {
+		this.$val = this;
+		if (arguments.length === 0) {
+			this.w = new Mutex.ptr(0, 0);
+			this.writerSem = 0;
+			this.readerSem = 0;
+			this.readerCount = 0;
+			this.readerWait = 0;
+			return;
+		}
+		this.w = w_;
+		this.writerSem = writerSem_;
+		this.readerSem = readerSem_;
+		this.readerCount = readerCount_;
+		this.readerWait = readerWait_;
+	});
+	rlocker = $pkg.rlocker = $newType(0, $kindStruct, "sync.rlocker", "rlocker", "sync", function(w_, writerSem_, readerSem_, readerCount_, readerWait_) {
+		this.$val = this;
+		if (arguments.length === 0) {
+			this.w = new Mutex.ptr(0, 0);
+			this.writerSem = 0;
+			this.readerSem = 0;
+			this.readerCount = 0;
+			this.readerWait = 0;
+			return;
+		}
+		this.w = w_;
+		this.writerSem = writerSem_;
+		this.readerSem = readerSem_;
+		this.readerCount = readerCount_;
+		this.readerWait = readerWait_;
+	});
 	ptrType = $ptrType(Pool);
 	sliceType = $sliceType(ptrType);
 	ptrType$1 = $ptrType($Uint32);
@@ -2490,6 +2527,8 @@ $packages["sync"] = (function() {
 	ptrType$4 = $ptrType($Int32);
 	ptrType$6 = $ptrType(poolLocal);
 	sliceType$3 = $sliceType($emptyInterface);
+	ptrType$7 = $ptrType(rlocker);
+	ptrType$8 = $ptrType(RWMutex);
 	funcType = $funcType([], [$emptyInterface], false);
 	ptrType$12 = $ptrType(Mutex);
 	arrayType$1 = $arrayType($Uint8, 128);
@@ -2682,12 +2721,105 @@ $packages["sync"] = (function() {
 	runtime_doSpin = function() {
 		$panic("Native function not implemented: sync.runtime_doSpin");
 	};
+	RWMutex.ptr.prototype.RLock = function() {
+		var $ptr, rw, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; rw = $f.rw; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		rw = this;
+		/* */ if (atomic.AddInt32((rw.$ptr_readerCount || (rw.$ptr_readerCount = new ptrType$4(function() { return this.$target.readerCount; }, function($v) { this.$target.readerCount = $v; }, rw))), 1) < 0) { $s = 1; continue; }
+		/* */ $s = 2; continue;
+		/* if (atomic.AddInt32((rw.$ptr_readerCount || (rw.$ptr_readerCount = new ptrType$4(function() { return this.$target.readerCount; }, function($v) { this.$target.readerCount = $v; }, rw))), 1) < 0) { */ case 1:
+			$r = runtime_Semacquire((rw.$ptr_readerSem || (rw.$ptr_readerSem = new ptrType$1(function() { return this.$target.readerSem; }, function($v) { this.$target.readerSem = $v; }, rw)))); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 2:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: RWMutex.ptr.prototype.RLock }; } $f.$ptr = $ptr; $f.rw = rw; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	RWMutex.prototype.RLock = function() { return this.$val.RLock(); };
+	RWMutex.ptr.prototype.RUnlock = function() {
+		var $ptr, r, rw, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; r = $f.r; rw = $f.rw; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		rw = this;
+		r = atomic.AddInt32((rw.$ptr_readerCount || (rw.$ptr_readerCount = new ptrType$4(function() { return this.$target.readerCount; }, function($v) { this.$target.readerCount = $v; }, rw))), -1);
+		/* */ if (r < 0) { $s = 1; continue; }
+		/* */ $s = 2; continue;
+		/* if (r < 0) { */ case 1:
+			if (((r + 1 >> 0) === 0) || ((r + 1 >> 0) === -1073741824)) {
+				race.Enable();
+				$panic(new $String("sync: RUnlock of unlocked RWMutex"));
+			}
+			/* */ if (atomic.AddInt32((rw.$ptr_readerWait || (rw.$ptr_readerWait = new ptrType$4(function() { return this.$target.readerWait; }, function($v) { this.$target.readerWait = $v; }, rw))), -1) === 0) { $s = 3; continue; }
+			/* */ $s = 4; continue;
+			/* if (atomic.AddInt32((rw.$ptr_readerWait || (rw.$ptr_readerWait = new ptrType$4(function() { return this.$target.readerWait; }, function($v) { this.$target.readerWait = $v; }, rw))), -1) === 0) { */ case 3:
+				$r = runtime_Semrelease((rw.$ptr_writerSem || (rw.$ptr_writerSem = new ptrType$1(function() { return this.$target.writerSem; }, function($v) { this.$target.writerSem = $v; }, rw)))); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* } */ case 4:
+		/* } */ case 2:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: RWMutex.ptr.prototype.RUnlock }; } $f.$ptr = $ptr; $f.r = r; $f.rw = rw; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	RWMutex.prototype.RUnlock = function() { return this.$val.RUnlock(); };
+	RWMutex.ptr.prototype.Lock = function() {
+		var $ptr, r, rw, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; r = $f.r; rw = $f.rw; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		rw = this;
+		$r = rw.w.Lock(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		r = atomic.AddInt32((rw.$ptr_readerCount || (rw.$ptr_readerCount = new ptrType$4(function() { return this.$target.readerCount; }, function($v) { this.$target.readerCount = $v; }, rw))), -1073741824) + 1073741824 >> 0;
+		/* */ if (!((r === 0)) && !((atomic.AddInt32((rw.$ptr_readerWait || (rw.$ptr_readerWait = new ptrType$4(function() { return this.$target.readerWait; }, function($v) { this.$target.readerWait = $v; }, rw))), r) === 0))) { $s = 2; continue; }
+		/* */ $s = 3; continue;
+		/* if (!((r === 0)) && !((atomic.AddInt32((rw.$ptr_readerWait || (rw.$ptr_readerWait = new ptrType$4(function() { return this.$target.readerWait; }, function($v) { this.$target.readerWait = $v; }, rw))), r) === 0))) { */ case 2:
+			$r = runtime_Semacquire((rw.$ptr_writerSem || (rw.$ptr_writerSem = new ptrType$1(function() { return this.$target.writerSem; }, function($v) { this.$target.writerSem = $v; }, rw)))); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 3:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: RWMutex.ptr.prototype.Lock }; } $f.$ptr = $ptr; $f.r = r; $f.rw = rw; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	RWMutex.prototype.Lock = function() { return this.$val.Lock(); };
+	RWMutex.ptr.prototype.Unlock = function() {
+		var $ptr, i, r, rw, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; i = $f.i; r = $f.r; rw = $f.rw; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		rw = this;
+		r = atomic.AddInt32((rw.$ptr_readerCount || (rw.$ptr_readerCount = new ptrType$4(function() { return this.$target.readerCount; }, function($v) { this.$target.readerCount = $v; }, rw))), 1073741824);
+		if (r >= 1073741824) {
+			race.Enable();
+			$panic(new $String("sync: Unlock of unlocked RWMutex"));
+		}
+		i = 0;
+		/* while (true) { */ case 1:
+			/* if (!(i < (r >> 0))) { break; } */ if(!(i < (r >> 0))) { $s = 2; continue; }
+			$r = runtime_Semrelease((rw.$ptr_readerSem || (rw.$ptr_readerSem = new ptrType$1(function() { return this.$target.readerSem; }, function($v) { this.$target.readerSem = $v; }, rw)))); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			i = i + (1) >> 0;
+		/* } */ $s = 1; continue; case 2:
+		$r = rw.w.Unlock(); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: RWMutex.ptr.prototype.Unlock }; } $f.$ptr = $ptr; $f.i = i; $f.r = r; $f.rw = rw; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	RWMutex.prototype.Unlock = function() { return this.$val.Unlock(); };
+	RWMutex.ptr.prototype.RLocker = function() {
+		var $ptr, rw;
+		rw = this;
+		return $pointerOfStructConversion(rw, ptrType$7);
+	};
+	RWMutex.prototype.RLocker = function() { return this.$val.RLocker(); };
+	rlocker.ptr.prototype.Lock = function() {
+		var $ptr, r, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; r = $f.r; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		r = this;
+		$r = $pointerOfStructConversion(r, ptrType$8).RLock(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: rlocker.ptr.prototype.Lock }; } $f.$ptr = $ptr; $f.r = r; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	rlocker.prototype.Lock = function() { return this.$val.Lock(); };
+	rlocker.ptr.prototype.Unlock = function() {
+		var $ptr, r, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; r = $f.r; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		r = this;
+		$r = $pointerOfStructConversion(r, ptrType$8).RUnlock(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: rlocker.ptr.prototype.Unlock }; } $f.$ptr = $ptr; $f.r = r; $f.$s = $s; $f.$r = $r; return $f;
+	};
+	rlocker.prototype.Unlock = function() { return this.$val.Unlock(); };
 	ptrType.methods = [{prop: "Get", name: "Get", pkg: "", typ: $funcType([], [$emptyInterface], false)}, {prop: "Put", name: "Put", pkg: "", typ: $funcType([$emptyInterface], [], false)}, {prop: "getSlow", name: "getSlow", pkg: "sync", typ: $funcType([], [$emptyInterface], false)}, {prop: "pin", name: "pin", pkg: "sync", typ: $funcType([], [ptrType$6], false)}, {prop: "pinSlow", name: "pinSlow", pkg: "sync", typ: $funcType([], [ptrType$6], false)}];
 	ptrType$12.methods = [{prop: "Lock", name: "Lock", pkg: "", typ: $funcType([], [], false)}, {prop: "Unlock", name: "Unlock", pkg: "", typ: $funcType([], [], false)}];
+	ptrType$8.methods = [{prop: "RLock", name: "RLock", pkg: "", typ: $funcType([], [], false)}, {prop: "RUnlock", name: "RUnlock", pkg: "", typ: $funcType([], [], false)}, {prop: "Lock", name: "Lock", pkg: "", typ: $funcType([], [], false)}, {prop: "Unlock", name: "Unlock", pkg: "", typ: $funcType([], [], false)}, {prop: "RLocker", name: "RLocker", pkg: "", typ: $funcType([], [Locker], false)}];
+	ptrType$7.methods = [{prop: "Lock", name: "Lock", pkg: "", typ: $funcType([], [], false)}, {prop: "Unlock", name: "Unlock", pkg: "", typ: $funcType([], [], false)}];
 	Pool.init([{prop: "local", name: "local", pkg: "sync", typ: $UnsafePointer, tag: ""}, {prop: "localSize", name: "localSize", pkg: "sync", typ: $Uintptr, tag: ""}, {prop: "store", name: "store", pkg: "sync", typ: sliceType$3, tag: ""}, {prop: "New", name: "New", pkg: "", typ: funcType, tag: ""}]);
 	Mutex.init([{prop: "state", name: "state", pkg: "sync", typ: $Int32, tag: ""}, {prop: "sema", name: "sema", pkg: "sync", typ: $Uint32, tag: ""}]);
+	Locker.init([{prop: "Lock", name: "Lock", pkg: "", typ: $funcType([], [], false)}, {prop: "Unlock", name: "Unlock", pkg: "", typ: $funcType([], [], false)}]);
 	poolLocal.init([{prop: "private$0", name: "private", pkg: "sync", typ: $emptyInterface, tag: ""}, {prop: "shared", name: "shared", pkg: "sync", typ: sliceType$3, tag: ""}, {prop: "Mutex", name: "", pkg: "", typ: Mutex, tag: ""}, {prop: "pad", name: "pad", pkg: "sync", typ: arrayType$1, tag: ""}]);
 	syncSema.init([{prop: "lock", name: "lock", pkg: "sync", typ: $Uintptr, tag: ""}, {prop: "head", name: "head", pkg: "sync", typ: $UnsafePointer, tag: ""}, {prop: "tail", name: "tail", pkg: "sync", typ: $UnsafePointer, tag: ""}]);
+	RWMutex.init([{prop: "w", name: "w", pkg: "sync", typ: Mutex, tag: ""}, {prop: "writerSem", name: "writerSem", pkg: "sync", typ: $Uint32, tag: ""}, {prop: "readerSem", name: "readerSem", pkg: "sync", typ: $Uint32, tag: ""}, {prop: "readerCount", name: "readerCount", pkg: "sync", typ: $Int32, tag: ""}, {prop: "readerWait", name: "readerWait", pkg: "sync", typ: $Int32, tag: ""}]);
+	rlocker.init([{prop: "w", name: "w", pkg: "sync", typ: Mutex, tag: ""}, {prop: "writerSem", name: "writerSem", pkg: "sync", typ: $Uint32, tag: ""}, {prop: "readerSem", name: "readerSem", pkg: "sync", typ: $Uint32, tag: ""}, {prop: "readerCount", name: "readerCount", pkg: "sync", typ: $Int32, tag: ""}, {prop: "readerWait", name: "readerWait", pkg: "sync", typ: $Int32, tag: ""}]);
 	$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $f, $c = false, $s = 0, $r; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -26444,7 +26576,7 @@ $packages["encoding/json"] = (function() {
 	return $pkg;
 })();
 $packages["github.com/influx6/coquery/data"] = (function() {
-	var $pkg = {}, $init, RequestContext, Parameter, Parameters, ResponsePack, sliceType;
+	var $pkg = {}, $init, RequestContext, Parameter, Parameters, ResponseMeta, ResponsePack, sliceType;
 	RequestContext = $pkg.RequestContext = $newType(0, $kindStruct, "data.RequestContext", "RequestContext", "github.com/influx6/coquery/data", function(RequestID_, Queries_, Diffs_, DiffTag_, DiffWatch_, NoJSON_) {
 		this.$val = this;
 		if (arguments.length === 0) {
@@ -26465,6 +26597,18 @@ $packages["github.com/influx6/coquery/data"] = (function() {
 	});
 	Parameter = $pkg.Parameter = $newType(4, $kindMap, "data.Parameter", "Parameter", "github.com/influx6/coquery/data", null);
 	Parameters = $pkg.Parameters = $newType(12, $kindSlice, "data.Parameters", "Parameters", "github.com/influx6/coquery/data", null);
+	ResponseMeta = $pkg.ResponseMeta = $newType(0, $kindStruct, "data.ResponseMeta", "ResponseMeta", "github.com/influx6/coquery/data", function(RecordKey_, RequestID_, DeltaID_) {
+		this.$val = this;
+		if (arguments.length === 0) {
+			this.RecordKey = "";
+			this.RequestID = "";
+			this.DeltaID = "";
+			return;
+		}
+		this.RecordKey = RecordKey_;
+		this.RequestID = RequestID_;
+		this.DeltaID = DeltaID_;
+	});
 	ResponsePack = $pkg.ResponsePack = $newType(0, $kindStruct, "data.ResponsePack", "ResponsePack", "github.com/influx6/coquery/data", function(RecordKey_, RequestID_, Batched_, DeltaID_, Deltas_, Results_) {
 		this.$val = this;
 		if (arguments.length === 0) {
@@ -26508,6 +26652,7 @@ $packages["github.com/influx6/coquery/data"] = (function() {
 	RequestContext.init([{prop: "RequestID", name: "RequestID", pkg: "", typ: $String, tag: "json:\"request_id\""}, {prop: "Queries", name: "Queries", pkg: "", typ: sliceType, tag: "json:\"queries\""}, {prop: "Diffs", name: "Diffs", pkg: "", typ: $Bool, tag: "json:\"diffing\""}, {prop: "DiffTag", name: "DiffTag", pkg: "", typ: $String, tag: "json:\"diff_tag\""}, {prop: "DiffWatch", name: "DiffWatch", pkg: "", typ: sliceType, tag: "json:\"diff_watch\""}, {prop: "NoJSON", name: "NoJSON", pkg: "", typ: $Bool, tag: "json:\"no_json\""}]);
 	Parameter.init($String, $emptyInterface);
 	Parameters.init(Parameter);
+	ResponseMeta.init([{prop: "RecordKey", name: "RecordKey", pkg: "", typ: $String, tag: "json:\"record_key\""}, {prop: "RequestID", name: "RequestID", pkg: "", typ: $String, tag: "json:\"request_id\""}, {prop: "DeltaID", name: "DeltaID", pkg: "", typ: $String, tag: "json:\"delta_id\""}]);
 	ResponsePack.init([{prop: "RecordKey", name: "RecordKey", pkg: "", typ: $String, tag: "json:\"record_key\""}, {prop: "RequestID", name: "RequestID", pkg: "", typ: $String, tag: "json:\"request_id\""}, {prop: "Batched", name: "Batched", pkg: "", typ: $Bool, tag: "json:\"batch\""}, {prop: "DeltaID", name: "DeltaID", pkg: "", typ: $String, tag: "json:\"delta_id\""}, {prop: "Deltas", name: "Deltas", pkg: "", typ: sliceType, tag: "json:\"delta_id\""}, {prop: "Results", name: "Results", pkg: "", typ: Parameters, tag: "json:\"results\""}]);
 	$init = function() {
 		$pkg.$init = function() {};
@@ -30312,15 +30457,16 @@ $packages["regexp"] = (function() {
 	return $pkg;
 })();
 $packages["github.com/influx6/faux/utils"] = (function() {
-	var $pkg = {}, $init, rand, fmt, rand$1, regexp, strconv, strings, time, sliceType$1, UUID;
+	var $pkg = {}, $init, rand, fmt, rand$1, regexp, strconv, strings, atomic, time, sliceType, UUID;
 	rand = $packages["crypto/rand"];
 	fmt = $packages["fmt"];
 	rand$1 = $packages["math/rand"];
 	regexp = $packages["regexp"];
 	strconv = $packages["strconv"];
 	strings = $packages["strings"];
+	atomic = $packages["sync/atomic"];
 	time = $packages["time"];
-	sliceType$1 = $sliceType($emptyInterface);
+	sliceType = $sliceType($emptyInterface);
 	UUID = function() {
 		var $ptr, _r, _r$1, _r$2, _r$3, _ref, _ref$1, i, random, uuid, x, x$1, $s, $r;
 		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; _ref = $f._ref; _ref$1 = $f._ref$1; i = $f.i; random = $f.random; uuid = $f.uuid; x = $f.x; x$1 = $f.x$1; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -30340,15 +30486,15 @@ $packages["github.com/influx6/faux/utils"] = (function() {
 			/* */ if (_ref$1 === 16) { $s = 6; continue; }
 			/* */ $s = 7; continue;
 			/* if (_ref$1 === 12) { */ case 5:
-				_r$1 = fmt.Sprintf("%x", new sliceType$1([new $Int(4)])); /* */ $s = 9; case 9: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
+				_r$1 = fmt.Sprintf("%x", new sliceType([new $Int(4)])); /* */ $s = 9; case 9: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
 				uuid = uuid + (_r$1);
 				$s = 8; continue;
 			/* } else if (_ref$1 === 16) { */ case 6:
-				_r$2 = fmt.Sprintf("%x", new sliceType$1([new $Int(((random & 3) | 8))])); /* */ $s = 10; case 10: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
+				_r$2 = fmt.Sprintf("%x", new sliceType([new $Int(((random & 3) | 8))])); /* */ $s = 10; case 10: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
 				uuid = uuid + (_r$2);
 				$s = 8; continue;
 			/* } else { */ case 7:
-				_r$3 = fmt.Sprintf("%x", new sliceType$1([new $Int(random)])); /* */ $s = 11; case 11: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+				_r$3 = fmt.Sprintf("%x", new sliceType([new $Int(random)])); /* */ $s = 11; case 11: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
 				uuid = uuid + (_r$3);
 			/* } */ case 8:
 			i = i + (1) >> 0;
@@ -30366,14 +30512,15 @@ $packages["github.com/influx6/faux/utils"] = (function() {
 		$r = regexp.$init(); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		$r = strconv.$init(); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		$r = strings.$init(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = time.$init(); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = atomic.$init(); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = time.$init(); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		/* */ } return; } if ($f === undefined) { $f = { $blk: $init }; } $f.$s = $s; $f.$r = $r; return $f;
 	};
 	$pkg.$init = $init;
 	return $pkg;
 })();
 $packages["github.com/influx6/coquery/client"] = (function() {
-	var $pkg = {}, $init, bytes, json, errors, fmt, data, utils, io, atomic, time, PerRequestHandler, RequestHandler, Requestor, BaseRequestor, Events, ServeTransport, Server, Servo, sliceType, ptrType, ptrType$1, sliceType$1, sliceType$2, sliceType$3, arrayType, arrayType$1, mapType, ptrType$2, mapType$1, ptrType$3, mapType$2, mapType$3, NewBaseRequester, NewServo;
+	var $pkg = {}, $init, bytes, json, errors, fmt, data, utils, io, sync, atomic, time, ServeTransport, Events, Handler, Handlers, UpdateTrigger, Servo, ptrType, sliceType, ptrType$1, sliceType$1, sliceType$2, sliceType$3, ptrType$2, sliceType$4, sliceType$5, arrayType, arrayType$1, mapType, mapType$1, funcType, ptrType$3, NewServo;
 	bytes = $packages["bytes"];
 	json = $packages["encoding/json"];
 	errors = $packages["errors"];
@@ -30381,205 +30528,152 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 	data = $packages["github.com/influx6/coquery/data"];
 	utils = $packages["github.com/influx6/faux/utils"];
 	io = $packages["io"];
+	sync = $packages["sync"];
 	atomic = $packages["sync/atomic"];
 	time = $packages["time"];
-	PerRequestHandler = $pkg.PerRequestHandler = $newType(4, $kindFunc, "client.PerRequestHandler", "PerRequestHandler", "github.com/influx6/coquery/client", null);
-	RequestHandler = $pkg.RequestHandler = $newType(4, $kindFunc, "client.RequestHandler", "RequestHandler", "github.com/influx6/coquery/client", null);
-	Requestor = $pkg.Requestor = $newType(8, $kindInterface, "client.Requestor", "Requestor", "github.com/influx6/coquery/client", null);
-	BaseRequestor = $pkg.BaseRequestor = $newType(0, $kindStruct, "client.BaseRequestor", "BaseRequestor", "github.com/influx6/coquery/client", function(records_, handles_, uuid_, query_, key_, server_, pending_, keyUpdate_) {
+	ServeTransport = $pkg.ServeTransport = $newType(8, $kindInterface, "client.ServeTransport", "ServeTransport", "github.com/influx6/coquery/client", null);
+	Events = $pkg.Events = $newType(8, $kindInterface, "client.Events", "Events", "github.com/influx6/coquery/client", null);
+	Handler = $pkg.Handler = $newType(4, $kindFunc, "client.Handler", "Handler", "github.com/influx6/coquery/client", null);
+	Handlers = $pkg.Handlers = $newType(0, $kindStruct, "client.Handlers", "Handlers", "github.com/influx6/coquery/client", function(Qry_, hl_) {
 		this.$val = this;
 		if (arguments.length === 0) {
-			this.records = false;
-			this.handles = sliceType.nil;
-			this.uuid = "";
-			this.query = "";
-			this.key = "";
-			this.server = $ifaceNil;
-			this.pending = new $Int64(0, 0);
-			this.keyUpdate = new $Int64(0, 0);
+			this.Qry = "";
+			this.hl = sliceType$4.nil;
 			return;
 		}
-		this.records = records_;
-		this.handles = handles_;
-		this.uuid = uuid_;
-		this.query = query_;
-		this.key = key_;
-		this.server = server_;
-		this.pending = pending_;
-		this.keyUpdate = keyUpdate_;
+		this.Qry = Qry_;
+		this.hl = hl_;
 	});
-	Events = $pkg.Events = $newType(8, $kindInterface, "client.Events", "Events", "github.com/influx6/coquery/client", null);
-	ServeTransport = $pkg.ServeTransport = $newType(8, $kindInterface, "client.ServeTransport", "ServeTransport", "github.com/influx6/coquery/client", null);
-	Server = $pkg.Server = $newType(8, $kindInterface, "client.Server", "Server", "github.com/influx6/coquery/client", null);
-	Servo = $pkg.Servo = $newType(0, $kindStruct, "client.Servo", "Servo", "github.com/influx6/coquery/client", function(Events_, pending_, watching_, addr_, uuid_, pendingTime_, wait_, transport_, pendingQuery_, providers_, lastPack_) {
+	UpdateTrigger = $pkg.UpdateTrigger = $newType(0, $kindStruct, "client.UpdateTrigger", "UpdateTrigger", "github.com/influx6/coquery/client", function(qry_, hl_, keys_, touched_, trigger_) {
+		this.$val = this;
+		if (arguments.length === 0) {
+			this.qry = "";
+			this.hl = new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0);
+			this.keys = false;
+			this.touched = false;
+			this.trigger = $throwNilPointerError;
+			return;
+		}
+		this.qry = qry_;
+		this.hl = hl_;
+		this.keys = keys_;
+		this.touched = touched_;
+		this.trigger = trigger_;
+	});
+	Servo = $pkg.Servo = $newType(0, $kindStruct, "client.Servo", "Servo", "github.com/influx6/coquery/client", function(Events_, addr_, uuid_, pendingTime_, wait_, transport_, rl_, requests_, ul_, updates_, lastPack_, locked_) {
 		this.$val = this;
 		if (arguments.length === 0) {
 			this.Events = $ifaceNil;
-			this.pending = new $Int64(0, 0);
-			this.watching = new $Int64(0, 0);
 			this.addr = "";
 			this.uuid = "";
-			this.pendingTime = new time.Time.ptr(new $Int64(0, 0), 0, ptrType$1.nil);
+			this.pendingTime = new time.Time.ptr(new $Int64(0, 0), 0, ptrType.nil);
 			this.wait = new time.Duration(0, 0);
 			this.transport = $ifaceNil;
-			this.pendingQuery = false;
-			this.providers = false;
-			this.lastPack = new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil);
+			this.rl = new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0);
+			this.requests = sliceType.nil;
+			this.ul = new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0);
+			this.updates = sliceType$1.nil;
+			this.lastPack = new data.ResponsePack.ptr("", "", false, "", sliceType$2.nil, data.Parameters.nil);
+			this.locked = new $Int64(0, 0);
 			return;
 		}
 		this.Events = Events_;
-		this.pending = pending_;
-		this.watching = watching_;
 		this.addr = addr_;
 		this.uuid = uuid_;
 		this.pendingTime = pendingTime_;
 		this.wait = wait_;
 		this.transport = transport_;
-		this.pendingQuery = pendingQuery_;
-		this.providers = providers_;
+		this.rl = rl_;
+		this.requests = requests_;
+		this.ul = ul_;
+		this.updates = updates_;
 		this.lastPack = lastPack_;
+		this.locked = locked_;
 	});
-	sliceType = $sliceType(RequestHandler);
-	ptrType = $ptrType($Int64);
-	ptrType$1 = $ptrType(time.Location);
-	sliceType$1 = $sliceType($String);
-	sliceType$2 = $sliceType($emptyInterface);
-	sliceType$3 = $sliceType($Uint8);
+	ptrType = $ptrType(time.Location);
+	sliceType = $sliceType(Handlers);
+	ptrType$1 = $ptrType(UpdateTrigger);
+	sliceType$1 = $sliceType(ptrType$1);
+	sliceType$2 = $sliceType($String);
+	sliceType$3 = $sliceType($emptyInterface);
+	ptrType$2 = $ptrType($Int64);
+	sliceType$4 = $sliceType(Handler);
+	sliceType$5 = $sliceType($Uint8);
 	arrayType = $arrayType($Uint8, 4);
 	arrayType$1 = $arrayType($Uint8, 64);
 	mapType = $mapType($String, $emptyInterface);
-	ptrType$2 = $ptrType(BaseRequestor);
 	mapType$1 = $mapType($emptyInterface, $Bool);
+	funcType = $funcType([], [], false);
 	ptrType$3 = $ptrType(Servo);
-	mapType$2 = $mapType($String, $Int);
-	mapType$3 = $mapType($String, Requestor);
-	NewBaseRequester = function(query, server) {
-		var $ptr, _r, br, query, server, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; br = $f.br; query = $f.query; server = $f.server; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-		br = [br];
-		_r = utils.UUID(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-		br[0] = new BaseRequestor.ptr({}, sliceType.nil, _r, query, "", server, new $Int64(0, 0), new $Int64(0, 0));
-		return br[0];
-		/* */ } return; } if ($f === undefined) { $f = { $blk: NewBaseRequester }; } $f.$ptr = $ptr; $f._r = _r; $f.br = br; $f.query = query; $f.server = server; $f.$s = $s; $f.$r = $r; return $f;
+	Handlers.ptr.prototype.Emit = function(err, m, d) {
+		var $ptr, _i, _ref, d, err, h, hl, m, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _ref = $f._ref; d = $f.d; err = $f.err; h = $f.h; hl = $f.hl; m = $f.m; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		m = $clone(m, data.ResponseMeta);
+		h = $clone(this, Handlers);
+		_ref = h.hl;
+		_i = 0;
+		/* while (true) { */ case 1:
+			/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 2; continue; }
+			hl = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
+			$r = hl(err, m, d); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			_i++;
+		/* } */ $s = 1; continue; case 2:
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: Handlers.ptr.prototype.Emit }; } $f.$ptr = $ptr; $f._i = _i; $f._ref = _ref; $f.d = d; $f.err = err; $f.h = h; $f.hl = hl; $f.m = m; $f.$s = $s; $f.$r = $r; return $f;
 	};
-	$pkg.NewBaseRequester = NewBaseRequester;
-	BaseRequestor.ptr.prototype.Do = function() {
-		var $ptr, _r, b, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; b = $f.b; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-		b = this;
-		_r = b.server.serve(b.query, b); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-		/* */ $s = 2; case 2:
-		return _r;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: BaseRequestor.ptr.prototype.Do }; } $f.$ptr = $ptr; $f._r = _r; $f.b = b; $f.$s = $s; $f.$r = $r; return $f;
-	};
-	BaseRequestor.prototype.Do = function() { return this.$val.Do(); };
-	BaseRequestor.ptr.prototype.ListenFor = function(key, rx) {
-		var $ptr, b, key, rx;
-		b = this;
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 1));
-		b.handles = $append(b.handles, (function $b(err, records) {
-			var $ptr, _entry, _i, _ref, err, record, records, $s, $r;
-			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _i = $f._i; _ref = $f._ref; err = $f.err; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 1; continue; }
-			/* */ $s = 2; continue;
-			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 1:
-				$r = rx(err, false); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				return;
-			/* } */ case 2:
-			_ref = records;
-			_i = 0;
-			/* while (true) { */ case 4:
-				/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 5; continue; }
-				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
-				/* */ if (!($interfaceIsEqual((_entry = record[$String.keyFor(b.key)], _entry !== undefined ? _entry.v : $ifaceNil), key))) { $s = 6; continue; }
-				/* */ $s = 7; continue;
-				/* if (!($interfaceIsEqual((_entry = record[$String.keyFor(b.key)], _entry !== undefined ? _entry.v : $ifaceNil), key))) { */ case 6:
-					_i++;
-					/* continue; */ $s = 4; continue;
-				/* } */ case 7:
-				$r = rx($ifaceNil, record); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				return;
-			/* } */ $s = 4; continue; case 5:
-			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._entry = _entry; $f._i = _i; $f._ref = _ref; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
-		}));
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 0));
-	};
-	BaseRequestor.prototype.ListenFor = function(key, rx) { return this.$val.ListenFor(key, rx); };
-	BaseRequestor.ptr.prototype.Listen = function(rx) {
-		var $ptr, b, rx;
-		b = this;
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 1));
-		b.handles = $append(b.handles, rx);
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 0));
-	};
-	BaseRequestor.prototype.Listen = function(rx) { return this.$val.Listen(rx); };
-	BaseRequestor.ptr.prototype.ShouldUpdate = function(deltas) {
-		var $ptr, _entry, _i, _ref, b, deltas, found, key;
-		b = this;
-		found = false;
-		atomic.StoreInt64((b.$ptr_keyUpdate || (b.$ptr_keyUpdate = new ptrType(function() { return this.$target.keyUpdate; }, function($v) { this.$target.keyUpdate = $v; }, b))), new $Int64(0, 1));
+	Handlers.prototype.Emit = function(err, m, d) { return this.$val.Emit(err, m, d); };
+	UpdateTrigger.ptr.prototype.Update = function(deltas) {
+		var $ptr, _entry, _i, _ref, deltas, h, key, klen, tlen, $s, $deferred, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _i = $f._i; _ref = $f._ref; deltas = $f.deltas; h = $f.h; key = $f.key; klen = $f.klen; tlen = $f.tlen; $s = $f.$s; $deferred = $f.$deferred; $r = $f.$r; } var $err = null; try { s: while (true) { switch ($s) { case 0: $deferred = []; $deferred.index = $curGoroutine.deferStack.length; $curGoroutine.deferStack.push($deferred);
+		h = [h];
+		h[0] = this;
+		tlen = $keys(h[0].touched).length;
+		klen = $keys(h[0].keys).length;
+		if (tlen === klen) {
+			return;
+		}
+		$deferred.push([(function(h) { return function() {
+			var $ptr;
+			h[0].touched = {};
+		}; })(h), []]);
+		$r = h[0].hl.RLock(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$deferred.push([$methodVal(h[0].hl, "RUnlock"), []]);
 		_ref = deltas;
+		_i = 0;
+		/* while (true) { */ case 2:
+			/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 3; continue; }
+			key = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
+			/* */ if ((_entry = h[0].keys[$emptyInterface.keyFor(new $String(key))], _entry !== undefined ? _entry.v : false)) { $s = 4; continue; }
+			/* */ $s = 5; continue;
+			/* if ((_entry = h[0].keys[$emptyInterface.keyFor(new $String(key))], _entry !== undefined ? _entry.v : false)) { */ case 4:
+				$r = h[0].trigger(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				return;
+			/* } */ case 5:
+			_i++;
+		/* } */ $s = 2; continue; case 3:
+		/* */ $s = -1; case -1: } return; } } catch(err) { $err = err; $s = -1; } finally { $callDeferred($deferred, $err); if($curGoroutine.asleep) { if ($f === undefined) { $f = { $blk: UpdateTrigger.ptr.prototype.Update }; } $f.$ptr = $ptr; $f._entry = _entry; $f._i = _i; $f._ref = _ref; $f.deltas = deltas; $f.h = h; $f.key = key; $f.klen = klen; $f.tlen = tlen; $f.$s = $s; $f.$deferred = $deferred; $f.$r = $r; return $f; } }
+	};
+	UpdateTrigger.prototype.Update = function(deltas) { return this.$val.Update(deltas); };
+	UpdateTrigger.ptr.prototype.UpdateKeys = function(meta, da) {
+		var $ptr, _entry, _i, _key, _key$1, _ref, da, h, key, meta, record, $s, $deferred, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _i = $f._i; _key = $f._key; _key$1 = $f._key$1; _ref = $f._ref; da = $f.da; h = $f.h; key = $f.key; meta = $f.meta; record = $f.record; $s = $f.$s; $deferred = $f.$deferred; $r = $f.$r; } var $err = null; try { s: while (true) { switch ($s) { case 0: $deferred = []; $deferred.index = $curGoroutine.deferStack.length; $curGoroutine.deferStack.push($deferred);
+		da = $clone(da, data.ResponsePack);
+		meta = $clone(meta, data.ResponseMeta);
+		h = this;
+		$r = h.hl.Lock(); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$deferred.push([$methodVal(h.hl, "Unlock"), []]);
+		_ref = da.Results;
 		_i = 0;
 		while (true) {
 			if (!(_i < _ref.$length)) { break; }
-			key = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
-			if ((_entry = b.records[$emptyInterface.keyFor(new $String(key))], _entry !== undefined ? _entry.v : false)) {
-				found = true;
-				break;
-			}
+			record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
+			key = (_entry = record[$String.keyFor(meta.RecordKey)], _entry !== undefined ? _entry.v : $ifaceNil);
+			_key = key; (h.keys || $throwRuntimeError("assignment to entry in nil map"))[$emptyInterface.keyFor(_key)] = { k: _key, v: true };
+			_key$1 = key; (h.keys || $throwRuntimeError("assignment to entry in nil map"))[$emptyInterface.keyFor(_key$1)] = { k: _key$1, v: true };
 			_i++;
 		}
-		atomic.StoreInt64((b.$ptr_keyUpdate || (b.$ptr_keyUpdate = new ptrType(function() { return this.$target.keyUpdate; }, function($v) { this.$target.keyUpdate = $v; }, b))), new $Int64(0, 0));
-		return found;
+		/* */ $s = -1; case -1: } return; } } catch(err) { $err = err; $s = -1; } finally { $callDeferred($deferred, $err); if($curGoroutine.asleep) { if ($f === undefined) { $f = { $blk: UpdateTrigger.ptr.prototype.UpdateKeys }; } $f.$ptr = $ptr; $f._entry = _entry; $f._i = _i; $f._key = _key; $f._key$1 = _key$1; $f._ref = _ref; $f.da = da; $f.h = h; $f.key = key; $f.meta = meta; $f.record = record; $f.$s = $s; $f.$deferred = $deferred; $f.$r = $r; return $f; } }
 	};
-	BaseRequestor.prototype.ShouldUpdate = function(deltas) { return this.$val.ShouldUpdate(deltas); };
-	BaseRequestor.ptr.prototype.Receive = function(err, data$1) {
-		var $ptr, _entry, _i, _i$1, _i$2, _key, _ref, _ref$1, _ref$2, b, client, client$1, data$1, err, key, record;
-		data$1 = $clone(data$1, data.ResponsePack);
-		b = this;
-		if (!($interfaceIsEqual(err, $ifaceNil))) {
-			atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 1));
-			_ref = b.handles;
-			_i = 0;
-			while (true) {
-				if (!(_i < _ref.$length)) { break; }
-				client = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
-				$go(client, [err, data.Parameters.nil]);
-				_i++;
-			}
-			atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 0));
-			return;
-		}
-		b.key = data$1.RecordKey;
-		atomic.StoreInt64((b.$ptr_keyUpdate || (b.$ptr_keyUpdate = new ptrType(function() { return this.$target.keyUpdate; }, function($v) { this.$target.keyUpdate = $v; }, b))), new $Int64(0, 1));
-		_ref$1 = data$1.Results;
-		_i$1 = 0;
-		while (true) {
-			if (!(_i$1 < _ref$1.$length)) { break; }
-			record = ((_i$1 < 0 || _i$1 >= _ref$1.$length) ? $throwRuntimeError("index out of range") : _ref$1.$array[_ref$1.$offset + _i$1]);
-			key = (_entry = record[$String.keyFor(data$1.RecordKey)], _entry !== undefined ? _entry.v : $ifaceNil);
-			_key = key; (b.records || $throwRuntimeError("assignment to entry in nil map"))[$emptyInterface.keyFor(_key)] = { k: _key, v: true };
-			_i$1++;
-		}
-		atomic.StoreInt64((b.$ptr_keyUpdate || (b.$ptr_keyUpdate = new ptrType(function() { return this.$target.keyUpdate; }, function($v) { this.$target.keyUpdate = $v; }, b))), new $Int64(0, 0));
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 1));
-		_ref$2 = b.handles;
-		_i$2 = 0;
-		while (true) {
-			if (!(_i$2 < _ref$2.$length)) { break; }
-			client$1 = ((_i$2 < 0 || _i$2 >= _ref$2.$length) ? $throwRuntimeError("index out of range") : _ref$2.$array[_ref$2.$offset + _i$2]);
-			$go(client$1, [$ifaceNil, data$1.Results]);
-			_i$2++;
-		}
-		atomic.StoreInt64((b.$ptr_pending || (b.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, b))), new $Int64(0, 0));
-	};
-	BaseRequestor.prototype.Receive = function(err, data$1) { return this.$val.Receive(err, data$1); };
-	BaseRequestor.ptr.prototype.UUID = function() {
-		var $ptr, b;
-		b = this;
-		return b.uuid;
-	};
-	BaseRequestor.prototype.UUID = function() { return this.$val.UUID(); };
+	UpdateTrigger.prototype.UpdateKeys = function(meta, da) { return this.$val.UpdateKeys(meta, da); };
 	NewServo = function(events, addr, wait, transport) {
 		var $ptr, _r, addr, events, svo, transport, wait, $s, $r;
 		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; addr = $f.addr; events = $f.events; svo = $f.svo; transport = $f.transport; wait = $f.wait; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -30588,299 +30682,263 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 			wait = new time.Duration(0, 500000000);
 		}
 		_r = utils.UUID(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-		svo[0] = new Servo.ptr(events, new $Int64(0, 0), new $Int64(0, 0), addr, _r, new time.Time.ptr(new $Int64(0, 0), 0, ptrType$1.nil), wait, transport, false, {}, new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil));
+		svo[0] = new Servo.ptr(events, addr, _r, $clone(time.Now().Add(wait), time.Time), wait, transport, new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0), $makeSlice(sliceType, 0), new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0), $makeSlice(sliceType$1, 0), new data.ResponsePack.ptr("", "", false, "", sliceType$2.nil, data.Parameters.nil), new $Int64(0, 1));
 		return svo[0];
 		/* */ } return; } if ($f === undefined) { $f = { $blk: NewServo }; } $f.$ptr = $ptr; $f._r = _r; $f.addr = addr; $f.events = events; $f.svo = svo; $f.transport = transport; $f.wait = wait; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	$pkg.NewServo = NewServo;
-	Servo.ptr.prototype.Register = function(query) {
-		var $ptr, _entry, _key, _r, _tuple, ok, provider, query, s, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _key = $f._key; _r = $f._r; _tuple = $f._tuple; ok = $f.ok; provider = $f.provider; query = $f.query; s = $f.s; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+	Servo.ptr.prototype.Updates = function(query, hl) {
+		var $ptr, hl, query, s, $s, $deferred, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; hl = $f.hl; query = $f.query; s = $f.s; $s = $f.$s; $deferred = $f.$deferred; $r = $f.$r; } var $err = null; try { s: while (true) { switch ($s) { case 0: $deferred = []; $deferred.index = $curGoroutine.deferStack.length; $curGoroutine.deferStack.push($deferred);
 		s = this;
-		$r = s.Events.Log(new $String("Servo"), "Register", "Started : Registering Query[%s]", new sliceType$2([new $String(query)])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		provider = $ifaceNil;
-		ok = false;
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
-		_tuple = (_entry = s.providers[$String.keyFor(query)], _entry !== undefined ? [_entry.v, true] : [$ifaceNil, false]);
-		provider = _tuple[0];
-		ok = _tuple[1];
-		/* */ if (!ok) { $s = 2; continue; }
-		/* */ $s = 3; continue;
-		/* if (!ok) { */ case 2:
-			_r = NewBaseRequester(query, s); /* */ $s = 4; case 4: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-			provider = _r;
-			_key = query; (s.providers || $throwRuntimeError("assignment to entry in nil map"))[$String.keyFor(_key)] = { k: _key, v: provider };
-		/* } */ case 3:
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
-		$r = s.Events.Log(new $String("Servo"), "Register", "Completed", new sliceType$2([])); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		return provider;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.Register }; } $f.$ptr = $ptr; $f._entry = _entry; $f._key = _key; $f._r = _r; $f._tuple = _tuple; $f.ok = ok; $f.provider = provider; $f.query = query; $f.s = s; $f.$s = $s; $f.$r = $r; return $f;
+		$r = s.Events.Log(new $String("Servo"), "Request", "Updates : Query[%s]", new sliceType$3([new $String(query)])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = s.ul.RLock(); /* */ $s = 2; case 2: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$deferred.push([$methodVal(s.ul, "RUnlock"), []]);
+		s.updates = $append(s.updates, new UpdateTrigger.ptr(query, new sync.RWMutex.ptr(new sync.Mutex.ptr(0, 0), 0, 0, 0, 0), {}, false, hl));
+		$r = s.Events.Log(new $String("Servo"), "Updates", "Completed", new sliceType$3([])); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		return $ifaceNil;
+		/* */ } return; } } catch(err) { $err = err; $s = -1; return $ifaceNil; } finally { $callDeferred($deferred, $err); if($curGoroutine.asleep) { if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.Updates }; } $f.$ptr = $ptr; $f.hl = hl; $f.query = query; $f.s = s; $f.$s = $s; $f.$deferred = $deferred; $f.$r = $r; return $f; } }
 	};
-	Servo.prototype.Register = function(query) { return this.$val.Register(query); };
-	Servo.ptr.prototype.serve = function(query, client) {
-		var $ptr, _r, _r$1, client, query, s, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; client = $f.client; query = $f.query; s = $f.s; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+	Servo.prototype.Updates = function(query, hl) { return this.$val.Updates(query, hl); };
+	Servo.ptr.prototype.Request = function(query, hl) {
+		var $ptr, _i, _r, _ref, hl, hls, new$1, query, s, x, $s, $deferred, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r = $f._r; _ref = $f._ref; hl = $f.hl; hls = $f.hls; new$1 = $f.new$1; query = $f.query; s = $f.s; x = $f.x; $s = $f.$s; $deferred = $f.$deferred; $r = $f.$r; } var $err = null; try { s: while (true) { switch ($s) { case 0: $deferred = []; $deferred.index = $curGoroutine.deferStack.length; $curGoroutine.deferStack.push($deferred);
 		s = [s];
 		s[0] = this;
-		$r = s[0].Events.Log(new $String("Servo"), "serve", "Started", new sliceType$2([])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		_r = s[0].batch(query, client); /* */ $s = 4; case 4: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
-		/* */ if (_r) { $s = 2; continue; }
-		/* */ $s = 3; continue;
-		/* if (_r) { */ case 2:
-			$r = s[0].Events.Log(new $String("Servo"), "serve", "Completed", new sliceType$2([])); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-			_r$1 = s[0].sendNow(); /* */ $s = 6; case 6: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
-			/* */ $s = 7; case 7:
-			return _r$1;
-		/* } */ case 3:
-		/* */ if ((x = atomic.LoadInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0])))), (x.$high > 0 || (x.$high === 0 && x.$low > 0)))) { $s = 8; continue; }
-		/* */ $s = 9; continue;
-		/* if ((x = atomic.LoadInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0])))), (x.$high > 0 || (x.$high === 0 && x.$low > 0)))) { */ case 8:
-			$r = s[0].Events.Log(new $String("Servo"), "serve", "Completed", new sliceType$2([])); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-			return $ifaceNil;
-		/* } */ case 9:
-		atomic.StoreInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0]))), new $Int64(0, 1));
-		$go((function(s) { return function $b() {
-			var $ptr, _r$2, _r$3, err, x$1, x$2, $s, $r;
-			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r$2 = $f._r$2; _r$3 = $f._r$3; err = $f.err; x$1 = $f.x$1; x$2 = $f.x$2; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-			_r$2 = $recv(time.After((x$1 = s[0].wait, new time.Duration(x$1.$high + 0, x$1.$low + 2)))); /* */ $s = 1; case 1: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
-			_r$2[0];
-			if ((x$2 = atomic.LoadInt64((s[0].$ptr_watching || (s[0].$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s[0])))), (x$2.$high === 0 && x$2.$low === 0))) {
-				return;
-			}
-			_r$3 = s[0].sendNow(); /* */ $s = 2; case 2: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
-			err = _r$3;
-			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 3; continue; }
-			/* */ $s = 4; continue;
-			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 3:
-				$r = s[0].Events.Error(new $String("Servo"), "serve", err, "Completed", new sliceType$2([])); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-			/* } */ case 4:
-			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._r$2 = _r$2; $f._r$3 = _r$3; $f.err = err; $f.x$1 = x$1; $f.x$2 = x$2; $f.$s = $s; $f.$r = $r; return $f;
-		}; })(s), []);
-		$r = s[0].Events.Log(new $String("Servo"), "serve", "Completed", new sliceType$2([])); /* */ $s = 11; case 11: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		return $ifaceNil;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.serve }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f.client = client; $f.query = query; $f.s = s; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
-	};
-	Servo.prototype.serve = function(query, client) { return this.$val.serve(query, client); };
-	Servo.ptr.prototype.sendNow = function() {
-		var $ptr, _entry, _entry$1, _entry$10, _entry$11, _entry$12, _entry$13, _entry$14, _entry$2, _entry$3, _entry$4, _entry$5, _entry$6, _entry$7, _entry$8, _entry$9, _i, _i$1, _i$2, _i$3, _i$4, _i$5, _keys, _keys$1, _keys$2, _keys$3, _r, _r$1, _r$2, _r$3, _r$4, _ref, _ref$1, _ref$2, _ref$3, _ref$4, _ref$5, _tuple, _tuple$1, _tuple$2, buf, err, err$1, err$2, failed, failedErr, ind, index, key, localReply, mdata, mrd, mrdos, ok, ok$1, pending, pmrec, prec, prevDiff, provider, qry, qry$1, qry$2, qry$3, queries, reply, rez, s, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _entry$1 = $f._entry$1; _entry$10 = $f._entry$10; _entry$11 = $f._entry$11; _entry$12 = $f._entry$12; _entry$13 = $f._entry$13; _entry$14 = $f._entry$14; _entry$2 = $f._entry$2; _entry$3 = $f._entry$3; _entry$4 = $f._entry$4; _entry$5 = $f._entry$5; _entry$6 = $f._entry$6; _entry$7 = $f._entry$7; _entry$8 = $f._entry$8; _entry$9 = $f._entry$9; _i = $f._i; _i$1 = $f._i$1; _i$2 = $f._i$2; _i$3 = $f._i$3; _i$4 = $f._i$4; _i$5 = $f._i$5; _keys = $f._keys; _keys$1 = $f._keys$1; _keys$2 = $f._keys$2; _keys$3 = $f._keys$3; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; _r$4 = $f._r$4; _ref = $f._ref; _ref$1 = $f._ref$1; _ref$2 = $f._ref$2; _ref$3 = $f._ref$3; _ref$4 = $f._ref$4; _ref$5 = $f._ref$5; _tuple = $f._tuple; _tuple$1 = $f._tuple$1; _tuple$2 = $f._tuple$2; buf = $f.buf; err = $f.err; err$1 = $f.err$1; err$2 = $f.err$2; failed = $f.failed; failedErr = $f.failedErr; ind = $f.ind; index = $f.index; key = $f.key; localReply = $f.localReply; mdata = $f.mdata; mrd = $f.mrd; mrdos = $f.mrdos; ok = $f.ok; ok$1 = $f.ok$1; pending = $f.pending; pmrec = $f.pmrec; prec = $f.prec; prevDiff = $f.prevDiff; provider = $f.provider; qry = $f.qry; qry$1 = $f.qry$1; qry$2 = $f.qry$2; qry$3 = $f.qry$3; queries = $f.queries; reply = $f.reply; rez = $f.rez; s = $f.s; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-		buf = [buf];
-		mdata = [mdata];
-		s = this;
-		$r = s.Events.Log(new $String("Servo"), "sendNow", "Started", new sliceType$2([])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		queries = $makeSlice(sliceType$1, $keys(s.pendingQuery).length);
-		_ref = s.pendingQuery;
+		$r = s[0].Events.Log(new $String("Servo"), "Request", "Started : Query[%s]", new sliceType$3([new $String(query)])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		if ((x = atomic.LoadInt64((s[0].$ptr_locked || (s[0].$ptr_locked = new ptrType$2(function() { return this.$target.locked; }, function($v) { this.$target.locked = $v; }, s[0])))), (x.$high < 0 || (x.$high === 0 && x.$low < 1)))) {
+			atomic.StoreInt64((s[0].$ptr_locked || (s[0].$ptr_locked = new ptrType$2(function() { return this.$target.locked; }, function($v) { this.$target.locked = $v; }, s[0]))), new $Int64(0, 1));
+		}
+		$r = s[0].rl.RLock(); /* */ $s = 2; case 2: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$deferred.push([$methodVal(s[0].rl, "RUnlock"), []]);
+		new$1 = true;
+		_ref = s[0].requests;
 		_i = 0;
-		_keys = $keys(_ref);
 		while (true) {
-			if (!(_i < _keys.length)) { break; }
-			_entry = _ref[_keys[_i]];
-			if (_entry === undefined) {
-				_i++;
-				continue;
+			if (!(_i < _ref.$length)) { break; }
+			hls = $clone(((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]), Handlers);
+			if (hls.Qry === query) {
+				hls.hl = $append(hls.hl, hl);
+				new$1 = false;
+				break;
 			}
-			qry = _entry.k;
-			index = _entry.v;
-			((index < 0 || index >= queries.$length) ? $throwRuntimeError("index out of range") : queries.$array[queries.$offset + index] = qry);
 			_i++;
 		}
-		prevDiff = "";
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
-		prevDiff = s.lastPack.DeltaID;
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
-		mdata[0] = new data.RequestContext.ptr("", sliceType$1.nil, false, "", sliceType$1.nil, false);
-		mdata[0].RequestID = s.uuid;
-		mdata[0].Queries = queries;
+		if (new$1) {
+			s[0].requests = $append(s[0].requests, new Handlers.ptr(query, new sliceType$4([hl])));
+		}
+		$go((function(s) { return function $b() {
+			var $ptr, _r, _r$1, x$1, $s, $r;
+			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; x$1 = $f.x$1; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+			_r = $recv(time.After(s[0].wait)); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
+			_r[0];
+			/* */ if ((x$1 = atomic.LoadInt64((s[0].$ptr_locked || (s[0].$ptr_locked = new ptrType$2(function() { return this.$target.locked; }, function($v) { this.$target.locked = $v; }, s[0])))), (x$1.$high > 0 || (x$1.$high === 0 && x$1.$low > 0)))) { $s = 2; continue; }
+			/* */ $s = 3; continue;
+			/* if ((x$1 = atomic.LoadInt64((s[0].$ptr_locked || (s[0].$ptr_locked = new ptrType$2(function() { return this.$target.locked; }, function($v) { this.$target.locked = $v; }, s[0])))), (x$1.$high > 0 || (x$1.$high === 0 && x$1.$low > 0)))) { */ case 2:
+				_r$1 = s[0].Serve(); /* */ $s = 4; case 4: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
+				_r$1;
+			/* } */ case 3:
+			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f.x$1 = x$1; $f.$s = $s; $f.$r = $r; return $f;
+		}; })(s), []);
+		$r = s[0].Events.Log(new $String("Servo"), "Request", "Completed", new sliceType$3([])); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		_r = s[0].Serve(); /* */ $s = 4; case 4: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
+		/* */ $s = 5; case 5:
+		return _r;
+		/* */ } return; } } catch(err) { $err = err; $s = -1; return $ifaceNil; } finally { $callDeferred($deferred, $err); if($curGoroutine.asleep) { if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.Request }; } $f.$ptr = $ptr; $f._i = _i; $f._r = _r; $f._ref = _ref; $f.hl = hl; $f.hls = hls; $f.new$1 = new$1; $f.query = query; $f.s = s; $f.x = x; $f.$s = $s; $f.$deferred = $deferred; $f.$r = $r; return $f; } }
+	};
+	Servo.prototype.Request = function(query, hl) { return this.$val.Request(query, hl); };
+	Servo.ptr.prototype.Serve = function() {
+		var $ptr, _entry, _entry$1, _entry$2, _entry$3, _i, _i$1, _i$2, _i$3, _i$4, _i$5, _i$6, _i$7, _r, _r$1, _r$2, _ref, _ref$1, _ref$2, _ref$3, _ref$4, _ref$5, _ref$6, _ref$7, _tuple, _tuple$1, buf, diff, err, err$1, err$2, failed, failedErr, hl, hl$1, hl$2, ind, localReply, mdata, meta, mrd, mrdos, ok, pending, pendings, pmrec, prec, qry, reply, rez, s, upd, upd$1, upd$2, x, $s, $deferred, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _entry = $f._entry; _entry$1 = $f._entry$1; _entry$2 = $f._entry$2; _entry$3 = $f._entry$3; _i = $f._i; _i$1 = $f._i$1; _i$2 = $f._i$2; _i$3 = $f._i$3; _i$4 = $f._i$4; _i$5 = $f._i$5; _i$6 = $f._i$6; _i$7 = $f._i$7; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _ref = $f._ref; _ref$1 = $f._ref$1; _ref$2 = $f._ref$2; _ref$3 = $f._ref$3; _ref$4 = $f._ref$4; _ref$5 = $f._ref$5; _ref$6 = $f._ref$6; _ref$7 = $f._ref$7; _tuple = $f._tuple; _tuple$1 = $f._tuple$1; buf = $f.buf; diff = $f.diff; err = $f.err; err$1 = $f.err$1; err$2 = $f.err$2; failed = $f.failed; failedErr = $f.failedErr; hl = $f.hl; hl$1 = $f.hl$1; hl$2 = $f.hl$2; ind = $f.ind; localReply = $f.localReply; mdata = $f.mdata; meta = $f.meta; mrd = $f.mrd; mrdos = $f.mrdos; ok = $f.ok; pending = $f.pending; pendings = $f.pendings; pmrec = $f.pmrec; prec = $f.prec; qry = $f.qry; reply = $f.reply; rez = $f.rez; s = $f.s; upd = $f.upd; upd$1 = $f.upd$1; upd$2 = $f.upd$2; x = $f.x; $s = $f.$s; $deferred = $f.$deferred; $r = $f.$r; } var $err = null; try { s: while (true) { switch ($s) { case 0: $deferred = []; $deferred.index = $curGoroutine.deferStack.length; $curGoroutine.deferStack.push($deferred);
+		buf = [buf];
+		mdata = [mdata];
+		s = [s];
+		s[0] = this;
+		$r = s[0].Events.Log(new $String("Servo"), "serve", "Started", new sliceType$3([])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* */ if (time.Now().Before(s[0].pendingTime)) { $s = 2; continue; }
+		/* */ $s = 3; continue;
+		/* if (time.Now().Before(s[0].pendingTime)) { */ case 2:
+			$r = s[0].Events.Log(new $String("Servo"), "serve", "Completed", new sliceType$3([])); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			return $ifaceNil;
+		/* } */ case 3:
+		atomic.StoreInt64((s[0].$ptr_locked || (s[0].$ptr_locked = new ptrType$2(function() { return this.$target.locked; }, function($v) { this.$target.locked = $v; }, s[0]))), new $Int64(0, 0));
+		$r = s[0].rl.Lock(); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		pendings = s[0].requests;
+		s[0].requests = sliceType.nil;
+		$r = s[0].rl.Unlock(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$deferred.push([(function(buf, mdata, s) { return function() {
+			var $ptr;
+			time.Time.copy(s[0].pendingTime, time.Now().Add(s[0].wait));
+		}; })(buf, mdata, s), []]);
+		diff = s[0].lastPack.DeltaID;
+		mdata[0] = new data.RequestContext.ptr("", sliceType$2.nil, false, "", sliceType$2.nil, false);
+		mdata[0].RequestID = s[0].uuid;
 		mdata[0].Diffs = true;
-		mdata[0].DiffTag = prevDiff;
-		buf[0] = new bytes.Buffer.ptr(sliceType$3.nil, 0, arrayType.zero(), arrayType$1.zero(), 0);
-		reply = new data.ResponsePack.ptr("", "", false, "", sliceType$1.nil, data.Parameters.nil);
-		_r = json.NewEncoder(buf[0]).Encode(mdata[0]); /* */ $s = 2; case 2: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
+		mdata[0].DiffTag = diff;
+		_ref = pendings;
+		_i = 0;
+		while (true) {
+			if (!(_i < _ref.$length)) { break; }
+			hl = $clone(((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]), Handlers);
+			mdata[0].Queries = $append(mdata[0].Queries, hl.Qry);
+			_i++;
+		}
+		buf[0] = new bytes.Buffer.ptr(sliceType$5.nil, 0, arrayType.zero(), arrayType$1.zero(), 0);
+		meta = new data.ResponseMeta.ptr("", "", "");
+		reply = new data.ResponsePack.ptr("", "", false, "", sliceType$2.nil, data.Parameters.nil);
+		_r = json.NewEncoder(buf[0]).Encode(mdata[0]); /* */ $s = 7; case 7: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
 		err = _r;
-		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 3; continue; }
-		/* */ $s = 4; continue;
-		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 3:
-			s.pendingQuery = false;
-			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
-			_ref$1 = s.pendingQuery;
+		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 8; continue; }
+		/* */ $s = 9; continue;
+		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 8:
+			_ref$1 = pendings;
 			_i$1 = 0;
-			_keys$1 = $keys(_ref$1);
-			/* while (true) { */ case 5:
-				/* if (!(_i$1 < _keys$1.length)) { break; } */ if(!(_i$1 < _keys$1.length)) { $s = 6; continue; }
-				_entry$1 = _ref$1[_keys$1[_i$1]];
-				if (_entry$1 === undefined) {
-					_i$1++;
-					/* continue; */ $s = 5; continue;
-				}
-				qry$1 = _entry$1.k;
-				$r = (_entry$2 = s.providers[$String.keyFor(qry$1)], _entry$2 !== undefined ? _entry$2.v : $ifaceNil).Receive(err, reply); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* while (true) { */ case 10:
+				/* if (!(_i$1 < _ref$1.$length)) { break; } */ if(!(_i$1 < _ref$1.$length)) { $s = 11; continue; }
+				hl$1 = $clone(((_i$1 < 0 || _i$1 >= _ref$1.$length) ? $throwRuntimeError("index out of range") : _ref$1.$array[_ref$1.$offset + _i$1]), Handlers);
+				$r = hl$1.Emit(err, meta, reply.Results); /* */ $s = 12; case 12: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$1++;
-			/* } */ $s = 5; continue; case 6:
-			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
-			$r = s.Events.Error(new $String("Servo"), "sendNow", err, "Completed", new sliceType$2([])); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* } */ $s = 10; continue; case 11:
+			$r = s[0].Events.Error(new $String("Servo"), "serve", err, "Completed", new sliceType$3([])); /* */ $s = 13; case 13: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 			return err;
-		/* } */ case 4:
+		/* } */ case 9:
 		err$1 = $ifaceNil;
-		_r$1 = s.transport.Do(s.addr, buf[0]); /* */ $s = 9; case 9: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
+		_r$1 = s[0].transport.Do(s[0].addr, buf[0]); /* */ $s = 14; case 14: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
 		_tuple = _r$1;
 		data.ResponsePack.copy(reply, _tuple[0]);
 		err$1 = _tuple[1];
-		/* */ if (!($interfaceIsEqual(err$1, $ifaceNil))) { $s = 10; continue; }
-		/* */ $s = 11; continue;
-		/* if (!($interfaceIsEqual(err$1, $ifaceNil))) { */ case 10:
-			s.pendingQuery = false;
-			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
-			_ref$2 = s.pendingQuery;
+		/* */ if (!($interfaceIsEqual(err$1, $ifaceNil))) { $s = 15; continue; }
+		/* */ $s = 16; continue;
+		/* if (!($interfaceIsEqual(err$1, $ifaceNil))) { */ case 15:
+			_ref$2 = pendings;
 			_i$2 = 0;
-			_keys$2 = $keys(_ref$2);
-			/* while (true) { */ case 12:
-				/* if (!(_i$2 < _keys$2.length)) { break; } */ if(!(_i$2 < _keys$2.length)) { $s = 13; continue; }
-				_entry$3 = _ref$2[_keys$2[_i$2]];
-				if (_entry$3 === undefined) {
-					_i$2++;
-					/* continue; */ $s = 12; continue;
-				}
-				qry$2 = _entry$3.k;
-				$r = (_entry$4 = s.providers[$String.keyFor(qry$2)], _entry$4 !== undefined ? _entry$4.v : $ifaceNil).Receive(err$1, reply); /* */ $s = 14; case 14: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* while (true) { */ case 17:
+				/* if (!(_i$2 < _ref$2.$length)) { break; } */ if(!(_i$2 < _ref$2.$length)) { $s = 18; continue; }
+				hl$2 = $clone(((_i$2 < 0 || _i$2 >= _ref$2.$length) ? $throwRuntimeError("index out of range") : _ref$2.$array[_ref$2.$offset + _i$2]), Handlers);
+				$r = hl$2.Emit(err$1, meta, reply.Results); /* */ $s = 19; case 19: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$2++;
-			/* } */ $s = 12; continue; case 13:
-			atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
-			$r = s.Events.Error(new $String("Servo"), "sendNow", err$1, "Completed", new sliceType$2([])); /* */ $s = 15; case 15: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			/* } */ $s = 17; continue; case 18:
+			$r = s[0].Events.Error(new $String("Servo"), "serve", err$1, "Completed", new sliceType$3([])); /* */ $s = 20; case 20: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 			return err$1;
-		/* } */ case 11:
-		pending = s.pendingQuery;
-		s.pendingQuery = false;
-		data.ResponsePack.copy(s.lastPack, reply);
-		/* */ if (reply.Results.$length < queries.$length) { $s = 16; continue; }
-		/* */ $s = 17; continue;
-		/* if (reply.Results.$length < queries.$length) { */ case 16:
+		/* } */ case 16:
+		meta.DeltaID = reply.DeltaID;
+		meta.RecordKey = reply.RecordKey;
+		meta.RequestID = reply.RequestID;
+		data.ResponsePack.copy(s[0].lastPack, reply);
+		/* */ if (reply.Results.$length < pendings.$length) { $s = 21; continue; }
+		/* */ $s = 22; continue;
+		/* if (reply.Results.$length < pendings.$length) { */ case 21:
 			err$2 = errors.New("Inadequate Response Length");
-			$r = s.Events.Error(new $String("Servo"), "sendNow", err$2, "Completed", new sliceType$2([])); /* */ $s = 18; case 18: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			$r = s[0].Events.Error(new $String("Servo"), "sendNow", err$2, "Completed", new sliceType$3([])); /* */ $s = 23; case 23: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 			return err$2;
-		/* } */ case 17:
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 1));
-		_ref$3 = queries;
+		/* } */ case 22:
+		_ref$3 = pendings;
 		_i$3 = 0;
-		/* while (true) { */ case 19:
-			/* if (!(_i$3 < _ref$3.$length)) { break; } */ if(!(_i$3 < _ref$3.$length)) { $s = 20; continue; }
+		/* while (true) { */ case 24:
+			/* if (!(_i$3 < _ref$3.$length)) { break; } */ if(!(_i$3 < _ref$3.$length)) { $s = 25; continue; }
 			ind = _i$3;
-			qry$3 = ((_i$3 < 0 || _i$3 >= _ref$3.$length) ? $throwRuntimeError("index out of range") : _ref$3.$array[_ref$3.$offset + _i$3]);
-			/* */ if (!reply.Batched) { $s = 21; continue; }
-			/* */ $s = 22; continue;
-			/* if (!reply.Batched) { */ case 21:
-				$r = (_entry$5 = s.providers[$String.keyFor(qry$3)], _entry$5 !== undefined ? _entry$5.v : $ifaceNil).Receive($ifaceNil, reply); /* */ $s = 23; case 23: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			qry = $clone(((_i$3 < 0 || _i$3 >= _ref$3.$length) ? $throwRuntimeError("index out of range") : _ref$3.$array[_ref$3.$offset + _i$3]), Handlers);
+			pending = $clone(((ind < 0 || ind >= pendings.$length) ? $throwRuntimeError("index out of range") : pendings.$array[pendings.$offset + ind]), Handlers);
+			/* */ if (!reply.Batched) { $s = 26; continue; }
+			/* */ $s = 27; continue;
+			/* if (!reply.Batched) { */ case 26:
+				$r = pending.Emit($ifaceNil, meta, reply.Results); /* */ $s = 28; case 28: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_ref$4 = s[0].updates;
+				_i$4 = 0;
+				/* while (true) { */ case 29:
+					/* if (!(_i$4 < _ref$4.$length)) { break; } */ if(!(_i$4 < _ref$4.$length)) { $s = 30; continue; }
+					upd = ((_i$4 < 0 || _i$4 >= _ref$4.$length) ? $throwRuntimeError("index out of range") : _ref$4.$array[_ref$4.$offset + _i$4]);
+					/* */ if (!(upd.qry === pending.Qry)) { $s = 31; continue; }
+					/* */ $s = 32; continue;
+					/* if (!(upd.qry === pending.Qry)) { */ case 31:
+						_i$4++;
+						/* continue; */ $s = 29; continue;
+					/* } */ case 32:
+					$r = upd.UpdateKeys(meta, reply); /* */ $s = 33; case 33: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+					_i$4++;
+				/* } */ $s = 29; continue; case 30:
 				_i$3++;
-				/* continue; */ $s = 19; continue;
-			/* } */ case 22:
+				/* continue; */ $s = 24; continue;
+			/* } */ case 27:
 			localReply = $clone(reply, data.ResponsePack);
 			localReply.Results = data.Parameters.nil;
 			rez = (x = reply.Results, ((ind < 0 || ind >= x.$length) ? $throwRuntimeError("index out of range") : x.$array[x.$offset + ind]));
-			_tuple$1 = $assertType((_entry$6 = rez[$String.keyFor("QueryFailed")], _entry$6 !== undefined ? _entry$6.v : $ifaceNil), $Bool, true);
+			_tuple$1 = $assertType((_entry = rez[$String.keyFor("QueryFailed")], _entry !== undefined ? _entry.v : $ifaceNil), $Bool, true);
 			failed = _tuple$1[0];
 			ok = _tuple$1[1];
-			/* */ if (ok && failed) { $s = 24; continue; }
-			/* */ $s = 25; continue;
-			/* if (ok && failed) { */ case 24:
-				_r$2 = fmt.Errorf("Message{%s} - Error{%s}", new sliceType$2([(_entry$7 = rez[$String.keyFor("Message")], _entry$7 !== undefined ? _entry$7.v : $ifaceNil), (_entry$8 = rez[$String.keyFor("Error")], _entry$8 !== undefined ? _entry$8.v : $ifaceNil)])); /* */ $s = 26; case 26: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
+			/* */ if (ok && failed) { $s = 34; continue; }
+			/* */ $s = 35; continue;
+			/* if (ok && failed) { */ case 34:
+				_r$2 = fmt.Errorf("Message{%s} - Error{%s}", new sliceType$3([(_entry$1 = rez[$String.keyFor("Message")], _entry$1 !== undefined ? _entry$1.v : $ifaceNil), (_entry$2 = rez[$String.keyFor("Error")], _entry$2 !== undefined ? _entry$2.v : $ifaceNil)])); /* */ $s = 36; case 36: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
 				failedErr = _r$2;
-				$r = s.Events.Error(new $String("Servo"), "sendNow", failedErr, "Info : Query [%s] : Failed", new sliceType$2([new $String(qry$3)])); /* */ $s = 27; case 27: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				$r = (_entry$9 = s.providers[$String.keyFor(qry$3)], _entry$9 !== undefined ? _entry$9.v : $ifaceNil).Receive(failedErr, localReply); /* */ $s = 28; case 28: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				$r = s[0].Events.Error(new $String("Servo"), "sendNow", failedErr, "Info : Query [%s] : Failed", new sliceType$3([new qry.constructor.elem(qry)])); /* */ $s = 37; case 37: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				$r = pending.Emit(failedErr, meta, localReply.Results); /* */ $s = 38; case 38: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$3++;
-				/* continue; */ $s = 19; continue;
-			/* } */ case 25:
-			mrdos = (_entry$10 = rez[$String.keyFor("data")], _entry$10 !== undefined ? _entry$10.v : $ifaceNil);
-			/* */ if ($interfaceIsEqual(mrdos, $ifaceNil)) { $s = 29; continue; }
-			/* */ $s = 30; continue;
-			/* if ($interfaceIsEqual(mrdos, $ifaceNil)) { */ case 29:
-				$r = (_entry$11 = s.providers[$String.keyFor(qry$3)], _entry$11 !== undefined ? _entry$11.v : $ifaceNil).Receive($ifaceNil, localReply); /* */ $s = 31; case 31: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				/* continue; */ $s = 24; continue;
+			/* } */ case 35:
+			mrdos = (_entry$3 = rez[$String.keyFor("data")], _entry$3 !== undefined ? _entry$3.v : $ifaceNil);
+			/* */ if ($interfaceIsEqual(mrdos, $ifaceNil)) { $s = 39; continue; }
+			/* */ $s = 40; continue;
+			/* if ($interfaceIsEqual(mrdos, $ifaceNil)) { */ case 39:
+				$r = pending.Emit($ifaceNil, meta, localReply.Results); /* */ $s = 41; case 41: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i$3++;
-				/* continue; */ $s = 19; continue;
-			/* } */ case 30:
-			mrd = $assertType(mrdos, sliceType$2);
-			_ref$4 = mrd;
-			_i$4 = 0;
+				/* continue; */ $s = 24; continue;
+			/* } */ case 40:
+			mrd = $assertType(mrdos, sliceType$3);
+			_ref$5 = mrd;
+			_i$5 = 0;
 			while (true) {
-				if (!(_i$4 < _ref$4.$length)) { break; }
-				prec = ((_i$4 < 0 || _i$4 >= _ref$4.$length) ? $throwRuntimeError("index out of range") : _ref$4.$array[_ref$4.$offset + _i$4]);
+				if (!(_i$5 < _ref$5.$length)) { break; }
+				prec = ((_i$5 < 0 || _i$5 >= _ref$5.$length) ? $throwRuntimeError("index out of range") : _ref$5.$array[_ref$5.$offset + _i$5]);
 				pmrec = $assertType(prec, mapType);
 				localReply.Results = $append(localReply.Results, pmrec);
-				_i$4++;
-			}
-			$r = (_entry$12 = s.providers[$String.keyFor(qry$3)], _entry$12 !== undefined ? _entry$12.v : $ifaceNil).Receive($ifaceNil, localReply); /* */ $s = 32; case 32: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-			_i$3++;
-		/* } */ $s = 19; continue; case 20:
-		/* */ if (!(reply.DeltaID === prevDiff) && reply.Deltas.$length > 0) { $s = 33; continue; }
-		/* */ $s = 34; continue;
-		/* if (!(reply.DeltaID === prevDiff) && reply.Deltas.$length > 0) { */ case 33:
-			_ref$5 = s.providers;
-			_i$5 = 0;
-			_keys$3 = $keys(_ref$5);
-			/* while (true) { */ case 35:
-				/* if (!(_i$5 < _keys$3.length)) { break; } */ if(!(_i$5 < _keys$3.length)) { $s = 36; continue; }
-				_entry$13 = _ref$5[_keys$3[_i$5]];
-				if (_entry$13 === undefined) {
-					_i$5++;
-					/* continue; */ $s = 35; continue;
-				}
-				key = _entry$13.k;
-				provider = _entry$13.v;
-				_tuple$2 = (_entry$14 = pending[$String.keyFor(key)], _entry$14 !== undefined ? [_entry$14.v, true] : [0, false]);
-				ok$1 = _tuple$2[1];
-				/* */ if (ok$1) { $s = 37; continue; }
-				/* */ $s = 38; continue;
-				/* if (ok$1) { */ case 37:
-					_i$5++;
-					/* continue; */ $s = 35; continue;
-				/* } */ case 38:
-				_r$3 = provider.ShouldUpdate(reply.Deltas); /* */ $s = 41; case 41: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
-				/* */ if (_r$3) { $s = 39; continue; }
-				/* */ $s = 40; continue;
-				/* if (_r$3) { */ case 39:
-					_r$4 = s.batch(key, provider); /* */ $s = 42; case 42: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
-					_r$4;
-				/* } */ case 40:
 				_i$5++;
-			/* } */ $s = 35; continue; case 36:
-		/* } */ case 34:
-		atomic.StoreInt64((s.$ptr_pending || (s.$ptr_pending = new ptrType(function() { return this.$target.pending; }, function($v) { this.$target.pending = $v; }, s))), new $Int64(0, 0));
-		atomic.StoreInt64((s.$ptr_watching || (s.$ptr_watching = new ptrType(function() { return this.$target.watching; }, function($v) { this.$target.watching = $v; }, s))), new $Int64(0, 0));
-		$r = s.Events.Log(new $String("Servo"), "sendNow", "Completed", new sliceType$2([])); /* */ $s = 43; case 43: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			}
+			$r = pending.Emit($ifaceNil, meta, localReply.Results); /* */ $s = 42; case 42: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			_ref$6 = s[0].updates;
+			_i$6 = 0;
+			/* while (true) { */ case 43:
+				/* if (!(_i$6 < _ref$6.$length)) { break; } */ if(!(_i$6 < _ref$6.$length)) { $s = 44; continue; }
+				upd$1 = ((_i$6 < 0 || _i$6 >= _ref$6.$length) ? $throwRuntimeError("index out of range") : _ref$6.$array[_ref$6.$offset + _i$6]);
+				/* */ if (!(upd$1.qry === pending.Qry)) { $s = 45; continue; }
+				/* */ $s = 46; continue;
+				/* if (!(upd$1.qry === pending.Qry)) { */ case 45:
+					_i$6++;
+					/* continue; */ $s = 43; continue;
+				/* } */ case 46:
+				$r = upd$1.UpdateKeys(meta, localReply); /* */ $s = 47; case 47: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_i$6++;
+			/* } */ $s = 43; continue; case 44:
+			_i$3++;
+		/* } */ $s = 24; continue; case 25:
+		/* */ if (!(reply.DeltaID === diff) && reply.Deltas.$length > 0) { $s = 48; continue; }
+		/* */ $s = 49; continue;
+		/* if (!(reply.DeltaID === diff) && reply.Deltas.$length > 0) { */ case 48:
+			$r = s[0].ul.RLock(); /* */ $s = 50; case 50: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+			_ref$7 = s[0].updates;
+			_i$7 = 0;
+			/* while (true) { */ case 51:
+				/* if (!(_i$7 < _ref$7.$length)) { break; } */ if(!(_i$7 < _ref$7.$length)) { $s = 52; continue; }
+				upd$2 = ((_i$7 < 0 || _i$7 >= _ref$7.$length) ? $throwRuntimeError("index out of range") : _ref$7.$array[_ref$7.$offset + _i$7]);
+				$r = upd$2.Update(reply.Deltas); /* */ $s = 53; case 53: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_i$7++;
+			/* } */ $s = 51; continue; case 52:
+			$r = s[0].ul.RUnlock(); /* */ $s = 54; case 54: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		/* } */ case 49:
+		$r = s[0].Events.Log(new $String("Servo"), "serve", "Completed", new sliceType$3([])); /* */ $s = 55; case 55: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		return $ifaceNil;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.sendNow }; } $f.$ptr = $ptr; $f._entry = _entry; $f._entry$1 = _entry$1; $f._entry$10 = _entry$10; $f._entry$11 = _entry$11; $f._entry$12 = _entry$12; $f._entry$13 = _entry$13; $f._entry$14 = _entry$14; $f._entry$2 = _entry$2; $f._entry$3 = _entry$3; $f._entry$4 = _entry$4; $f._entry$5 = _entry$5; $f._entry$6 = _entry$6; $f._entry$7 = _entry$7; $f._entry$8 = _entry$8; $f._entry$9 = _entry$9; $f._i = _i; $f._i$1 = _i$1; $f._i$2 = _i$2; $f._i$3 = _i$3; $f._i$4 = _i$4; $f._i$5 = _i$5; $f._keys = _keys; $f._keys$1 = _keys$1; $f._keys$2 = _keys$2; $f._keys$3 = _keys$3; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._ref = _ref; $f._ref$1 = _ref$1; $f._ref$2 = _ref$2; $f._ref$3 = _ref$3; $f._ref$4 = _ref$4; $f._ref$5 = _ref$5; $f._tuple = _tuple; $f._tuple$1 = _tuple$1; $f._tuple$2 = _tuple$2; $f.buf = buf; $f.err = err; $f.err$1 = err$1; $f.err$2 = err$2; $f.failed = failed; $f.failedErr = failedErr; $f.ind = ind; $f.index = index; $f.key = key; $f.localReply = localReply; $f.mdata = mdata; $f.mrd = mrd; $f.mrdos = mrdos; $f.ok = ok; $f.ok$1 = ok$1; $f.pending = pending; $f.pmrec = pmrec; $f.prec = prec; $f.prevDiff = prevDiff; $f.provider = provider; $f.qry = qry; $f.qry$1 = qry$1; $f.qry$2 = qry$2; $f.qry$3 = qry$3; $f.queries = queries; $f.reply = reply; $f.rez = rez; $f.s = s; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
+		/* */ } return; } } catch(err) { $err = err; $s = -1; return $ifaceNil; } finally { $callDeferred($deferred, $err); if($curGoroutine.asleep) { if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.Serve }; } $f.$ptr = $ptr; $f._entry = _entry; $f._entry$1 = _entry$1; $f._entry$2 = _entry$2; $f._entry$3 = _entry$3; $f._i = _i; $f._i$1 = _i$1; $f._i$2 = _i$2; $f._i$3 = _i$3; $f._i$4 = _i$4; $f._i$5 = _i$5; $f._i$6 = _i$6; $f._i$7 = _i$7; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._ref = _ref; $f._ref$1 = _ref$1; $f._ref$2 = _ref$2; $f._ref$3 = _ref$3; $f._ref$4 = _ref$4; $f._ref$5 = _ref$5; $f._ref$6 = _ref$6; $f._ref$7 = _ref$7; $f._tuple = _tuple; $f._tuple$1 = _tuple$1; $f.buf = buf; $f.diff = diff; $f.err = err; $f.err$1 = err$1; $f.err$2 = err$2; $f.failed = failed; $f.failedErr = failedErr; $f.hl = hl; $f.hl$1 = hl$1; $f.hl$2 = hl$2; $f.ind = ind; $f.localReply = localReply; $f.mdata = mdata; $f.meta = meta; $f.mrd = mrd; $f.mrdos = mrdos; $f.ok = ok; $f.pending = pending; $f.pendings = pendings; $f.pmrec = pmrec; $f.prec = prec; $f.qry = qry; $f.reply = reply; $f.rez = rez; $f.s = s; $f.upd = upd; $f.upd$1 = upd$1; $f.upd$2 = upd$2; $f.x = x; $f.$s = $s; $f.$deferred = $deferred; $f.$r = $r; return $f; } }
 	};
-	Servo.prototype.sendNow = function() { return this.$val.sendNow(); };
-	Servo.ptr.prototype.batch = function(query, client) {
-		var $ptr, _key, client, index, query, s, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _key = $f._key; client = $f.client; index = $f.index; query = $f.query; s = $f.s; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-		s = this;
-		$r = s.Events.Log(new $String("Servo"), "batch", "Started : Batching Query : %s", new sliceType$2([new $String(query)])); /* */ $s = 1; case 1: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		if (s.pendingQuery === false) {
-			time.Time.copy(s.pendingTime, time.Now().Add(s.wait));
-			s.pendingQuery = {};
-		}
-		index = $keys(s.pendingQuery).length;
-		_key = query; (s.pendingQuery || $throwRuntimeError("assignment to entry in nil map"))[$String.keyFor(_key)] = { k: _key, v: index };
-		/* */ if ($keys(s.providers).length > 1 && !time.Now().After(s.pendingTime)) { $s = 2; continue; }
-		/* */ $s = 3; continue;
-		/* if ($keys(s.providers).length > 1 && !time.Now().After(s.pendingTime)) { */ case 2:
-			$r = s.Events.Log(new $String("Servo"), "batch", "Completed", new sliceType$2([])); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-			return false;
-		/* } */ case 3:
-		$r = s.Events.Log(new $String("Servo"), "batch", "Completed", new sliceType$2([])); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		return true;
-		/* */ } return; } if ($f === undefined) { $f = { $blk: Servo.ptr.prototype.batch }; } $f.$ptr = $ptr; $f._key = _key; $f.client = client; $f.index = index; $f.query = query; $f.s = s; $f.$s = $s; $f.$r = $r; return $f;
-	};
-	Servo.prototype.batch = function(query, client) { return this.$val.batch(query, client); };
-	ptrType$2.methods = [{prop: "Do", name: "Do", pkg: "", typ: $funcType([], [$error], false)}, {prop: "ListenFor", name: "ListenFor", pkg: "", typ: $funcType([$emptyInterface, PerRequestHandler], [], false)}, {prop: "Listen", name: "Listen", pkg: "", typ: $funcType([RequestHandler], [], false)}, {prop: "ShouldUpdate", name: "ShouldUpdate", pkg: "", typ: $funcType([sliceType$1], [$Bool], false)}, {prop: "Receive", name: "Receive", pkg: "", typ: $funcType([$error, data.ResponsePack], [], false)}, {prop: "UUID", name: "UUID", pkg: "", typ: $funcType([], [$String], false)}];
-	ptrType$3.methods = [{prop: "Register", name: "Register", pkg: "", typ: $funcType([$String], [Requestor], false)}, {prop: "serve", name: "serve", pkg: "github.com/influx6/coquery/client", typ: $funcType([$String, Requestor], [$error], false)}, {prop: "sendNow", name: "sendNow", pkg: "github.com/influx6/coquery/client", typ: $funcType([], [$error], false)}, {prop: "batch", name: "batch", pkg: "github.com/influx6/coquery/client", typ: $funcType([$String, Requestor], [$Bool], false)}];
-	PerRequestHandler.init([$error, data.Parameter], [], false);
-	RequestHandler.init([$error, data.Parameters], [], false);
-	Requestor.init([{prop: "Do", name: "Do", pkg: "", typ: $funcType([], [$error], false)}, {prop: "Listen", name: "Listen", pkg: "", typ: $funcType([RequestHandler], [], false)}, {prop: "ListenFor", name: "ListenFor", pkg: "", typ: $funcType([$emptyInterface, PerRequestHandler], [], false)}, {prop: "Receive", name: "Receive", pkg: "", typ: $funcType([$error, data.ResponsePack], [], false)}, {prop: "ShouldUpdate", name: "ShouldUpdate", pkg: "", typ: $funcType([sliceType$1], [$Bool], false)}, {prop: "UUID", name: "UUID", pkg: "", typ: $funcType([], [$String], false)}]);
-	BaseRequestor.init([{prop: "records", name: "records", pkg: "github.com/influx6/coquery/client", typ: mapType$1, tag: ""}, {prop: "handles", name: "handles", pkg: "github.com/influx6/coquery/client", typ: sliceType, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "query", name: "query", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "key", name: "key", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "server", name: "server", pkg: "github.com/influx6/coquery/client", typ: Server, tag: ""}, {prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "keyUpdate", name: "keyUpdate", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}]);
-	Events.init([{prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType$2], [], true)}, {prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType$2], [], true)}]);
+	Servo.prototype.Serve = function() { return this.$val.Serve(); };
+	Handlers.methods = [{prop: "Emit", name: "Emit", pkg: "", typ: $funcType([$error, data.ResponseMeta, data.Parameters], [], false)}];
+	ptrType$1.methods = [{prop: "Update", name: "Update", pkg: "", typ: $funcType([sliceType$2], [], false)}, {prop: "UpdateKeys", name: "UpdateKeys", pkg: "", typ: $funcType([data.ResponseMeta, data.ResponsePack], [], false)}];
+	ptrType$3.methods = [{prop: "Updates", name: "Updates", pkg: "", typ: $funcType([$String, funcType], [$error], false)}, {prop: "Request", name: "Request", pkg: "", typ: $funcType([$String, Handler], [$error], false)}, {prop: "Serve", name: "Serve", pkg: "", typ: $funcType([], [$error], false)}];
 	ServeTransport.init([{prop: "Do", name: "Do", pkg: "", typ: $funcType([$String, io.Reader], [data.ResponsePack, $error], false)}]);
-	Server.init([{prop: "Register", name: "Register", pkg: "", typ: $funcType([$String], [Requestor], false)}, {prop: "serve", name: "serve", pkg: "github.com/influx6/coquery/client", typ: $funcType([$String, Requestor], [$error], false)}]);
-	Servo.init([{prop: "Events", name: "", pkg: "", typ: Events, tag: ""}, {prop: "pending", name: "pending", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "watching", name: "watching", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}, {prop: "addr", name: "addr", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "pendingTime", name: "pendingTime", pkg: "github.com/influx6/coquery/client", typ: time.Time, tag: ""}, {prop: "wait", name: "wait", pkg: "github.com/influx6/coquery/client", typ: time.Duration, tag: ""}, {prop: "transport", name: "transport", pkg: "github.com/influx6/coquery/client", typ: ServeTransport, tag: ""}, {prop: "pendingQuery", name: "pendingQuery", pkg: "github.com/influx6/coquery/client", typ: mapType$2, tag: ""}, {prop: "providers", name: "providers", pkg: "github.com/influx6/coquery/client", typ: mapType$3, tag: ""}, {prop: "lastPack", name: "lastPack", pkg: "github.com/influx6/coquery/client", typ: data.ResponsePack, tag: ""}]);
+	Events.init([{prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType$3], [], true)}, {prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType$3], [], true)}]);
+	Handler.init([$error, data.ResponseMeta, data.Parameters], [], false);
+	Handlers.init([{prop: "Qry", name: "Qry", pkg: "", typ: $String, tag: ""}, {prop: "hl", name: "hl", pkg: "github.com/influx6/coquery/client", typ: sliceType$4, tag: ""}]);
+	UpdateTrigger.init([{prop: "qry", name: "qry", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "hl", name: "hl", pkg: "github.com/influx6/coquery/client", typ: sync.RWMutex, tag: ""}, {prop: "keys", name: "keys", pkg: "github.com/influx6/coquery/client", typ: mapType$1, tag: ""}, {prop: "touched", name: "touched", pkg: "github.com/influx6/coquery/client", typ: mapType$1, tag: ""}, {prop: "trigger", name: "trigger", pkg: "github.com/influx6/coquery/client", typ: funcType, tag: ""}]);
+	Servo.init([{prop: "Events", name: "", pkg: "", typ: Events, tag: ""}, {prop: "addr", name: "addr", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "uuid", name: "uuid", pkg: "github.com/influx6/coquery/client", typ: $String, tag: ""}, {prop: "pendingTime", name: "pendingTime", pkg: "github.com/influx6/coquery/client", typ: time.Time, tag: ""}, {prop: "wait", name: "wait", pkg: "github.com/influx6/coquery/client", typ: time.Duration, tag: ""}, {prop: "transport", name: "transport", pkg: "github.com/influx6/coquery/client", typ: ServeTransport, tag: ""}, {prop: "rl", name: "rl", pkg: "github.com/influx6/coquery/client", typ: sync.RWMutex, tag: ""}, {prop: "requests", name: "requests", pkg: "github.com/influx6/coquery/client", typ: sliceType, tag: ""}, {prop: "ul", name: "ul", pkg: "github.com/influx6/coquery/client", typ: sync.RWMutex, tag: ""}, {prop: "updates", name: "updates", pkg: "github.com/influx6/coquery/client", typ: sliceType$1, tag: ""}, {prop: "lastPack", name: "lastPack", pkg: "github.com/influx6/coquery/client", typ: data.ResponsePack, tag: ""}, {prop: "locked", name: "locked", pkg: "github.com/influx6/coquery/client", typ: $Int64, tag: ""}]);
 	$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $f, $c = false, $s = 0, $r; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
@@ -30891,8 +30949,9 @@ $packages["github.com/influx6/coquery/client"] = (function() {
 		$r = data.$init(); /* */ $s = 5; case 5: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		$r = utils.$init(); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		$r = io.$init(); /* */ $s = 7; case 7: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = atomic.$init(); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		$r = time.$init(); /* */ $s = 9; case 9: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = sync.$init(); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = atomic.$init(); /* */ $s = 9; case 9: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+		$r = time.$init(); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 		/* */ } return; } if ($f === undefined) { $f = { $blk: $init }; } $f.$s = $s; $f.$r = $r; return $f;
 	};
 	$pkg.$init = $init;
@@ -36083,19 +36142,44 @@ $packages["main"] = (function() {
 	};
 	eventlog.prototype.Error = function(context$1, name, err, message, data$1) { return this.$val.Error(context$1, name, err, message, data$1); };
 	main = function() {
-		var $ptr, _r, _r$1, _r$2, _r$3, _r$4, _r$5, all, clientServo, doc, err, err$1, get, window, x, $s, $r;
-		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; _r$4 = $f._r$4; _r$5 = $f._r$5; all = $f.all; clientServo = $f.clientServo; doc = $f.doc; err = $f.err; err$1 = $f.err$1; get = $f.get; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		var $ptr, _r, _r$1, _r$2, _r$3, client$1, doc, window, x, $s, $r;
+		/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _r = $f._r; _r$1 = $f._r$1; _r$2 = $f._r$2; _r$3 = $f._r$3; client$1 = $f.client$1; doc = $f.doc; window = $f.window; x = $f.x; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
 		doc = [doc];
 		window = dom.GetWindow();
 		_r = window.Document(); /* */ $s = 1; case 1: if($c) { $c = false; _r = _r.$blk(); } if (_r && _r.$blk !== undefined) { break s; }
 		doc[0] = _r;
 		_r$1 = client.NewServo(new events.constructor.elem(events), "http://127.0.0.1:3000", new time.Duration(0, 300000000), (x = js.HTTP, new x.constructor.elem(x))); /* */ $s = 2; case 2: if($c) { $c = false; _r$1 = _r$1.$blk(); } if (_r$1 && _r$1.$blk !== undefined) { break s; }
-		clientServo = _r$1;
-		_r$2 = clientServo.Register("docs.users.findN(-1).collects(name,nationality)"); /* */ $s = 3; case 3: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
-		all = _r$2;
-		$r = all.Listen((function(doc) { return function $b(err, records) {
-			var $ptr, _i, _r$3, _r$4, _r$5, _ref, div, err, record, records, $s, $r;
-			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r$3 = $f._r$3; _r$4 = $f._r$4; _r$5 = $f._r$5; _ref = $f._ref; div = $f.div; err = $f.err; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+		client$1 = _r$1;
+		_r$2 = client$1.Request("docs.users.findN(-1).collects(name,nationality)", (function(doc) { return function $b(err, meta, records) {
+			var $ptr, _i, _r$2, _r$3, _r$4, _ref, div, err, meta, record, records, $s, $r;
+			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r$2 = $f._r$2; _r$3 = $f._r$3; _r$4 = $f._r$4; _ref = $f._ref; div = $f.div; err = $f.err; meta = $f.meta; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+			meta = $clone(meta, data.ResponseMeta);
+			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 1; continue; }
+			/* */ $s = 2; continue;
+			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 1:
+				$r = events.Error(new $String(context), "Listen", err, "All query Failed", new sliceType([])); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				return;
+			/* } */ case 2:
+			_ref = records;
+			_i = 0;
+			/* while (true) { */ case 4:
+				/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 5; continue; }
+				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
+				_r$2 = doc[0].CreateElement("div"); /* */ $s = 6; case 6: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
+				div = _r$2;
+				_r$3 = fmt.Sprintf("All: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+				$r = div.SetInnerHTML(_r$3); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_r$4 = doc[0].QuerySelector("body"); /* */ $s = 9; case 9: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
+				$r = _r$4.AppendChild(div); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
+				_i++;
+			/* } */ $s = 4; continue; case 5:
+			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$2 = _r$2; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._ref = _ref; $f.div = div; $f.err = err; $f.meta = meta; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
+		}; })(doc)); /* */ $s = 3; case 3: if($c) { $c = false; _r$2 = _r$2.$blk(); } if (_r$2 && _r$2.$blk !== undefined) { break s; }
+		_r$2;
+		_r$3 = client$1.Request("docs.users.findN(1).mutate({ \"name\": \"Von Bruz\" })", (function(doc) { return function $b(err, meta, records) {
+			var $ptr, _i, _r$3, _r$4, _r$5, _ref, div, err, meta, record, records, $s, $r;
+			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r$3 = $f._r$3; _r$4 = $f._r$4; _r$5 = $f._r$5; _ref = $f._ref; div = $f.div; err = $f.err; meta = $f.meta; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
+			meta = $clone(meta, data.ResponseMeta);
 			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 1; continue; }
 			/* */ $s = 2; continue;
 			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 1:
@@ -36109,55 +36193,16 @@ $packages["main"] = (function() {
 				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
 				_r$3 = doc[0].CreateElement("div"); /* */ $s = 6; case 6: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
 				div = _r$3;
-				_r$4 = fmt.Sprintf("All: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
+				_r$4 = fmt.Sprintf("Get: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
 				$r = div.SetInnerHTML(_r$4); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_r$5 = doc[0].QuerySelector("body"); /* */ $s = 9; case 9: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
 				$r = _r$5.AppendChild(div); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
 				_i++;
 			/* } */ $s = 4; continue; case 5:
-			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._ref = _ref; $f.div = div; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
-		}; })(doc)); /* */ $s = 4; case 4: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		_r$3 = clientServo.Register("docs.users.findN(1).mutate({ \"name\": \"Von Bruz\" })"); /* */ $s = 5; case 5: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
-		get = _r$3;
-		$r = get.Listen((function(doc) { return function $b(err, records) {
-			var $ptr, _i, _r$4, _r$5, _r$6, _ref, div, err, record, records, $s, $r;
-			/* */ $s = 0; var $f, $c = false; if (this !== undefined && this.$blk !== undefined) { $f = this; $c = true; $ptr = $f.$ptr; _i = $f._i; _r$4 = $f._r$4; _r$5 = $f._r$5; _r$6 = $f._r$6; _ref = $f._ref; div = $f.div; err = $f.err; record = $f.record; records = $f.records; $s = $f.$s; $r = $f.$r; } s: while (true) { switch ($s) { case 0:
-			/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 1; continue; }
-			/* */ $s = 2; continue;
-			/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 1:
-				$r = events.Error(new $String(context), "Listen", err, "All query Failed", new sliceType([])); /* */ $s = 3; case 3: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				return;
-			/* } */ case 2:
-			_ref = records;
-			_i = 0;
-			/* while (true) { */ case 4:
-				/* if (!(_i < _ref.$length)) { break; } */ if(!(_i < _ref.$length)) { $s = 5; continue; }
-				record = ((_i < 0 || _i >= _ref.$length) ? $throwRuntimeError("index out of range") : _ref.$array[_ref.$offset + _i]);
-				_r$4 = doc[0].CreateElement("div"); /* */ $s = 6; case 6: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
-				div = _r$4;
-				_r$5 = fmt.Sprintf("Get: %+v", new sliceType([new data.Parameter(record)])); /* */ $s = 7; case 7: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
-				$r = div.SetInnerHTML(_r$5); /* */ $s = 8; case 8: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				_r$6 = doc[0].QuerySelector("body"); /* */ $s = 9; case 9: if($c) { $c = false; _r$6 = _r$6.$blk(); } if (_r$6 && _r$6.$blk !== undefined) { break s; }
-				$r = _r$6.AppendChild(div); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-				_i++;
-			/* } */ $s = 4; continue; case 5:
-			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._r$6 = _r$6; $f._ref = _ref; $f.div = div; $f.err = err; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
-		}; })(doc)); /* */ $s = 6; case 6: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		_r$4 = all.Do(); /* */ $s = 7; case 7: if($c) { $c = false; _r$4 = _r$4.$blk(); } if (_r$4 && _r$4.$blk !== undefined) { break s; }
-		err = _r$4;
-		/* */ if (!($interfaceIsEqual(err, $ifaceNil))) { $s = 8; continue; }
-		/* */ $s = 9; continue;
-		/* if (!($interfaceIsEqual(err, $ifaceNil))) { */ case 8:
-			$r = events.Error(new $String(context), "all.Do", err, "All query Failed", new sliceType([])); /* */ $s = 10; case 10: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		/* } */ case 9:
-		_r$5 = get.Do(); /* */ $s = 11; case 11: if($c) { $c = false; _r$5 = _r$5.$blk(); } if (_r$5 && _r$5.$blk !== undefined) { break s; }
-		err$1 = _r$5;
-		/* */ if (!($interfaceIsEqual(err$1, $ifaceNil))) { $s = 12; continue; }
-		/* */ $s = 13; continue;
-		/* if (!($interfaceIsEqual(err$1, $ifaceNil))) { */ case 12:
-			$r = events.Error(new $String(context), "get.Do", err$1, "Get query Failed", new sliceType([])); /* */ $s = 14; case 14: if($c) { $c = false; $r = $r.$blk(); } if ($r && $r.$blk !== undefined) { break s; }
-		/* } */ case 13:
-		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f.all = all; $f.clientServo = clientServo; $f.doc = doc; $f.err = err; $f.err$1 = err$1; $f.get = get; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
+			/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: $b }; } $f.$ptr = $ptr; $f._i = _i; $f._r$3 = _r$3; $f._r$4 = _r$4; $f._r$5 = _r$5; $f._ref = _ref; $f.div = div; $f.err = err; $f.meta = meta; $f.record = record; $f.records = records; $f.$s = $s; $f.$r = $r; return $f;
+		}; })(doc)); /* */ $s = 4; case 4: if($c) { $c = false; _r$3 = _r$3.$blk(); } if (_r$3 && _r$3.$blk !== undefined) { break s; }
+		_r$3;
+		/* */ $s = -1; case -1: } return; } if ($f === undefined) { $f = { $blk: main }; } $f.$ptr = $ptr; $f._r = _r; $f._r$1 = _r$1; $f._r$2 = _r$2; $f._r$3 = _r$3; $f.client$1 = client$1; $f.doc = doc; $f.window = window; $f.x = x; $f.$s = $s; $f.$r = $r; return $f;
 	};
 	eventlog.methods = [{prop: "Log", name: "Log", pkg: "", typ: $funcType([$emptyInterface, $String, $String, sliceType], [], true)}, {prop: "Error", name: "Error", pkg: "", typ: $funcType([$emptyInterface, $String, $error, $String, sliceType], [], true)}];
 	eventlog.init([]);

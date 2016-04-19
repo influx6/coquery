@@ -42,12 +42,9 @@ func main() {
 	window := dom.GetWindow()
 	doc := window.Document()
 
-	clientServo := client.NewServo(events, "http://127.0.0.1:3000", 300*time.Millisecond, js.HTTP)
+	client := client.NewServo(events, "http://127.0.0.1:3000", 300*time.Millisecond, js.HTTP)
 
-	all := clientServo.Register("docs.users.findN(-1).collects(name,nationality)")
-
-	all.Listen(func(err error, records data.Parameters) {
-
+	client.Request("docs.users.findN(-1).collects(name,nationality)", func(err error, meta data.ResponseMeta, records data.Parameters) {
 		if err != nil {
 			events.Error(context, "Listen", err, "All query Failed")
 			return
@@ -60,9 +57,7 @@ func main() {
 		}
 	})
 
-	get := clientServo.Register(`docs.users.findN(1).mutate({ "name": "Von Bruz" })`)
-
-	get.Listen(func(err error, records data.Parameters) {
+	client.Request(`docs.users.findN(1).mutate({ "name": "Von Bruz" })`, func(err error, meta data.ResponseMeta, records data.Parameters) {
 		if err != nil {
 			events.Error(context, "Listen", err, "All query Failed")
 			return
@@ -74,13 +69,5 @@ func main() {
 			doc.QuerySelector("body").AppendChild(div)
 		}
 	})
-
-	if err := all.Do(); err != nil {
-		events.Error(context, "all.Do", err, "All query Failed")
-	}
-
-	if err := get.Do(); err != nil {
-		events.Error(context, "get.Do", err, "Get query Failed")
-	}
 
 }

@@ -42,6 +42,14 @@ type Parameters []Parameter
 
 //==============================================================================
 
+// ResponseMeta provides a meta record which provides specific information for
+// a giving response.
+type ResponseMeta struct {
+	RecordKey string `json:"record_key"`
+	RequestID string `json:"request_id"`
+	DeltaID   string `json:"delta_id"`
+}
+
 // ResponsePack defines the response to be recieved back from the API.
 type ResponsePack struct {
 	RecordKey string     `json:"record_key"`
