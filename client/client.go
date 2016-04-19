@@ -107,7 +107,7 @@ func (h *UpdateTrigger) UpdateKeys(meta data.ResponseMeta, da data.ResponsePack)
 // Server provides a central request manager for different query requests and
 // subscriptions.
 type Server interface {
-	Request(query string, hl Handler)
+	Request(query string, hl Handler) error
 	Updates(query string, hl func())
 	Serve() error
 }
